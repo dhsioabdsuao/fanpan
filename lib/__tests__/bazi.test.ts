@@ -147,4 +147,68 @@ describe('calculateBazi', () => {
     expect(result.pillars.year.stem).toBe('癸')
     expect(result.pillars.year.branch).toBe('亥')
   })
+
+  describe('阶段4: 常规日期完整四柱验证', () => {
+    // 测试9: 1990-06-15 14:30 男 — 算法输出(已验证正确): 年庚午月壬午日辛亥时乙未
+    // 用户曾报告期望: 日柱庚申、时柱癸未，经三方验证(JS Date / Python / 万年历锚点)确认算法正确
+    it('1990-06-15 14:30 男 → 年庚午月壬午日辛亥时乙未', () => {
+      const result = calculateBazi(makeInput({
+        year: 1990, month: 6, day: 15, hour: 14, minute: 30,
+      }))
+      expect(result.pillars.year.stem).toBe('庚')
+      expect(result.pillars.year.branch).toBe('午')
+      expect(result.pillars.month.stem).toBe('壬')
+      expect(result.pillars.month.branch).toBe('午')
+      expect(result.pillars.day.stem).toBe('辛')
+      expect(result.pillars.day.branch).toBe('亥')
+      expect(result.pillars.hour.stem).toBe('乙')
+      expect(result.pillars.hour.branch).toBe('未')
+    })
+
+    // 测试10: 2024-01-01 12:00 — 立春前年柱癸卯，大雪后子月
+    it('2024-01-01 12:00 → 年癸卯月甲子日甲子时庚午', () => {
+      const result = calculateBazi(makeInput({
+        year: 2024, month: 1, day: 1, hour: 12, minute: 0,
+      }))
+      expect(result.pillars.year.stem).toBe('癸')
+      expect(result.pillars.year.branch).toBe('卯')
+      expect(result.pillars.month.stem).toBe('甲')
+      expect(result.pillars.month.branch).toBe('子')
+      expect(result.pillars.day.stem).toBe('甲')
+      expect(result.pillars.day.branch).toBe('子')
+      expect(result.pillars.hour.stem).toBe('庚')
+      expect(result.pillars.hour.branch).toBe('午')
+    })
+
+    // 测试11: 1985-08-20 08:00 男
+    it('1985-08-20 08:00 → 年乙丑月甲申日辛卯时壬辰', () => {
+      const result = calculateBazi(makeInput({
+        year: 1985, month: 8, day: 20, hour: 8, minute: 0,
+      }))
+      expect(result.pillars.year.stem).toBe('乙')
+      expect(result.pillars.year.branch).toBe('丑')
+      expect(result.pillars.month.stem).toBe('甲')
+      expect(result.pillars.month.branch).toBe('申')
+      expect(result.pillars.day.stem).toBe('辛')
+      expect(result.pillars.day.branch).toBe('卯')
+      expect(result.pillars.hour.stem).toBe('壬')
+      expect(result.pillars.hour.branch).toBe('辰')
+    })
+
+    // 测试12: 2010-12-25 16:00 女
+    it('2010-12-25 16:00 → 年庚寅月戊子日己酉时壬申', () => {
+      const result = calculateBazi(makeInput({
+        year: 2010, month: 12, day: 25, hour: 16, minute: 0,
+        gender: 'female',
+      }))
+      expect(result.pillars.year.stem).toBe('庚')
+      expect(result.pillars.year.branch).toBe('寅')
+      expect(result.pillars.month.stem).toBe('戊')
+      expect(result.pillars.month.branch).toBe('子')
+      expect(result.pillars.day.stem).toBe('己')
+      expect(result.pillars.day.branch).toBe('酉')
+      expect(result.pillars.hour.stem).toBe('壬')
+      expect(result.pillars.hour.branch).toBe('申')
+    })
+  })
 })

@@ -1,0 +1,58 @@
+import type { BaziResult } from '@/types/bazi'
+import type { ElementType } from '@/types/bazi'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+const ELEMENT_ORDER: ElementType[] = ['金', '木', '水', '火', '土']
+
+const ELEMENT_BG: Record<string, string> = {
+  金: 'bg-yellow-600',
+  木: 'bg-emerald-700',
+  水: 'bg-blue-700',
+  火: 'bg-red-600',
+  土: 'bg-amber-700',
+}
+
+export function ElementChart({ result }: { result: BaziResult }) {
+  const { elementCount } = result
+
+  const lines: string[] = []
+  const dominant = ELEMENT_ORDER.filter((e) => elementCount[e] >= 3)
+  const missing = ELEMENT_ORDER.filter((e) => elementCount[e] === 0)
+
+  if (dominant.length > 0) {
+    lines.push(`您的命局五行以 ${dominant.join('、')} 为主(偏旺)`)
+  }
+  if (missing.length > 0) {
+    lines.push(`五行缺 ${missing.join('、')}`)
+  }
+  if (lines.length === 0) {
+    lines.push('五行较为均衡')
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">五行分布</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {ELEMENT_ORDER.map((el) => (
+          <div key={el} className="flex items-center gap-3">
+            <span className="w-16 text-sm font-medium shrink-0">
+              {el} {elementCount[el]}
+            </span>
+            <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${ELEMENT_BG[el]}`}
+                style={{ width: `${(elementCount[el] / 8) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
+
+        <p className="text-sm text-muted-foreground pt-2 border-t">
+          {lines.join('；')}
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
