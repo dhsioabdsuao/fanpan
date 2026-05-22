@@ -127,6 +127,37 @@ export default function AboutPage() {
                 调候用神原则会作为补充，平衡命局冷暖燥湿。
               </p>
             </div>
+
+            <div>
+              <h3
+                className="text-xl text-stone-800"
+                style={{ fontFamily: notoSerifSC.style.fontFamily }}
+              >
+                关于具体算法
+              </h3>
+              <p className="mt-1 leading-relaxed text-base text-stone-700">
+                命理判断需要将古籍的定性表述转化为可计算的定量规则。
+              </p>
+              <p className="mt-1 leading-relaxed text-base text-stone-700">
+                本站算法的定性原则严格遵循古籍——
+              </p>
+              <ul className="mt-1 list-disc pl-5 space-y-1 text-base text-stone-700">
+                <li>月令最重（滴天髓：「令出提纲」）</li>
+                <li>通根次之（子平真诠：「通根月令为最，得地次之」）</li>
+                <li>近者重远者轻（月支最重，年支最轻）</li>
+                <li>克者最伤，泄者最轻（滴天髓：「七杀重于正官」）</li>
+                <li>冲合改变力量分布</li>
+              </ul>
+              <p className="mt-1 leading-relaxed text-base text-stone-700">
+                但具体的分数和百分比，是基于古籍精神的现代化定量实现。
+                古籍只给定性原则，没有给出具体数字。
+                不同命理流派和软件在数字上会有微调，这是合理的差异。
+              </p>
+              <p className="mt-1 leading-relaxed text-base text-stone-700">
+                我们公开算法的所有规则供专业人士对照参考，
+                也欢迎命理师对算法提出指正。
+              </p>
+            </div>
           </div>
         </section>
 
