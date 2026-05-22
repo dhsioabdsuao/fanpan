@@ -88,10 +88,18 @@ function ResultContent() {
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">
-          <CardContent className="py-4 text-center text-sm text-muted-foreground">
-            <p>本站排盘与解读基于传统命理学，</p>
-            <p>仅供文化研究与娱乐参考。</p>
-            <p>命运掌握在自己手中，请勿据此做出重大人生决策。</p>
+          <CardContent className="py-10 text-center">
+            <div className="text-sm leading-relaxed text-stone-600">
+              <p>本站排盘与解读基于子平派传统命理学，</p>
+              <p>可见人生大致方向、性格特质、五行格局。</p>
+              <p>具体事件、流年小事变数较多，不可强求精准。</p>
+            </div>
+            <div className="my-6 font-serif text-2xl text-stone-800">
+              知命而不认命，但行好事，莫问前程
+            </div>
+            <div className="text-sm text-stone-500">
+              命运掌握在自己手中，请勿据此做出重大人生决策。
+            </div>
           </CardContent>
         </Card>
       </div>
