@@ -1,5 +1,7 @@
 import { Solar, Lunar } from 'lunar-typescript'
 import type { BaziInput, BaziResult, Pillar } from '@/types/bazi'
+import type { SolarTimeAdjustment } from '@/lib/solarTime/types'
+import { adjustToSolarTime } from '@/lib/solarTime'
 import {
   getStemElement,
   getBranchElement,
@@ -51,7 +53,30 @@ function createLunarFromInput(input: BaziInput): Lunar {
 export function calculateBazi(input: BaziInput): BaziResult {
   validateInput(input)
 
-  const lunar = createLunarFromInput(input)
+  // ── 真太阳时换算 ──
+  // 如果提供了完整出生地(省+市)，将标准时间换算为真太阳时
+  let solarTimeAdjustment: SolarTimeAdjustment | null = null
+
+  if (input.birthPlace?.province && input.birthPlace?.city) {
+    // 先确定标准时间：农历输入需先转公历获取对应的 solar date
+    const originalLunar = createLunarFromInput(input)
+    const standardSolar = originalLunar.getSolar()
+    const standardTime = new Date(
+      standardSolar.getYear(),
+      standardSolar.getMonth() - 1,
+      standardSolar.getDay(),
+      input.hour,
+      input.minute,
+      0,
+    )
+    solarTimeAdjustment = adjustToSolarTime(standardTime, input.birthPlace)
+  }
+
+  // 使用换算后的时间创建 Lunar 对象
+  const lunar = solarTimeAdjustment
+    ? Solar.fromDate(solarTimeAdjustment.solarTime).getLunar()
+    : createLunarFromInput(input)
+
   const solar = lunar.getSolar()
 
   // 年柱：以立春精确时刻为界
@@ -78,6 +103,14 @@ export function calculateBazi(input: BaziInput): BaziResult {
   const hourPillar = buildPillar(hourStem, hourBranch)
 
   const dayMaster = dayStem
+
+  // solarDate 显示真太阳时(如有换算)或原始输入时间
+  const displayHour = solarTimeAdjustment
+    ? solarTimeAdjustment.solarTime.getHours()
+    : input.hour
+  const displayMinute = solarTimeAdjustment
+    ? solarTimeAdjustment.solarTime.getMinutes()
+    : input.minute
 
   return {
     pillars: {
@@ -108,8 +141,9 @@ export function calculateBazi(input: BaziInput): BaziResult {
       dayBranch: dayPillar.hiddenStems.map((s) => getTenGod(dayMaster, s)),
       hourBranch: hourPillar.hiddenStems.map((s) => getTenGod(dayMaster, s)),
     },
-    solarDate: `${solar.getYear()}年${solar.getMonth()}月${solar.getDay()}日 ${String(input.hour).padStart(2, '0')}:${String(input.minute).padStart(2, '0')}`,
+    solarDate: `${solar.getYear()}年${solar.getMonth()}月${solar.getDay()}日 ${String(displayHour).padStart(2, '0')}:${String(displayMinute).padStart(2, '0')}`,
     lunarDate: `${lunar.getYearInGanZhiByLiChun()}年${lunar.getMonthInChinese()}${lunar.getDayInChinese()}`,
     inputInfo: { ...input },
+    solarTimeAdjustment,
   }
 }

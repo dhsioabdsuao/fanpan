@@ -1,3 +1,5 @@
+import type { BirthPlace, SolarTimeAdjustment } from '@/lib/solarTime/types'
+
 export type BaziInput = {
   year: number
   month: number
@@ -7,6 +9,7 @@ export type BaziInput = {
   gender: 'male' | 'female'
   isLunar: boolean
   isLeapMonth?: boolean
+  birthPlace?: BirthPlace
 }
 
 export type ElementType = '金' | '木' | '水' | '火' | '土'
@@ -48,4 +51,5 @@ export type BaziResult = {
   solarDate: string
   lunarDate: string
   inputInfo: BaziInput
+  solarTimeAdjustment: SolarTimeAdjustment | null
 }

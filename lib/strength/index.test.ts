@@ -44,6 +44,7 @@ function makeBazi(
     solarDate: '',
     lunarDate: '',
     inputInfo: { year: 2000, month: 1, day: 1, hour: 0, minute: 0, gender: 'male', isLunar: false },
+    solarTimeAdjustment: null,
   }
 }
 
