@@ -19,11 +19,11 @@ const ZHI_WU_XING: Record<string, ElementType> = {
 }
 
 export function getGanIndex(gan: string): number {
-  return GAN.indexOf(gan)
+  return GAN.indexOf(gan as typeof GAN[number])
 }
 
 export function getZhiIndex(zhi: string): number {
-  return ZHI.indexOf(zhi)
+  return ZHI.indexOf(zhi as typeof ZHI[number])
 }
 
 export function getStemElement(stem: string): ElementType {
