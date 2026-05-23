@@ -6,11 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 import { BirthFormSchema, type BirthFormData } from '@/lib/schemas';
+import type { BaziInput } from '@/types/bazi';
+import type { BirthPlace } from '@/lib/solarTime/types';
 import { Combobox } from '@/components/ui/combobox';
 import {
   getAllProvinces,
   getCitiesByProvince,
   getDistrictsByCity,
+  lookupCoordinates,
 } from '@/lib/solarTime/cityLookup';
 
 const resolver: Resolver<BirthFormData> = async (values) => {
@@ -60,7 +63,11 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-export function BirthForm() {
+interface BirthFormProps {
+  onSubmit?: (input: BaziInput) => void;
+}
+
+export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
   const router = useRouter();
 
   const form = useForm<BirthFormData>({
@@ -120,7 +127,53 @@ export function BirthForm() {
     setDistrict('');
   }
 
+  function buildBaziInput(data: BirthFormData): BaziInput {
+    let hour: number;
+    let minute: number;
+
+    if (data.timeMode === 'precise') {
+      hour = data.hour ?? 12;
+      minute = data.minute ?? 0;
+    } else if (data.timeMode === 'shichen') {
+      const entry = SHICHEN_OPTIONS.find((s) => s.value === data.shichen);
+      hour = entry?.hour ?? 12;
+      minute = 0;
+    } else {
+      hour = 12;
+      minute = 0;
+    }
+
+    let birthPlace: BirthPlace | undefined;
+    if (province && city && district) {
+      const coords = lookupCoordinates(province, city, district);
+      if (coords) {
+        birthPlace = { province, city, district };
+      }
+    }
+
+    return {
+      year: data.year,
+      month: data.month,
+      day: data.day,
+      hour,
+      minute,
+      gender: data.gender,
+      isLunar: data.calendar === 'lunar',
+      isLeapMonth: data.isLeapMonth || undefined,
+      birthPlace,
+    };
+  }
+
   function onSubmit(data: BirthFormData) {
+    const input = buildBaziInput(data);
+
+    // 如果父组件传了 onSubmit，走回调路径（调试页）
+    if (onExternalSubmit) {
+      onExternalSubmit(input);
+      return;
+    }
+
+    // 首页路径：router.push 到结果页
     const params = new URLSearchParams();
     params.set('calendar', data.calendar);
     params.set('year', String(data.year));
