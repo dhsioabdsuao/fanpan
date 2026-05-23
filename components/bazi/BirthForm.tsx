@@ -1,10 +1,17 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useForm, Controller, type Resolver } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 import { BirthFormSchema, type BirthFormData } from '@/lib/schemas';
+import { Combobox } from '@/components/ui/combobox';
+import {
+  getAllProvinces,
+  getCitiesByProvince,
+  getDistrictsByCity,
+} from '@/lib/solarTime/cityLookup';
 
 const resolver: Resolver<BirthFormData> = async (values) => {
   const result = BirthFormSchema.safeParse(values);
@@ -78,6 +85,41 @@ export function BirthForm() {
   const timeMode = form.watch('timeMode');
   const daysInMonth = getDaysInMonth(year ?? 1990, month ?? 1);
 
+  // ── 出生地三级联动 ──
+  const searchParams = useSearchParams();
+  const [province, setProvince] = useState('');
+  const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
+
+  // URL 参数回填
+  useEffect(() => {
+    const p = searchParams.get('province');
+    const c = searchParams.get('city');
+    const d = searchParams.get('district');
+    if (p) setProvince(p);
+    if (c) setCity(c);
+    if (d) setDistrict(d);
+  }, [searchParams]);
+
+  const provinceOptions = getAllProvinces();
+  const cityOptions = province ? getCitiesByProvince(province) : [];
+  const districtOptions = province && city ? getDistrictsByCity(province, city) : [];
+
+  // 精确时辰模式下，出生地必填校验
+  const isLocationValid = !!province && !!city && !!district;
+  const canSubmit = timeMode !== 'precise' || isLocationValid;
+
+  function handleProvinceChange(value: string) {
+    setProvince(value);
+    setCity('');
+    setDistrict('');
+  }
+
+  function handleCityChange(value: string) {
+    setCity(value);
+    setDistrict('');
+  }
+
   function onSubmit(data: BirthFormData) {
     const params = new URLSearchParams();
     params.set('calendar', data.calendar);
@@ -101,6 +143,12 @@ export function BirthForm() {
       params.set('hour', '12');
       params.set('minute', '0');
       params.set('noHour', '1');
+    }
+
+    if (province) {
+      params.set('province', province);
+      if (city) params.set('city', city);
+      if (district) params.set('district', district);
     }
 
     router.push(`/result?${params.toString()}`);
@@ -272,8 +320,11 @@ export function BirthForm() {
                       min={0}
                       max={23}
                       className="mt-1.5"
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      value={Number.isFinite(field.value) ? field.value : ''}
+                      onChange={(e) => {
+                        const v = e.target.valueAsNumber;
+                        field.onChange(isNaN(v) ? undefined : v);
+                      }}
                       onBlur={field.onBlur}
                     />
                   )}
@@ -294,8 +345,11 @@ export function BirthForm() {
                       min={0}
                       max={59}
                       className="mt-1.5"
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      value={Number.isFinite(field.value) ? field.value : ''}
+                      onChange={(e) => {
+                        const v = e.target.valueAsNumber;
+                        field.onChange(isNaN(v) ? undefined : v);
+                      }}
                       onBlur={field.onBlur}
                     />
                   )}
@@ -340,6 +394,58 @@ export function BirthForm() {
             </div>
           )}
 
+          {/* Birth location —— 出生地三级联动 */}
+          <div className="md:col-span-2 border-t pt-4">
+            <Label className="mb-2 block">
+              {timeMode === 'precise'
+                ? '出生地（必填）'
+                : '出生地（选填）'}
+            </Label>
+            <p className="mb-3 text-xs text-muted-foreground">
+              {timeMode === 'precise'
+                ? '精确时辰需要真太阳时换算'
+                : timeMode === 'shichen'
+                  ? '此模式时辰粒度大，真太阳时影响较小'
+                  : '此模式不使用真太阳时'}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className="mb-1 block text-xs">省份</Label>
+                <Combobox
+                  options={provinceOptions}
+                  value={province}
+                  onChange={handleProvinceChange}
+                  placeholder="选择省份"
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block text-xs">城市</Label>
+                <Combobox
+                  options={cityOptions}
+                  value={city}
+                  onChange={handleCityChange}
+                  placeholder={province ? '选择城市' : '请先选省份'}
+                  disabled={!province}
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block text-xs">区县</Label>
+                <Combobox
+                  options={districtOptions}
+                  value={district}
+                  onChange={setDistrict}
+                  placeholder={city ? '选择区县' : '请先选城市'}
+                  disabled={!city}
+                />
+              </div>
+            </div>
+            {!canSubmit && (
+              <p className="mt-2 text-sm text-destructive">
+                请填写出生地（精确时辰模式必填）
+              </p>
+            )}
+          </div>
+
           {/* Gender */}
           <div className="md:col-span-2">
             <Label className="mb-2 block">性别</Label>
@@ -370,7 +476,7 @@ export function BirthForm() {
 
           {/* Submit */}
           <div className="md:col-span-2 pt-2">
-            <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+            <Button type="submit" disabled={!canSubmit || form.formState.isSubmitting} className="w-full">
               {form.formState.isSubmitting && (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               )}

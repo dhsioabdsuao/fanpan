@@ -1,4 +1,5 @@
 import { Noto_Serif_SC } from 'next/font/google';
+import { Suspense } from 'react';
 import { BirthForm } from '@/components/bazi/BirthForm';
 
 const notoSerifSC = Noto_Serif_SC({
@@ -22,7 +23,9 @@ export default function Home() {
         <p>具体事件流变数较多，不可执着精准</p>
       </div>
       <div className="w-full max-w-2xl">
-        <BirthForm />
+        <Suspense fallback={null}>
+          <BirthForm />
+        </Suspense>
       </div>
     </div>
   );
