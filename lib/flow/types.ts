@@ -127,14 +127,8 @@ export interface StructureSummary {
 }
 
 // ── LLM 占位符 ──
-
-export interface Placeholders {
-  mainNarrative: string    // "{{MAIN_NARRATIVE}}"
-  flowAdvice: string       // "{{FLOW_ADVICE}}"
-  structureInsight: string // "{{STRUCTURE_INSIGHT}}"
-  climaticNote: string     // "{{CLIMATIC_NOTE}}"
-  conflictNote: string     // "{{CONFLICT_NOTE}}"
-}
+// Record 的 key 是占位符名（如 日柱、日主），value 是替换值
+export type Placeholders = Record<string, string>
 
 // ── 顶层 FactPack ──
 

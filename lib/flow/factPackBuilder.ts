@@ -55,12 +55,26 @@ export function buildFactPack(
   structureSummary.yinYangLayer = stemBranchRelation.yinYangTexture
 
   // ── LLM 占位符 ──
-  const placeholders = {
+  const placeholders: Record<string, string> = {
     mainNarrative: '{{MAIN_NARRATIVE}}',
     flowAdvice: '{{FLOW_ADVICE}}',
     structureInsight: '{{STRUCTURE_INSIGHT}}',
     climaticNote: '{{CLIMATIC_NOTE}}',
     conflictNote: '{{CONFLICT_NOTE}}',
+    // 四柱占位符（供 LLM prompt 使用，LLM 输出 [日柱] 后被替换为真实八字）
+    年柱: bazi.pillars.year.stem + bazi.pillars.year.branch,
+    月柱: bazi.pillars.month.stem + bazi.pillars.month.branch,
+    日柱: bazi.pillars.day.stem + bazi.pillars.day.branch,
+    时柱: bazi.pillars.hour.stem + bazi.pillars.hour.branch,
+    年干: bazi.pillars.year.stem,
+    年支: bazi.pillars.year.branch,
+    月干: bazi.pillars.month.stem,
+    月支: bazi.pillars.month.branch,
+    日干: bazi.pillars.day.stem,
+    日支: bazi.pillars.day.branch,
+    时干: bazi.pillars.hour.stem,
+    时支: bazi.pillars.hour.branch,
+    日主: bazi.dayMaster,
   }
 
   return {
