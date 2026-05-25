@@ -1,13 +1,14 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseSearchParams } from '@/lib/bazi-input-adapter'
+import type { BaziInput } from '@/types/bazi'
 import { calculateBazi } from '@/lib/bazi'
 import { PillarTable } from '@/components/bazi/PillarTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
@@ -44,6 +45,85 @@ function ErrorMessage({ message }: { message: string }) {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+const FLOW_CLOSING = '命局给出的是倾向,不是定数。你比命盘更了解自己。'
+
+function FlowReadingSection({ input }: { input: BaziInput }) {
+  const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading')
+  const [reading, setReading] = useState('')
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function load() {
+      try {
+        const res = await fetch('/api/flow-reading', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+          signal: controller.signal,
+        })
+
+        if (!res.ok) {
+          setState('error')
+          return
+        }
+
+        const data = await res.json()
+        setReading(data.reading)
+        setState('loaded')
+      } catch {
+        if (!controller.signal.aborted) {
+          setState('error')
+        }
+      }
+    }
+
+    load()
+    return () => controller.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const closingIndex = reading.lastIndexOf(FLOW_CLOSING)
+  const mainText = closingIndex > 0 ? reading.slice(0, closingIndex).trim() : reading
+  const hasClosing = closingIndex > 0
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <h2 className="font-serif text-xl font-semibold mb-4">五行流通度</h2>
+
+        {state === 'loading' && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="size-8 animate-spin rounded-full border-4 border-stone-200 border-t-stone-600" />
+            <p className="text-stone-500 text-sm">
+              正在生成你的五行流通度解读……（约需 30-60 秒）
+            </p>
+          </div>
+        )}
+
+        {state === 'error' && (
+          <p className="text-destructive text-sm py-4">
+            解读生成失败，请刷新页面重试
+          </p>
+        )}
+
+        {state === 'loaded' && (
+          <div>
+            <div className="text-base leading-relaxed whitespace-pre-line">
+              {mainText}
+            </div>
+            {hasClosing && (
+              <p className="mt-6 text-center text-sm text-stone-400">
+                {FLOW_CLOSING}
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -85,6 +165,7 @@ function ResultContent() {
         <PillarTable result={result} hideHour={noHour === '1'} />
         <ElementChart result={result} />
         <Interpretation result={result} />
+        <FlowReadingSection input={input} />
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">
