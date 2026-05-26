@@ -191,10 +191,10 @@ export function validateLlmOutput(
       detail: `去除空白后 ${stripped.length} 字（要求 ≥ 200 字）`,
       snippet: text.slice(0, 50) + '…',
     })
-  } else if (stripped.length > 700) {
+  } else if (stripped.length > 1000) {
     violations.push({
       rule: '规则9_篇幅过长',
-      detail: `去除空白后 ${stripped.length} 字（要求 ≤ 700 字）`,
+      detail: `去除空白后 ${stripped.length} 字（要求 ≤ 1000 字）`,
       snippet: text.slice(0, 50) + '…',
     })
   }

@@ -52,7 +52,9 @@ export async function generateFlowReading(
 
     lastValidation = validation
     retryReasons.push(
-      `第${attempt}次校验失败: ${validation.violations.map(v => v.rule).join(',')}`
+      `第${attempt}次校验失败: ${validation.violations.map(v =>
+        `${v.rule}(${v.detail})${v.snippet ? ' snippet: ' + v.snippet : ''}`
+      ).join('; ')}`
     )
   }
 

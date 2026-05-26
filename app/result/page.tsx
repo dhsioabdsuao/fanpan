@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -127,6 +127,46 @@ function FlowReadingSection({ input }: { input: BaziInput }) {
   )
 }
 
+function Methodology() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Card className="border-stone-200">
+      <CardContent className="pt-4 pb-4">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <span className="text-sm text-stone-400">关于本站方法论</span>
+          <ChevronDown
+            className={`size-4 text-stone-400 transition-transform duration-200 ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+        <div
+          className={`grid transition-all duration-200 ${
+            open ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="text-sm text-stone-500 leading-relaxed space-y-2">
+              <p>
+                本站的八字、五行分布、流通判定等所有命局数据均由代码按子平派
+                算法严格计算，每次结果一致。下方的「五行流通度」解读由大模型
+                根据上述命局数据生成，命局事实不变，但具体措辞可能略有不同。
+              </p>
+              <p>
+                本站仅作命理参考，不预测具体事件，请勿据此做出重大人生决策。
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 function ResultContent() {
   const searchParams = useSearchParams()
 
@@ -160,6 +200,9 @@ function ResultContent() {
           <h1 className="font-serif text-2xl md:text-3xl font-semibold">命盘解析</h1>
           <div className="w-[92px]" />
         </div>
+
+        {/* Methodology */}
+        <Methodology />
 
         <BasicInfo result={result} />
         <PillarTable result={result} hideHour={noHour === '1'} />

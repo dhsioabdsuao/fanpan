@@ -3,10 +3,37 @@ export const maxDuration = 90
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { readFile, writeFile, mkdir } from 'fs/promises'
+import path from 'path'
+import crypto from 'crypto'
 import { calculateBazi } from '@/lib/bazi'
 import { calculateDayMasterStrength } from '@/lib/strength'
 import { buildFactPack } from '@/lib/flow'
 import { generateFlowReading } from '@/lib/flow/llm'
+
+const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
+
+function getCacheKey(bazi: ReturnType<typeof calculateBazi>, gender: string): string {
+  const p = bazi.pillars
+  const raw = `${p.year.stem}${p.year.branch}_${p.month.stem}${p.month.branch}_${p.day.stem}${p.day.branch}_${p.hour.stem}${p.hour.branch}_${gender}`
+  return crypto.createHash('md5').update(raw).digest('hex')
+}
+
+async function getCachedReading(key: string) {
+  try {
+    const filePath = path.join(CACHE_DIR, `${key}.json`)
+    const content = await readFile(filePath, 'utf-8')
+    return JSON.parse(content)
+  } catch {
+    return null
+  }
+}
+
+async function setCachedReading(key: string, result: unknown) {
+  await mkdir(CACHE_DIR, { recursive: true })
+  const filePath = path.join(CACHE_DIR, `${key}.json`)
+  await writeFile(filePath, JSON.stringify(result, null, 2), 'utf-8')
+}
 
 const BodySchema = z.object({
   year: z.number().int().min(1900).max(2100),
@@ -41,15 +68,27 @@ export async function POST(request: NextRequest) {
     const input = parsed.data
     const baziResult = calculateBazi(input)
     const strengthResult = calculateDayMasterStrength(baziResult)
+
+    // 检查缓存
+    const cacheKey = getCacheKey(baziResult, input.gender === 'male' ? '男' : '女')
+    const cached = await getCachedReading(cacheKey)
+    if (cached) {
+      return NextResponse.json({ ...cached, fromCache: true })
+    }
+
     const factPack = buildFactPack(baziResult, strengthResult)
     const reading = await generateFlowReading(factPack)
 
-    return NextResponse.json({
+    const responseData = {
       reading: reading.text,
       source: reading.source,
       attempts: reading.attempts,
+      retryReasons: reading.retryReasons,
       factPack,
-    })
+    }
+    await setCachedReading(cacheKey, responseData)
+
+    return NextResponse.json(responseData)
   } catch (e) {
     const msg = e instanceof Error ? e.message : '服务异常'
     // 不暴露 API key 相关细节

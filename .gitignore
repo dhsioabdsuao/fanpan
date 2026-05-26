@@ -43,3 +43,4 @@ next-env.d.ts
 # china coord data build artifacts
 tmp/
 *.csv
+.cache/
