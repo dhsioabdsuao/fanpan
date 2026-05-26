@@ -74,13 +74,13 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
     resolver,
     defaultValues: {
       calendar: 'solar',
-      year: 1990,
-      month: 1,
-      day: 1,
+      year: undefined,
+      month: undefined,
+      day: undefined,
       isLeapMonth: false,
       timeMode: 'precise',
-      hour: 12,
-      minute: 0,
+      hour: undefined,
+      minute: undefined,
       shichen: undefined,
       gender: 'male',
     },
@@ -90,7 +90,7 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
   const year = form.watch('year');
   const month = form.watch('month');
   const timeMode = form.watch('timeMode');
-  const daysInMonth = getDaysInMonth(year ?? 1990, month ?? 1);
+  const daysInMonth = year && month ? getDaysInMonth(year, month) : 31;
 
   // ── 出生地三级联动 ──
   const searchParams = useSearchParams();
@@ -152,9 +152,9 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
     }
 
     return {
-      year: data.year,
-      month: data.month,
-      day: data.day,
+      year: data.year!,
+      month: data.month!,
+      day: data.day!,
       hour,
       minute,
       gender: data.gender,
@@ -243,10 +243,16 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
               render={({ field }) => (
                 <Input
                   id="year"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="例如 2002"
                   className="mt-1.5"
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber || 1990)}
+                  value={field.value ?? ''}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '')
+                    field.onChange(raw === '' ? undefined : Number(raw))
+                  }}
                   onBlur={field.onBlur}
                 />
               )}
@@ -263,7 +269,7 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
               control={form.control}
               name="month"
               render={({ field }) => (
-                <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
+                <Select value={field.value ? String(field.value) : undefined} onValueChange={(v) => field.onChange(Number(v))}>
                   <SelectTrigger className="mt-1.5 w-full">
                     <SelectValue placeholder="选择月份" />
                   </SelectTrigger>
@@ -289,7 +295,7 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
               control={form.control}
               name="day"
               render={({ field }) => (
-                <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
+                <Select value={field.value ? String(field.value) : undefined} onValueChange={(v) => field.onChange(Number(v))}>
                   <SelectTrigger className="mt-1.5 w-full">
                     <SelectValue placeholder="选择日期" />
                   </SelectTrigger>
@@ -369,14 +375,15 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
                   render={({ field }) => (
                     <Input
                       id="hour"
-                      type="number"
-                      min={0}
-                      max={23}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="0-23"
                       className="mt-1.5"
-                      value={Number.isFinite(field.value) ? field.value : ''}
+                      value={field.value ?? ''}
                       onChange={(e) => {
-                        const v = e.target.valueAsNumber;
-                        field.onChange(isNaN(v) ? undefined : v);
+                        const raw = e.target.value.replace(/\D/g, '')
+                        field.onChange(raw === '' ? undefined : Number(raw))
                       }}
                       onBlur={field.onBlur}
                     />
@@ -394,14 +401,15 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
                   render={({ field }) => (
                     <Input
                       id="minute"
-                      type="number"
-                      min={0}
-                      max={59}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="0-59"
                       className="mt-1.5"
-                      value={Number.isFinite(field.value) ? field.value : ''}
+                      value={field.value ?? ''}
                       onChange={(e) => {
-                        const v = e.target.valueAsNumber;
-                        field.onChange(isNaN(v) ? undefined : v);
+                        const raw = e.target.value.replace(/\D/g, '')
+                        field.onChange(raw === '' ? undefined : Number(raw))
                       }}
                       onBlur={field.onBlur}
                     />
