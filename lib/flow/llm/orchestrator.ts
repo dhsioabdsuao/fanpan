@@ -24,6 +24,8 @@ export async function generateFlowReading(
   const maxRetries = options?.maxRetries ?? 3
   const retryReasons: string[] = []
   let lastValidation: ValidationResult | undefined
+  let apiRetries = 0
+  const MAX_API_RETRIES = 2
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const prompt = buildPrompt(factPack, lastValidation)
@@ -36,6 +38,16 @@ export async function generateFlowReading(
         `第${attempt}次调用失败: ${e instanceof Error ? e.message : String(e)}`
       )
       continue
+    }
+
+    // 空响应检测: LLM 返回空内容视为 API 错误,不消耗校验配额
+    if (rawOutput.trim().length < 10) {
+      if (apiRetries < MAX_API_RETRIES) {
+        apiRetries++
+        retryReasons.push(`API空响应_第${apiRetries}次API重试`)
+        attempt--
+        continue
+      }
     }
 
     const validation = validateLlmOutput(rawOutput, factPack)

@@ -37,6 +37,27 @@ function makeMockProvider(responses: string[]): LlmProvider {
   }
 }
 
+// ── 测试 0: 空响应触发 API 重试,不消耗校验配额 ──
+// 意图: 第一次 LLM 返回空内容(<10 chars),应触发 API 重试(attempt 不增加);
+//       第二次返回合规文本,最终 attempts=1(API 重试不计数)
+it('Mock: 空响应触发API重试,不消耗校验配额', async () => {
+  const { bazi, strength } = compute(makeInput())
+  const factPack = buildFactPack(bazi, strength)
+  factPack.climaticBalance.pattern = '平衡'
+
+  const mockProvider = makeMockProvider([
+    '   ',
+    '你的命局,土的力量厚而稳——日柱的 [日柱] 坐在 [日支] 上,得地有根,这意味着日主在地支里有同类支撑。月支 [月支] 和时柱 [时柱] 又把土的根基再加深两层,整个命局像一片层层叠叠的厚土,牢牢扎在那里。这种结构意味着你倾向于在熟悉的环境里找到稳定感,但在面对新事物时也会有自己的节奏,需要更多时间去消化和适应。不过正是这种厚实的根基,让你在长期的事情上有持续的耐力,不容易被外界轻易推动。在性格上你倾向于稳重,做选择时会先衡量这件事稳不稳。这份厚实是你的力量,也是你的节奏。',
+  ])
+
+  const result = await generateFlowReading(factPack, { provider: mockProvider })
+
+  expect(result.attempts).toBe(1)
+  expect(result.source).toBe('llm')
+  expect(result.retryReasons.length).toBe(1)
+  expect(result.retryReasons[0]).toContain('API空响应')
+})
+
 // ── 测试 1: 真 API happy path ──
 // 意图: 使用真实 DeepSeek API 验证端到端 LLM 调用 + 校验 + 占位符替换全链路
 it('真 API: 完整调用链路（需 DEEPSEEK_API_KEY）', async () => {
