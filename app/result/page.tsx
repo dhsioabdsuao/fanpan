@@ -14,6 +14,8 @@ import { PillarTable } from '@/components/bazi/PillarTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
 import { Interpretation } from '@/components/bazi/Interpretation'
+import { YongShenSection } from './YongShenSection'
+import type { YongShenResult } from '@/lib/yongshen'
 
 function SkeletonResult() {
   return (
@@ -50,7 +52,13 @@ function ErrorMessage({ message }: { message: string }) {
 
 const FLOW_CLOSING = '命局给出的是倾向,不是定数。你比命盘更了解自己。'
 
-function FlowReadingSection({ input }: { input: BaziInput }) {
+function FlowReadingSection({
+  input,
+  onData,
+}: {
+  input: BaziInput
+  onData?: (data: { yongshen: YongShenResult }) => void
+}) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [reading, setReading] = useState('')
 
@@ -74,6 +82,9 @@ function FlowReadingSection({ input }: { input: BaziInput }) {
         const data = await res.json()
         setReading(data.reading)
         setState('loaded')
+        if (data.yongshen) {
+          onData?.({ yongshen: data.yongshen })
+        }
       } catch {
         if (!controller.signal.aborted) {
           setState('error')
@@ -169,6 +180,7 @@ function Methodology() {
 
 function ResultContent() {
   const searchParams = useSearchParams()
+  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult } | null>(null)
 
   const input = parseSearchParams(searchParams)
 
@@ -208,7 +220,8 @@ function ResultContent() {
         <PillarTable result={result} hideHour={noHour === '1'} />
         <ElementChart result={result} />
         <Interpretation result={result} />
-        <FlowReadingSection input={input} />
+        <FlowReadingSection input={input} onData={setFlowData} />
+        {flowData?.yongshen && <YongShenSection yongshen={flowData.yongshen} />}
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">

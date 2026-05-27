@@ -269,7 +269,7 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
               control={form.control}
               name="month"
               render={({ field }) => (
-                <Select value={field.value ? String(field.value) : undefined} onValueChange={(v) => field.onChange(Number(v))}>
+                <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))}>
                   <SelectTrigger className="mt-1.5 w-full">
                     <SelectValue placeholder="选择月份" />
                   </SelectTrigger>
@@ -295,7 +295,7 @@ export function BirthForm({ onSubmit: onExternalSubmit }: BirthFormProps) {
               control={form.control}
               name="day"
               render={({ field }) => (
-                <Select value={field.value ? String(field.value) : undefined} onValueChange={(v) => field.onChange(Number(v))}>
+                <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))}>
                   <SelectTrigger className="mt-1.5 w-full">
                     <SelectValue placeholder="选择日期" />
                   </SelectTrigger>

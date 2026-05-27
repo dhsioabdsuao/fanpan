@@ -26,6 +26,9 @@ import { deriveTongGuan } from './tongGuan'
 import { refineYinYang } from './yinYangRefine'
 import { rankGanRatings } from './ranker'
 
+// 类型重导出，方便外部使用
+export type { YongShenResult, GanRating, PrimaryMethod, ReasoningStep } from './types'
+
 export function deriveYongShen(
   bazi: BaziResult,
   strength: DayMasterStrength,

@@ -10,6 +10,7 @@ import { calculateBazi } from '@/lib/bazi'
 import { calculateDayMasterStrength } from '@/lib/strength'
 import { buildFactPack } from '@/lib/flow'
 import { generateFlowReading } from '@/lib/flow/llm'
+import { deriveYongShen } from '@/lib/yongshen'
 
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
 
@@ -69,14 +70,16 @@ export async function POST(request: NextRequest) {
     const baziResult = calculateBazi(input)
     const strengthResult = calculateDayMasterStrength(baziResult)
 
+    const factPack = buildFactPack(baziResult, strengthResult)
+    const yongshen = deriveYongShen(baziResult, strengthResult, factPack)
+
     // 检查缓存
     const cacheKey = getCacheKey(baziResult, input.gender === 'male' ? '男' : '女')
     const cached = await getCachedReading(cacheKey)
     if (cached) {
-      return NextResponse.json({ ...cached, fromCache: true })
+      return NextResponse.json({ ...cached, yongshen, fromCache: true })
     }
 
-    const factPack = buildFactPack(baziResult, strengthResult)
     const reading = await generateFlowReading(factPack)
 
     const responseData = {
@@ -85,6 +88,7 @@ export async function POST(request: NextRequest) {
       attempts: reading.attempts,
       retryReasons: reading.retryReasons,
       factPack,
+      yongshen,
     }
     await setCachedReading(cacheKey, responseData)
 
