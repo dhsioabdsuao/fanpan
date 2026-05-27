@@ -63,7 +63,6 @@ export function Combobox({
       <PopoverContent
         className="w-[--anchor-width] max-w-[calc(100vw-2rem)] p-0"
         align="start"
-        finalFocus={false}
       >
         <Command>
           <CommandInput placeholder={placeholder} />
