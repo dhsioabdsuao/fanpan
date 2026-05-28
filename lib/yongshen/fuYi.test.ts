@@ -110,15 +110,36 @@ describe('deriveFuYi', () => {
     expect(result.elementScores['火']).toBe(-2) // 食伤忌
   })
 
-  it('3. 日主中和 → 方向=中和，全部 0 分', () => {
+  it('3. 日主中和偏弱（score=28）→ 方向=中和，生扶方向微弱正分', () => {
+    // 丁火日主，中和偏弱半区 → 印(+1.5)=木, 比劫(+1)=火, 官杀(-1.5)=水, 食伤(-1)=土, 财(-1)=金
     const bazi = makeBazi('丁', '卯', '己', '酉', '丁', '亥', '辛', '亥')
-    const strength = makeStrength('中和', 35)
+    const strength = makeStrength('中和', 28)
     const result = deriveFuYi(bazi, strength, factPackMock)
 
     expect(result.direction).toBe('中和')
-    for (const el of ['金', '木', '水', '火', '土'] as const) {
-      expect(result.elementScores[el]).toBe(0)
-    }
+    // 生扶方向减半：印木 +1.5, 比劫火 +1
+    expect(result.elementScores['木']).toBe(1.5)  // 印星用
+    expect(result.elementScores['火']).toBe(1)    // 比劫用
+    // 克泄耗减半：官杀水 -1.5, 食伤土 -1, 财金 -1
+    expect(result.elementScores['水']).toBe(-1.5) // 官杀忌
+    expect(result.elementScores['土']).toBe(-1)   // 食伤忌
+    expect(result.elementScores['金']).toBe(-1)   // 财忌
+  })
+
+  it('3b. 日主中和偏强（score=48）→ 方向=中和，克泄耗方向微弱正分', () => {
+    // 丁火日主，中和偏强半区 → 财(+1.5)=金, 官杀(+1)=水, 食伤(+1)=土, 印(-1.5)=木, 比劫(-1.5)=火
+    const bazi = makeBazi('丁', '卯', '己', '酉', '丁', '亥', '辛', '亥')
+    const strength = makeStrength('中和', 48)
+    const result = deriveFuYi(bazi, strength, factPackMock)
+
+    expect(result.direction).toBe('中和')
+    // 克泄耗减半：财金 +1.5, 官杀水 +1, 食伤土 +1
+    expect(result.elementScores['金']).toBe(1.5)  // 财用
+    expect(result.elementScores['水']).toBe(1)    // 官杀用
+    expect(result.elementScores['土']).toBe(1)    // 食伤用
+    // 生扶减半：印木 -1.5, 比劫火 -1.5
+    expect(result.elementScores['木']).toBe(-1.5) // 印星忌
+    expect(result.elementScores['火']).toBe(-1.5) // 比劫忌
   })
 
   it('4. 日主极强 → 方向=克泄耗（同偏强）', () => {

@@ -222,11 +222,12 @@ describe('rankGanRatings', () => {
 
     const result = rankGanRatings(zeroRatings, tiaoHou, tongGuan, fuYi, mockFactPack())
 
-    // 分数归为闲神
-    expect(result.yongShen).toHaveLength(0)
-    expect(result.jiShen).toHaveLength(0)
-    expect(result.xianShen).toHaveLength(2)
-    expect(result.xianShen[0].category).toBe('闲')
+    // 兜底触发：全零分时取 top2 为 yongShen（极端均衡命局保护）
+    expect(result.yongShen).toHaveLength(2)
+    expect(result.yongShen[0].category).toBe('喜用')
+    expect(result.yongShen[0].reason).toContain('兜底取前2')
+    // jiShen 也是这 2 个，但兜底会去重（top2 已全包含）
+    expect(result.xianShen).toHaveLength(0)
   })
 
   it('5. 仇神判定：分数 < -2.5', () => {

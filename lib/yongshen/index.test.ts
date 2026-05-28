@@ -208,7 +208,7 @@ describe('deriveYongShen（集成测试）', () => {
     expect(jiElements.some((e) => e === '木')).toBe(true)
   })
 
-  it('4. 中和八字 + 平衡气候：扶抑+调候+通关均弱', () => {
+  it('4. 中和八字 + 平衡气候：扶抑+调候+通关均弱，仍有微弱方向分', () => {
     const bazi = makeBazi('丁', '卯', '己', '酉', '丁', '亥', '辛', '亥')
     const strength = makeStrength('中和', 35)
     const factPack = mockFactPack()
@@ -218,9 +218,13 @@ describe('deriveYongShen（集成测试）', () => {
     expect(result.primaryMethod).toBe('扶抑')
     expect(result.fuYi?.direction).toBe('中和')
 
-    // 所有分数应接近 0
+    // 中和不再全零，yongShen 和 jiShen 都应非空
+    expect(result.yongShen.length).toBeGreaterThan(0)
+    expect(result.jiShen.length).toBeGreaterThan(0)
+
+    // 分数为减半方向分，应 < 2.5
     for (const r of result.yongShen) {
-      expect(Math.abs(r.score)).toBeLessThan(2)
+      expect(Math.abs(r.score)).toBeLessThan(2.5)
     }
   })
 
@@ -247,6 +251,34 @@ describe('deriveYongShen（集成测试）', () => {
       expect(result.tongGuan.mediator).toBe('水')
       expect(result.reasoning.some((s) => s.step === '通关介入')).toBe(true)
     }
+  })
+
+  it('4b. 中和偏强（score=49.5，模拟1995-06-15）：yongShen和jiShen均非空', () => {
+    // 乙亥 壬午 丁丑 丙午 → 丁火日主，中和偏强 49.5 分
+    const bazi = makeBazi('乙', '亥', '壬', '午', '丁', '丑', '丙', '午')
+    const strength = makeStrength('中和', 49.5)
+    const factPack = mockFactPack()
+
+    const result = deriveYongShen(bazi, strength, factPack)
+
+    expect(result.primaryMethod).toBe('扶抑')
+    expect(result.fuYi?.direction).toBe('中和')
+
+    // 关键：yongShen 和 jiShen 都必须非空
+    expect(result.yongShen.length).toBeGreaterThan(0)
+    expect(result.jiShen.length).toBeGreaterThan(0)
+
+    // 中和偏强 → 克泄耗方向：金水应为正分（财官用神）
+    const yongElements = result.yongShen.map((r) => r.element)
+    expect(yongElements.some((e) => e === '金')).toBe(true)
+    expect(yongElements.some((e) => e === '水')).toBe(true)
+
+    // 比劫火应为忌神
+    const jiElements = result.jiShen.map((r) => r.element)
+    expect(jiElements.some((e) => e === '火')).toBe(true)
+
+    // 摘要非空
+    expect(result.summary).not.toContain('喜用神：无')
   })
 
   it('6. 输出结构完整性验证', () => {

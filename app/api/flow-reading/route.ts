@@ -1,5 +1,5 @@
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 240
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -11,6 +11,7 @@ import { calculateDayMasterStrength } from '@/lib/strength'
 import { buildFactPack } from '@/lib/flow'
 import { generateFlowReading } from '@/lib/flow/llm'
 import { deriveYongShen } from '@/lib/yongshen'
+import { generateYongShenReading } from '@/lib/yongshen/llm/orchestrator'
 
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
 
@@ -77,10 +78,22 @@ export async function POST(request: NextRequest) {
     const cacheKey = getCacheKey(baziResult, input.gender === 'male' ? '男' : '女')
     const cached = await getCachedReading(cacheKey)
     if (cached) {
+      // 兼容旧缓存（没有 yongshenReading 字段）
+      if (!cached.yongshenReading) {
+        const yongshenReading = await generateYongShenReading(yongshen)
+        cached.yongshenReading = {
+          text: yongshenReading.text,
+          source: yongshenReading.source,
+          attempts: yongshenReading.attempts,
+          retryReasons: yongshenReading.retryReasons,
+        }
+        await setCachedReading(cacheKey, cached)
+      }
       return NextResponse.json({ ...cached, yongshen, fromCache: true })
     }
 
     const reading = await generateFlowReading(factPack)
+    const yongshenReading = await generateYongShenReading(yongshen)
 
     const responseData = {
       reading: reading.text,
@@ -89,6 +102,12 @@ export async function POST(request: NextRequest) {
       retryReasons: reading.retryReasons,
       factPack,
       yongshen,
+      yongshenReading: {
+        text: yongshenReading.text,
+        source: yongshenReading.source,
+        attempts: yongshenReading.attempts,
+        retryReasons: yongshenReading.retryReasons,
+      },
     }
     await setCachedReading(cacheKey, responseData)
 

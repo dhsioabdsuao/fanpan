@@ -74,6 +74,31 @@ export function rankGanRatings(
     (r) => !yongShen.includes(r) && !jiShen.includes(r),
   )
 
+  // ── 兜底：极端均衡命局 ──
+  if (yongShen.length === 0 && jiShen.length === 0) {
+    const sorted = [...fused].sort((a, b) => b.score - a.score)
+    const top2 = sorted.slice(0, 2)
+    for (const r of top2) {
+      r.category = '喜用'
+      r.reason = r.reason + ', 兜底取前2'
+    }
+    yongShen.push(...top2)
+    // 末2作为忌神，排除已进入喜用的条目（当 total < 4 时去重）
+    const bottom2 = sorted.slice(-2).reverse()
+      .filter((r) => !top2.includes(r))
+    for (const r of bottom2) {
+      r.category = '忌'
+      r.reason = r.reason + ', 兜底取末2'
+    }
+    jiShen.push(...bottom2)
+    xianShen.length = 0
+    for (const r of fused) {
+      if (!yongShen.includes(r) && !jiShen.includes(r)) {
+        xianShen.push(r)
+      }
+    }
+  }
+
   // ── Step 5：重算 priority ──
 
   yongShen.forEach((r, i) => {

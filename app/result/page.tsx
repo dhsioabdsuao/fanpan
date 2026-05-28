@@ -57,7 +57,7 @@ function FlowReadingSection({
   onData,
 }: {
   input: BaziInput
-  onData?: (data: { yongshen: YongShenResult }) => void
+  onData?: (data: { yongshen: YongShenResult; yongshenReading?: string }) => void
 }) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [reading, setReading] = useState('')
@@ -83,7 +83,7 @@ function FlowReadingSection({
         setReading(data.reading)
         setState('loaded')
         if (data.yongshen) {
-          onData?.({ yongshen: data.yongshen })
+          onData?.({ yongshen: data.yongshen, yongshenReading: data.yongshenReading?.text })
         }
       } catch {
         if (!controller.signal.aborted) {
@@ -180,7 +180,7 @@ function Methodology() {
 
 function ResultContent() {
   const searchParams = useSearchParams()
-  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult } | null>(null)
+  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult; yongshenReading?: string } | null>(null)
 
   const input = parseSearchParams(searchParams)
 
@@ -221,7 +221,7 @@ function ResultContent() {
         <ElementChart result={result} />
         <Interpretation result={result} />
         <FlowReadingSection input={input} onData={setFlowData} />
-        {flowData?.yongshen && <YongShenSection yongshen={flowData.yongshen} />}
+        {flowData?.yongshen && <YongShenSection yongshen={flowData.yongshen} reading={flowData.yongshenReading} />}
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">
