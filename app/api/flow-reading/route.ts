@@ -13,6 +13,10 @@ import { generateFlowReading } from '@/lib/flow/llm'
 import { deriveYongShen } from '@/lib/yongshen'
 import { generateYongShenReading } from '@/lib/yongshen/llm/orchestrator'
 
+// 每次修改 prompt 逻辑后手动 +1，使旧缓存自动失效
+// 当前为第 5 版（初版→性格深度→字数→fallback→性格词典）
+const PROMPT_VERSION = 5
+
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
 
 function getCacheKey(bazi: ReturnType<typeof calculateBazi>, gender: string): string {
@@ -74,10 +78,10 @@ export async function POST(request: NextRequest) {
     const factPack = buildFactPack(baziResult, strengthResult)
     const yongshen = deriveYongShen(baziResult, strengthResult, factPack)
 
-    // 检查缓存
+    // 检查缓存：版本不匹配视为无缓存
     const cacheKey = getCacheKey(baziResult, input.gender === 'male' ? '男' : '女')
     const cached = await getCachedReading(cacheKey)
-    if (cached) {
+    if (cached && cached.promptVersion === PROMPT_VERSION) {
       // 兼容旧缓存（没有 yongshenReading 字段）
       if (!cached.yongshenReading) {
         const yongshenReading = await generateYongShenReading(yongshen)
@@ -96,6 +100,7 @@ export async function POST(request: NextRequest) {
     const yongshenReading = await generateYongShenReading(yongshen)
 
     const responseData = {
+      promptVersion: PROMPT_VERSION,
       reading: reading.text,
       source: reading.source,
       attempts: reading.attempts,
