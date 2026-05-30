@@ -23,6 +23,7 @@ export function deriveBage(bazi: BaziResult): BageResult {
     patternOrigin: pattern.patternOrigin,
     patternGodSource: pattern.patternGodSource,
     success: outcome.success,
+    outcomeType: outcome.outcomeType,
     successDetail: outcome.successDetail,
     failureReasons: outcome.failureReasons,
     xiangShen,

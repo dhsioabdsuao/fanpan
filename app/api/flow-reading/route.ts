@@ -13,6 +13,7 @@ import { generateFlowReading } from '@/lib/flow/llm'
 import { deriveYongShen } from '@/lib/yongshen'
 import { generateYongShenReading } from '@/lib/yongshen/llm/orchestrator'
 import { deriveBage } from '@/lib/bage'
+import { buildPatternExplanation } from '@/lib/bage/buildPatternExplanation'
 
 // 每次修改 prompt 逻辑或 factPack 数据后手动 +1，使旧缓存自动失效
 // 7: getTenGod 修复——阴干日主十神标签修正，factPack 十神数据变更
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
     const factPack = buildFactPack(baziResult, strengthResult)
     const yongshen = deriveYongShen(baziResult, strengthResult, factPack)
     const bage = deriveBage(baziResult)
+    const bageDisplay = buildPatternExplanation(baziResult, bage)
 
     // 检查缓存：版本不匹配视为无缓存；forceRegenerate 跳过缓存读取
     const cacheKey = getCacheKey(baziResult, input.gender === 'male' ? '男' : '女')
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
           await setCachedReading(cacheKey, cached)
         }
       }
-      return NextResponse.json({ ...cached, yongshen, bage, fromCache: true })
+      return NextResponse.json({ ...cached, yongshen, bage, bageDisplay, fromCache: true })
     }
 
     const reading = await generateFlowReading(factPack)
@@ -114,6 +116,7 @@ export async function POST(request: NextRequest) {
       factPack,
       yongshen,
       bage,
+      bageDisplay,
       yongshenReading: {
         text: yongshenReading.text,
         source: yongshenReading.source,

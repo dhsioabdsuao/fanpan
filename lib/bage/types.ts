@@ -27,6 +27,7 @@ export interface BageResult {
 
   // 成败（算法内部用，不对外判好坏）
   success: boolean | null      // true=成格, false=败格, null=中立/难以判定
+  outcomeType: '成格' | '不成格' | '破格' | '中立'
   successDetail: string        // 一句话判定依据
   failureReasons: string[]     // 败格具体原因
 

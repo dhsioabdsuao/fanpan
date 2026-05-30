@@ -15,6 +15,7 @@ import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
 import { Interpretation } from '@/components/bazi/Interpretation'
 import { YongShenSection } from './YongShenSection'
+import { BageSection, type BageDisplayData } from './BageSection'
 import type { YongShenResult } from '@/lib/yongshen'
 
 function SkeletonResult() {
@@ -58,7 +59,7 @@ function FlowReadingSection({
   regenerateKey = 0,
 }: {
   input: BaziInput
-  onData?: (data: { yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback' }) => void
+  onData?: (data: { yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback'; bageDisplay?: BageDisplayData }) => void
   regenerateKey?: number
 }) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading')
@@ -89,6 +90,7 @@ function FlowReadingSection({
             yongshen: data.yongshen,
             yongshenReading: data.yongshenReading?.text,
             source: data.yongshenReading?.source,
+            bageDisplay: data.bageDisplay,
           })
         }
       } catch {
@@ -185,7 +187,7 @@ function Methodology() {
 
 function ResultContent() {
   const searchParams = useSearchParams()
-  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback' } | null>(null)
+  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback'; bageDisplay?: BageDisplayData } | null>(null)
   const [regenerateKey, setRegenerateKey] = useState(0)
 
   const input = parseSearchParams(searchParams)
@@ -234,6 +236,9 @@ function ResultContent() {
             source={flowData.source}
             onRegenerate={() => setRegenerateKey((k) => k + 1)}
           />
+        )}
+        {flowData?.bageDisplay && (
+          <BageSection data={flowData.bageDisplay} />
         )}
 
         {/* Disclaimer */}
