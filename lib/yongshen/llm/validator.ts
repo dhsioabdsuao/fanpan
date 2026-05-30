@@ -125,6 +125,11 @@ const ABSTRACT_EXPRESSIONS = [
   /有意识地向.{0,10}靠拢/g,
 ]
 
+// ── 规则 F2：伪具体句式（忌神段）──
+// 匹配"在需要X的时刻/场合 + 不太容易/慢半拍 + 句号紧收"的填空模板，
+// 这类句子看起来具体但实际没有场景/画面/内心独白
+const PSEUDO_CONCRETE_RE = /在(?:那些)?需要.{1,12}的?(时刻|场合|时候|时).{0,20}?(不太容易|不太顺手|慢半拍|不太跟得上|不习惯|不擅长).{0,10}[。]/g
+
 // ── 规则 E：天干字符 ──
 const ALL_GAN_CHARS = /[甲乙丙丁戊己庚辛壬癸]/g
 
@@ -415,6 +420,18 @@ export function validateYongShenReading(
       })
       break
     }
+  }
+
+  // ── 规则 F2：伪具体句式（hard）──
+  PSEUDO_CONCRETE_RE.lastIndex = 0
+  const pseudoMatch = PSEUDO_CONCRETE_RE.exec(text)
+  if (pseudoMatch) {
+    violations.push({
+      rule: '规则F2_伪具体句式',
+      detail: `忌神段出现伪具体填空句式："${pseudoMatch[0]}"，必须替换为可认领的场景/冲动/念头`,
+      snippet: extractContext(text, pseudoMatch[0], 20),
+      severity: 'hard',
+    })
   }
 
   // ── 判定 passed：无 hard 违规即为通过 ──
