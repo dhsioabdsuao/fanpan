@@ -19,10 +19,6 @@ type AssessResult = Outcome & {
   helperRole: string
 }
 
-const PILLAR_LABEL: Record<string, string> = {
-  year: '年支', month: '月支', day: '日支', hour: '时支',
-}
-
 export function assessOutcome(bazi: BaziResult, pattern: PatternInfo): Outcome {
   const result = assessInternal(bazi, pattern)
   const { helperTenGod: _, helperRole: __, ...outcome } = result
@@ -54,8 +50,8 @@ function assessInternal(bazi: BaziResult, pattern: PatternInfo): AssessResult {
     for (const ob of otherBranches) {
       if (isBranchClash(monthBranch, ob.branch)) {
         return {
-          success: false, successDetail: '',
-          failureReasons: [`月令${monthBranch}被${PILLAR_LABEL[ob.pillar]}${ob.branch}冲，禄刃格破`],
+          success: null, successDetail: '禄刃格，月令逢冲，结构有动荡，中立未判',
+          failureReasons: [],
           helperTenGod: null, helperRole: '',
         }
       }
@@ -65,17 +61,13 @@ function assessInternal(bazi: BaziResult, pattern: PatternInfo): AssessResult {
 
   // 分支 D：本气不透
   if (pattern.patternOrigin === '本气不透') {
-    const failures: string[] = []
     for (const ob of otherBranches) {
       if (isBranchClash(monthBranch, ob.branch)) {
-        failures.push(`月令${monthBranch}被${PILLAR_LABEL[ob.pillar]}${ob.branch}冲，根基动摇`)
+        return { success: null, successDetail: '月令本气不透且逢冲，根基有动荡，中立未判', failureReasons: [], helperTenGod: null, helperRole: '' }
       }
       if (isBranchHarm(monthBranch, ob.branch)) {
-        failures.push(`月令${monthBranch}被${PILLAR_LABEL[ob.pillar]}${ob.branch}害，根基动摇`)
+        return { success: null, successDetail: '月令本气不透且逢害，根基有动荡，中立未判', failureReasons: [], helperTenGod: null, helperRole: '' }
       }
-    }
-    if (failures.length > 0) {
-      return { success: false, successDetail: '', failureReasons: failures, helperTenGod: null, helperRole: '' }
     }
     return { success: true, successDetail: '月令本气不透，但月支无冲害，格仍成立', failureReasons: [], helperTenGod: null, helperRole: '' }
   }
@@ -193,7 +185,7 @@ function assessZhengYin(s: Set<TenGodName>): AssessResult {
     if (hasBiJie) {
       return { success: true, successDetail: '财破印，有比劫制财护印', failureReasons: [], helperTenGod: pickBiJie(s), helperRole: '比劫制财护印' }
     }
-    return { success: false, successDetail: '', failureReasons: ['财破印，无比劫制财护印'], ...noHelper() }
+    return { success: null, successDetail: '财印并见，无比劫调和，中立未判', failureReasons: [], ...noHelper() }
   }
 
   if (hasGuanSha) {
@@ -232,7 +224,7 @@ function assessZhengCai(s: Set<TenGodName>): AssessResult {
     if (hasGuanSha) {
       return { success: true, successDetail: '比劫夺财，有官杀制比劫护财', failureReasons: [], helperTenGod: pickGuanSha(s), helperRole: '官杀制比劫护财' }
     }
-    return { success: false, successDetail: '', failureReasons: ['比劫夺财，无官杀制比劫护财'], ...noHelper() }
+    return { success: null, successDetail: '比劫透干，无官杀护卫，中立未判', failureReasons: [], ...noHelper() }
   }
 
   if (hasShiShang) {
@@ -252,7 +244,7 @@ function assessPianCai(s: Set<TenGodName>): AssessResult {
     if (hasGuanSha) {
       return { success: true, successDetail: '比劫夺财，有官杀制比劫护财', failureReasons: [], helperTenGod: pickGuanSha(s), helperRole: '官杀制比劫护财' }
     }
-    return { success: false, successDetail: '', failureReasons: ['比劫夺财，无官杀制比劫护财'], ...noHelper() }
+    return { success: null, successDetail: '比劫透干，无官杀护卫，中立未判', failureReasons: [], ...noHelper() }
   }
 
   if (hasShiShang) {
