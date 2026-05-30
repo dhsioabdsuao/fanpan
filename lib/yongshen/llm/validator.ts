@@ -434,6 +434,54 @@ export function validateYongShenReading(
     })
   }
 
+  // ── 规则 G：忌神段天干校验（hard）──
+  // 定位忌神段：需要.{0,2}(多)?留意  + 化格专用 fallback
+  const JI_PARA_RE = /需要.{0,2}(多)?留意/
+  const JI_PARA_FALLBACK_RE = /会冲散|会打破|克制化神/
+  const jiParas = text.split(/\n\n/)
+  let jiPara: string | null = null
+  for (const p of jiParas) {
+    if (JI_PARA_RE.test(p) || JI_PARA_FALLBACK_RE.test(p)) {
+      jiPara = p
+      break
+    }
+  }
+
+  if (jiPara) {
+    // 常见非天干词：单字天干可能落在日常用词中（与规则8排除"透不过气"同类坑）
+    // 扫描前先整体抹掉，避免误命中
+    const NON_GAN_WORDS = [
+      '自己', '知己', '己见', '身不由己', '各抒己见',
+      '辛苦', '辛劳', '辛酸', '艰辛',
+      '指甲', '甲方', '甲醛',
+    ]
+    let cleaned = jiPara
+    for (const w of NON_GAN_WORDS) {
+      // 将整词替换为等长占位符，保持位置不变（不影响 snippet）
+      cleaned = cleaned.replaceAll(w, '_'.repeat(w.length))
+    }
+    const GAN_CHARS = '甲乙丙丁戊己庚辛壬癸'
+    const ganInJiPara = new Set<string>()
+    for (const ch of cleaned) {
+      if (GAN_CHARS.includes(ch)) {
+        ganInJiPara.add(ch)
+      }
+    }
+
+    const jiGanSet = new Set(factPack.jiShen.map((g) => g.gan))
+    const whitelist = new Set([...jiGanSet, ...new Set(yongGanList)])
+
+    const violators = [...ganInJiPara].filter((g) => !whitelist.has(g))
+    if (violators.length > 0) {
+      violations.push({
+        rule: '规则G_忌神段天干错误',
+        detail: `忌神段出现非忌神/非喜用天干"${violators.join('、')}"（本命局忌神为${factPack.jiShen.map((g) => g.gan).join('、')}）`,
+        snippet: extractContext(jiPara, violators[0], 25),
+        severity: 'hard',
+      })
+    }
+  }
+
   // ── 判定 passed：无 hard 违规即为通过 ──
   const hardViolations = violations.filter((v) => v.severity === 'hard')
 
