@@ -12,7 +12,10 @@ export function YongShenSection({
   yongshen: YongShenResult
   reading?: string
 }) {
-  const { yongShen, jiShen } = yongshen
+  const { yongShen, jiShen, primaryMethod } = yongshen
+
+  const isSpecialGe = primaryMethod === '化格' || primaryMethod === '从格'
+  const subtitle = isSpecialGe ? '顺势取用，喜用神顺其势而定' : '综合扶抑、调候、通关推算'
 
   const closingIndex = reading ? reading.lastIndexOf(CLOSING) : -1
   const mainText = closingIndex > 0 ? reading!.slice(0, closingIndex).trim() : reading
@@ -22,9 +25,7 @@ export function YongShenSection({
     <Card>
       <CardHeader>
         <CardTitle className="font-serif text-2xl">喜用神</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          综合扶抑、调候、通关推算
-        </p>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* 徽章区 */}
