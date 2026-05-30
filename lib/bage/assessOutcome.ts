@@ -264,6 +264,9 @@ function assessShiShen(s: Set<TenGodName>): AssessResult {
     if (hasCai) {
       return { success: true, successDetail: '枭神夺食，有财制枭护食', failureReasons: [], helperTenGod: pickCai(s), helperRole: '财制枭护食' }
     }
+    if (hasQiSha) {
+      return { success: null, successDetail: '食神制杀与枭印并见，格局复杂，中立未判', failureReasons: [], ...noHelper() }
+    }
     return { success: false, successDetail: '', failureReasons: ['枭神夺食，无财制枭'], ...noHelper() }
   }
 
