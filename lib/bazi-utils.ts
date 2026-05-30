@@ -104,19 +104,47 @@ export function getHourZhi(hour: number): string {
   return ZHI[idx]
 }
 
+// 天干阴阳
+const GAN_YIN_YANG: Record<string, '阳' | '阴'> = {
+  甲: '阳', 乙: '阴', 丙: '阳', 丁: '阴', 戊: '阳',
+  己: '阴', 庚: '阳', 辛: '阴', 壬: '阳', 癸: '阴',
+}
+
+// 五行生克（本文件自用，不依赖 yongshen/helpers）
+const EL_GENERATES: Record<ElementType, ElementType> = { 木: '火', 火: '土', 土: '金', 金: '水', 水: '木' }
+const EL_CONTROLS: Record<ElementType, ElementType> = { 木: '土', 土: '水', 水: '火', 火: '金', 金: '木' }
+
 /**
  * 十神：otherStem 相对于 dayMasterStem 的关系
- * 以日主为"我"，根据天干生克关系判定
+ * 以日主为"我"，根据五行生克 + 阴阳同异判定
  */
 export function getTenGod(dayMasterStem: string, otherStem: string): string {
-  const shiShen = [
-    '比肩', '劫财', '食神', '伤官', '偏财',
-    '正财', '七杀', '正官', '偏印', '正印',
-  ]
-  const myIdx = getGanIndex(dayMasterStem)
-  const otherIdx = getGanIndex(otherStem)
-  const offset = (otherIdx - myIdx + 10) % 10
-  return shiShen[offset]
+  const myEl = getStemElement(dayMasterStem)
+  const otherEl = getStemElement(otherStem)
+  const sameYinYang = GAN_YIN_YANG[dayMasterStem] === GAN_YIN_YANG[otherStem]
+
+  // 同五行 → 比劫
+  if (myEl === otherEl) {
+    return sameYinYang ? '比肩' : '劫财'
+  }
+
+  // 我生 → 食伤
+  if (EL_GENERATES[myEl] === otherEl) {
+    return sameYinYang ? '食神' : '伤官'
+  }
+
+  // 生我 → 印星
+  if (EL_GENERATES[otherEl] === myEl) {
+    return sameYinYang ? '偏印' : '正印'
+  }
+
+  // 我克 → 财星
+  if (EL_CONTROLS[myEl] === otherEl) {
+    return sameYinYang ? '偏财' : '正财'
+  }
+
+  // 克我 → 官杀
+  return sameYinYang ? '七杀' : '正官'
 }
 
 /**
