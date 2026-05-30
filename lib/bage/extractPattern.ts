@@ -1,8 +1,20 @@
 import type { BaziResult } from '@/types/bazi'
 import type { TenGodName } from '@/lib/yongshen/types'
 import type { PatternName } from './types'
-import { getTenGod, getGanIndex } from '@/lib/bazi-utils'
+import { getTenGod } from '@/lib/bazi-utils'
 import { getMonthHiddenStems, buildStemPool, detectTransparency } from './helpers'
+
+// 十二长生禄位（临官）
+const LU_POSITION: Record<string, string> = {
+  '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午',
+  '戊': '巳', '己': '午', '庚': '申', '辛': '酉',
+  '壬': '亥', '癸': '子',
+}
+
+// 阳干刃位（帝旺），阴干不立羊刃
+const YANG_REN_POSITION: Record<string, string> = {
+  '甲': '卯', '丙': '午', '戊': '午', '庚': '酉', '壬': '子',
+}
 
 const PATTERN_MAP: Record<TenGodName, PatternName> = {
   '正官': '正官格', '七杀': '七杀格',
@@ -18,6 +30,7 @@ export function extractPattern(bazi: BaziResult): {
   patternGodType: TenGodName
   patternOrigin: '透干' | '本气不透' | '禄刃借透'
   patternGodSource: string
+  isLuRen: boolean
 } {
   const monthBranch = bazi.pillars.month.branch
   const dayMaster = bazi.dayMaster
@@ -44,19 +57,34 @@ export function extractPattern(bazi: BaziResult): {
           patternGodType: tenGod,
           patternOrigin: '禄刃借透',
           patternGodSource: `（月令${monthBranch}本气为比劫，借${hs.position}${hs.stem}透于${match.expressedOn}干立格）`,
+          isLuRen: false,
         }
       }
     }
 
-    // 无借透 → 建禄格 / 月刃格
-    const isYangMaster = getGanIndex(dayMaster) % 2 === 0
-    const patternName: PatternName = isYangMaster ? '建禄格' : '月刃格'
+    // 无借透 → 按十二长生禄刃表判定
+    const luBranch = LU_POSITION[dayMaster]
+    const renBranch = YANG_REN_POSITION[dayMaster]
+    let patternName: PatternName
+    let isLuRen: boolean
+    if (monthBranch === luBranch) {
+      patternName = '建禄格'
+      isLuRen = true
+    } else if (monthBranch === renBranch) {
+      patternName = '月刃格'
+      isLuRen = true
+    } else {
+      // 杂气比劫月：月令本气为比劫，但既非禄也非阳干刃 → 兜底建禄格
+      patternName = '建禄格'
+      isLuRen = false
+    }
     return {
       patternName,
       patternGod: benQi.stem,
       patternGodType: benQiTenGod,
       patternOrigin: '本气不透',
       patternGodSource: `（月令${monthBranch}本气${benQi.stem}为${benQiTenGod}，立${patternName}）`,
+      isLuRen,
     }
   }
 
@@ -71,6 +99,7 @@ export function extractPattern(bazi: BaziResult): {
         patternGodType: tenGod,
         patternOrigin: '透干',
         patternGodSource: `透于${match.expressedOn}干`,
+        isLuRen: false,
       }
     }
   }
@@ -83,5 +112,6 @@ export function extractPattern(bazi: BaziResult): {
     patternGodType: tenGod,
     patternOrigin: '本气不透',
     patternGodSource: `（月令${monthBranch}本气${benQi.stem}不透，取本气）`,
+    isLuRen: false,
   }
 }

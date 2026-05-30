@@ -57,7 +57,7 @@ describe('命局1：建禄格（戊日主·辰月）', () => {
   })
 
   it('patternHint：中性，不提成败', () => {
-    expect(result.patternHint).toBe('命局立建禄格，月令为日主禄旺之位。')
+    expect(result.patternHint).toBe('命局立建禄格。')
   })
 
   it('reasoning：2步', () => {

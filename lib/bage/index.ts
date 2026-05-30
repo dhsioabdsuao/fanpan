@@ -14,7 +14,7 @@ export function deriveBage(bazi: BaziResult): BageResult {
   const xiangShen = deriveXiangShen(bazi, pattern)
 
   const reasoning = buildReasoning(bazi, pattern, outcome, xiangShen)
-  const patternHint = buildPatternHint(pattern.patternName, outcome, xiangShen)
+  const patternHint = buildPatternHint(pattern.patternName, pattern.isLuRen, outcome, xiangShen)
 
   return {
     patternName: pattern.patternName,
@@ -65,12 +65,17 @@ function buildReasoning(
 
 function buildPatternHint(
   patternName: string,
+  isLuRen: boolean,
   outcome: ReturnType<typeof assessOutcome>,
   xs: ReturnType<typeof deriveXiangShen>,
 ): string {
-  // 禄刃格
-  if (patternName === '建禄格' || patternName === '月刃格') {
+  // 真禄刃格（月支为日主禄或阳干刃）
+  if ((patternName === '建禄格' || patternName === '月刃格') && isLuRen) {
     return `命局立${patternName}，月令为日主禄旺之位。`
+  }
+  // 杂气兜底建禄格：月令本气比劫但非禄非刃
+  if (patternName === '建禄格' || patternName === '月刃格') {
+    return `命局立${patternName}。`
   }
 
   // 成格 + 有相神 → 一句中性结构描述
