@@ -6,6 +6,8 @@ import {
   detectTransparency,
   isStemCombo,
   isStemClash,
+  isBranchClash,
+  isBranchHarm,
 } from './helpers'
 
 // 构建一个最小可用的 BaziResult 用于测试
@@ -239,5 +241,75 @@ describe('isStemClash', () => {
 
   it('戊甲 → 不冲', () => {
     expect(isStemClash('戊', '甲')).toBe(false)
+  })
+})
+
+describe('isBranchClash', () => {
+  it('子午冲 → true', () => {
+    expect(isBranchClash('子', '午')).toBe(true)
+    expect(isBranchClash('午', '子')).toBe(true)
+  })
+
+  it('丑未冲 → true', () => {
+    expect(isBranchClash('丑', '未')).toBe(true)
+  })
+
+  it('寅申冲 → true', () => {
+    expect(isBranchClash('寅', '申')).toBe(true)
+  })
+
+  it('卯酉冲 → true', () => {
+    expect(isBranchClash('卯', '酉')).toBe(true)
+  })
+
+  it('辰戌冲 → true', () => {
+    expect(isBranchClash('辰', '戌')).toBe(true)
+  })
+
+  it('巳亥冲 → true', () => {
+    expect(isBranchClash('巳', '亥')).toBe(true)
+  })
+
+  it('子丑 → 不冲（子丑合，非冲）', () => {
+    expect(isBranchClash('子', '丑')).toBe(false)
+  })
+
+  it('寅卯 → 不冲', () => {
+    expect(isBranchClash('寅', '卯')).toBe(false)
+  })
+})
+
+describe('isBranchHarm', () => {
+  it('子未害 → true', () => {
+    expect(isBranchHarm('子', '未')).toBe(true)
+    expect(isBranchHarm('未', '子')).toBe(true)
+  })
+
+  it('丑午害 → true', () => {
+    expect(isBranchHarm('丑', '午')).toBe(true)
+  })
+
+  it('寅巳害 → true', () => {
+    expect(isBranchHarm('寅', '巳')).toBe(true)
+  })
+
+  it('卯辰害 → true', () => {
+    expect(isBranchHarm('卯', '辰')).toBe(true)
+  })
+
+  it('申亥害 → true', () => {
+    expect(isBranchHarm('申', '亥')).toBe(true)
+  })
+
+  it('酉戌害 → true', () => {
+    expect(isBranchHarm('酉', '戌')).toBe(true)
+  })
+
+  it('子丑 → 不害（子丑合，非害）', () => {
+    expect(isBranchHarm('子', '丑')).toBe(false)
+  })
+
+  it('寅申 → 不害（寅申冲，非害）', () => {
+    expect(isBranchHarm('寅', '申')).toBe(false)
   })
 })

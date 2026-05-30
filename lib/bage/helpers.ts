@@ -113,3 +113,25 @@ export function isStemCombo(a: string, b: string): boolean {
 export function isStemClash(a: string, b: string): boolean {
   return STEM_CLASH_PAIRS.has(a + b)
 }
+
+// ── 5. 地支冲合 ──
+
+const BRANCH_CLASH_PAIRS: ReadonlySet<string> = new Set([
+  '子午', '午子', '丑未', '未丑', '寅申', '申寅',
+  '卯酉', '酉卯', '辰戌', '戌辰', '巳亥', '亥巳',
+])
+
+const BRANCH_HARM_PAIRS: ReadonlySet<string> = new Set([
+  '子未', '未子', '丑午', '午丑', '寅巳', '巳寅',
+  '卯辰', '辰卯', '申亥', '亥申', '酉戌', '戌酉',
+])
+
+/** 判定两个地支是否六冲（子午冲等） */
+export function isBranchClash(a: string, b: string): boolean {
+  return BRANCH_CLASH_PAIRS.has(a + b)
+}
+
+/** 判定两个地支是否六害（子未害等） */
+export function isBranchHarm(a: string, b: string): boolean {
+  return BRANCH_HARM_PAIRS.has(a + b)
+}
