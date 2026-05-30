@@ -13,9 +13,9 @@ import { generateFlowReading } from '@/lib/flow/llm'
 import { deriveYongShen } from '@/lib/yongshen'
 import { generateYongShenReading } from '@/lib/yongshen/llm/orchestrator'
 
-// 每次修改 prompt 逻辑后手动 +1，使旧缓存自动失效
-// 当前为第 5 版（初版→性格深度→字数→fallback→性格词典）
-const PROMPT_VERSION = 6
+// 每次修改 prompt 逻辑或 factPack 数据后手动 +1，使旧缓存自动失效
+// 7: getTenGod 修复——阴干日主十神标签修正，factPack 十神数据变更
+const PROMPT_VERSION = 7
 
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
 
