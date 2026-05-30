@@ -68,7 +68,27 @@ const SEVERE_HEALTH_PATTERNS = [
 ]
 
 // ── 规则 8：双面性转折词 ──
-const TURN_WORDS = ['但是', '不过', '然而', '另一方面', '反过来说', '代价是', '与此同时']
+const TURN_WORDS_EXACT = [
+  '但是', '可是', '然而',
+  '反过来说', '另一方面', '与此同时', '代价是', '话说回来',
+  '一方面', '虽然', '尽管',
+]
+
+// 短词/单字需边界检测，避免 substring 误命中
+// "不过"：排除 verb+不过 结果补语（透不过气、说不过去、熬不过 等）
+const BUGUO_RE = /(?<![透说熬信打跑比争抢忙看想吃睡数算喘过抵挡防拦耐忍受撑顶经禁敌胜赢压盖困累气死闲])不过/
+// "但"：排除 "不但"（非转折）
+const DAN_RE = /(?<!不)但/
+// "却"：排除常见 verb+却 组合（冷却、退却、忘却 等）
+const QUE_RE = /(?<![冷退了忘推抛省失除免减卖丢焚毁撤拒])却/
+
+function hasTurnWord(text: string): boolean {
+  if (TURN_WORDS_EXACT.some((w) => text.includes(w))) return true
+  if (BUGUO_RE.test(text)) return true
+  if (DAN_RE.test(text)) return true
+  if (QUE_RE.test(text)) return true
+  return false
+}
 
 // ── 规则 10：超出阶段范围 ──
 const OUT_OF_SCOPE_TERMS = [
@@ -229,11 +249,11 @@ export function validateYongShenReading(
   }
 
   // ── 规则 8：双面性检查 ──
-  const hasTurnWord = TURN_WORDS.some((w) => text.includes(w))
-  if (!hasTurnWord) {
+  const turnFound = hasTurnWord(text)
+  if (!turnFound) {
     violations.push({
       rule: '规则8_双面性缺失',
-      detail: '全文未出现转折词（但是/不过/然而/另一方面/反过来说/代价是/与此同时），缺少双面性',
+      detail: '全文未出现转折词（但是/但/可是/不过/然而/却/虽然/尽管/反过来说/另一方面/与此同时/代价是/话说回来/一方面），缺少双面性',
       snippet: text.slice(0, 40) + '…',
       severity: 'hard',
     })
