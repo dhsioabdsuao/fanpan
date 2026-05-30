@@ -55,9 +55,11 @@ const FLOW_CLOSING = '命局给出的是倾向,不是定数。你比命盘更了
 function FlowReadingSection({
   input,
   onData,
+  regenerateKey = 0,
 }: {
   input: BaziInput
-  onData?: (data: { yongshen: YongShenResult; yongshenReading?: string }) => void
+  onData?: (data: { yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback' }) => void
+  regenerateKey?: number
 }) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [reading, setReading] = useState('')
@@ -70,7 +72,7 @@ function FlowReadingSection({
         const res = await fetch('/api/flow-reading', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(input),
+          body: JSON.stringify({ ...input, forceRegenerate: regenerateKey > 0 }),
           signal: controller.signal,
         })
 
@@ -83,7 +85,11 @@ function FlowReadingSection({
         setReading(data.reading)
         setState('loaded')
         if (data.yongshen) {
-          onData?.({ yongshen: data.yongshen, yongshenReading: data.yongshenReading?.text })
+          onData?.({
+            yongshen: data.yongshen,
+            yongshenReading: data.yongshenReading?.text,
+            source: data.yongshenReading?.source,
+          })
         }
       } catch {
         if (!controller.signal.aborted) {
@@ -94,8 +100,7 @@ function FlowReadingSection({
 
     load()
     return () => controller.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [regenerateKey])
 
   const closingIndex = reading.lastIndexOf(FLOW_CLOSING)
   const mainText = closingIndex > 0 ? reading.slice(0, closingIndex).trim() : reading
@@ -180,7 +185,8 @@ function Methodology() {
 
 function ResultContent() {
   const searchParams = useSearchParams()
-  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult; yongshenReading?: string } | null>(null)
+  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback' } | null>(null)
+  const [regenerateKey, setRegenerateKey] = useState(0)
 
   const input = parseSearchParams(searchParams)
 
@@ -220,8 +226,15 @@ function ResultContent() {
         <PillarTable result={result} hideHour={noHour === '1'} />
         <ElementChart result={result} />
         <Interpretation result={result} />
-        <FlowReadingSection input={input} onData={setFlowData} />
-        {flowData?.yongshen && <YongShenSection yongshen={flowData.yongshen} reading={flowData.yongshenReading} />}
+        <FlowReadingSection input={input} onData={setFlowData} regenerateKey={regenerateKey} />
+        {flowData?.yongshen && (
+          <YongShenSection
+            yongshen={flowData.yongshen}
+            reading={flowData.yongshenReading}
+            source={flowData.source}
+            onRegenerate={() => setRegenerateKey((k) => k + 1)}
+          />
+        )}
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">

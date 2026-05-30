@@ -57,6 +57,7 @@ const BodySchema = z.object({
       district: z.string().optional(),
     })
     .optional(),
+  forceRegenerate: z.boolean().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -78,9 +79,9 @@ export async function POST(request: NextRequest) {
     const factPack = buildFactPack(baziResult, strengthResult)
     const yongshen = deriveYongShen(baziResult, strengthResult, factPack)
 
-    // 检查缓存：版本不匹配视为无缓存
+    // 检查缓存：版本不匹配视为无缓存；forceRegenerate 跳过缓存读取
     const cacheKey = getCacheKey(baziResult, input.gender === 'male' ? '男' : '女')
-    const cached = await getCachedReading(cacheKey)
+    const cached = input.forceRegenerate ? null : await getCachedReading(cacheKey)
     if (cached && cached.promptVersion === PROMPT_VERSION) {
       // 兼容旧缓存（没有 yongshenReading 字段）
       if (!cached.yongshenReading) {
@@ -91,7 +92,10 @@ export async function POST(request: NextRequest) {
           attempts: yongshenReading.attempts,
           retryReasons: yongshenReading.retryReasons,
         }
-        await setCachedReading(cacheKey, cached)
+        // 只有 LLM 成功才写回；fallback 不污染旧缓存槽
+        if (yongshenReading.source === 'llm') {
+          await setCachedReading(cacheKey, cached)
+        }
       }
       return NextResponse.json({ ...cached, yongshen, fromCache: true })
     }
@@ -114,7 +118,10 @@ export async function POST(request: NextRequest) {
         retryReasons: yongshenReading.retryReasons,
       },
     }
-    await setCachedReading(cacheKey, responseData)
+    // 只有 LLM 真正成功才写缓存；fallback 不进缓存（避免永久钉死简版）
+    if (yongshenReading.source === 'llm') {
+      await setCachedReading(cacheKey, responseData)
+    }
 
     return NextResponse.json(responseData)
   } catch (e) {
