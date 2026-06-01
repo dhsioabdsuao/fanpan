@@ -107,6 +107,7 @@ export interface ConflictsHarmoniesReport {
 // ── 命局结构 ──
 
 export type FlowType =
+  | '0_未分类'
   | '1a_周流'
   | '1b_起伏'
   | '2a_火土偏枯' | '2b_金水偏枯' | '2c_木火偏枯' | '2d_水土偏枯' | '2e_全偏枯'

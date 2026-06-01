@@ -104,9 +104,9 @@ export function classifyFlow(
   // 如果没有分类，给默认
   if (entries.length === 0) {
     entries.push({
-      type: '1b_起伏',
-      priority: 5,
-      trigger: '默认分类',
+      type: '0_未分类',
+      priority: 0,
+      trigger: '未命中任何结构类型',
     })
   }
 
@@ -216,6 +216,7 @@ function describeMainAxis(fr: ElementForceReport, links: FlowLink[]): string {
 function buildOverallTone(types: FlowTypeEntry[], fr: ElementForceReport): string {
   if (types.length === 0) return '平衡流通'
   const mainType = types[0].type
+  if (mainType === '0_未分类') return '五行分布尚不均衡，但未至明显偏枯'
   if (mainType.startsWith('1')) return '周流通畅，五行循环良好'
   if (mainType.startsWith('2')) return '五行偏枯，某些元素过强或过弱'
   if (mainType.startsWith('3')) return '十神偏堵，某类十神过旺影响命局'
