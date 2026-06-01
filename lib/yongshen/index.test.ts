@@ -151,8 +151,8 @@ describe('deriveYongShen（集成测试）', () => {
     expect(result.summary.length).toBeGreaterThan(0)
   })
 
-  it('2. 从财格：极弱戊土，全局金旺', () => {
-    // 戊土极弱，天干无印比，地支无土本气根，金>50%
+  it('2. 假从格回退扶抑：戊土极弱但申中戊余气根，破格', () => {
+    // 戊土极弱，天干无印比(庚辛食伤/财)，但申藏戊(余气根) → 有根破格不从
     const bazi = makeBazi('庚', '申', '辛', '酉', '戊', '子', '辛', '酉')
     const strength = makeStrength('极弱', 5)
     const factPack = mockFactPack({
@@ -165,23 +165,21 @@ describe('deriveYongShen（集成测试）', () => {
 
     const result = deriveYongShen(bazi, strength, factPack)
 
-    expect(result.primaryMethod).toBe('从格')
-    expect(result.congGe?.active).toBe(true)
+    // 有根破格，走扶抑
+    expect(result.primaryMethod).toBe('扶抑')
+    expect(result.congGe).toBeNull()
 
-    // 从神为金（财）
-    expect(result.congGe?.congShen).toContain('金')
+    // 极弱 → 扶抑方向=生扶（喜火印+土比劫）
+    expect(result.fuYi?.direction).toBe('生扶')
 
-    // 喜用神以金为主
-    const yongElements = result.yongShen.map((r) => r.element)
-    expect(yongElements.some((e) => e === '金')).toBe(true)
-
-    // 忌神包含日主
-    const jiGans = result.jiShen.map((r) => r.gan)
-    expect(jiGans.some((g) => g === '戊' || g === '己')).toBe(true)
+    // 忌神含金（食伤泄身）
+    const jiElements = result.jiShen.map((r) => r.element)
+    expect(jiElements.some((e) => e === '金')).toBe(true)
   })
 
-  it('3. 化格：甲己合土，月令得气', () => {
-    // 甲日主，己在月干，辰月（土月）→ 甲己合土
+  it('3. 假化格回退扶抑：甲木日主寅辰重根，不合化', () => {
+    // 甲日主 + 月干己 → 甲己合土
+    // 但地支寅×3(甲木本气根)+辰(乙木中气根) → 四重根 → 化格不成立
     const bazi = makeBazi('丙', '寅', '己', '辰', '甲', '寅', '丙', '寅')
     const strength = makeStrength('中和', 35)
     const factPack = mockFactPack({
@@ -194,18 +192,13 @@ describe('deriveYongShen（集成测试）', () => {
 
     const result = deriveYongShen(bazi, strength, factPack)
 
-    expect(result.primaryMethod).toBe('化格')
-    expect(result.huaGe?.active).toBe(true)
-    expect(result.huaGe?.huaShen).toBe('土')
+    // 有根破格，走扶抑
+    expect(result.primaryMethod).toBe('扶抑')
+    expect(result.huaGe).toBeNull()
 
-    // 喜用神以土为主
+    // 中和 → 扶抑方向=中和
+    expect(result.fuYi?.direction).toBe('中和')
     expect(result.yongShen.length).toBeGreaterThan(0)
-    const yongElements = result.yongShen.map((r) => r.element)
-    expect(yongElements.every((e) => e === '土' || e === '金')).toBe(true) // 土+土所生的金
-
-    // 忌克破化神者（木克土）
-    const jiElements = result.jiShen.map((r) => r.element)
-    expect(jiElements.some((e) => e === '木')).toBe(true)
   })
 
   it('4. 中和八字 + 平衡气候：扶抑+调候+通关均弱，仍有微弱方向分', () => {

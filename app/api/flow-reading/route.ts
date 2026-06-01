@@ -16,8 +16,8 @@ import { deriveBage } from '@/lib/bage'
 import { buildPatternExplanation } from '@/lib/bage/buildPatternExplanation'
 
 // 每次修改 prompt 逻辑或 factPack 数据后手动 +1，使旧缓存自动失效
-// 10: flowClassifier兜底分类改中性(0_未分类)，修复未命中类型被误判周流通畅
-const PROMPT_VERSION = 10
+// 11: 从格/化格根气检查扩到全藏干(本气+中气+余气)，化格补天干印比检查
+const PROMPT_VERSION = 11
 
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
 

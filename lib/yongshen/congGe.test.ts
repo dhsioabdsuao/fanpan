@@ -162,7 +162,7 @@ describe('deriveCongGe', () => {
     const result = deriveCongGe(bazi, strength, factPack)
 
     expect(result.active).toBe(false)
-    expect(result.detail).toContain('本气根')
+    expect(result.detail).toContain('藏干有金根气')
   })
 
   it('7. 非从格：日主中和，直接不进入从格逻辑', () => {

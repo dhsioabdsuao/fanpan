@@ -79,40 +79,30 @@ function mockFactPack(forceMap: Record<ElementType, number>): FlowFactPack {
 // ── 测试 ──
 
 describe('deriveHuaGe', () => {
-  it('1. 真化格：甲己合土，月令辰得气', () => {
-    // 甲日主，月干己土 → 甲己合化土
-    // 月支辰 → 在土月令列表中
-    // 克土者=木，mock 木力 < 25%
+  it('1. 假化格：日主在地支有根气（寅甲本气+辰乙中气），合而不化', () => {
+    // 甲日主，月干己土 → 甲己合土
+    // 地支：寅藏甲(木本气)、辰藏乙(木中气) → 日主甲木有根 → 不合化
     const bazi = makeBazi('壬', '午', '己', '辰', '甲', '子', '丙', '寅')
     const strength = makeStrength('中和')
-    // 土化神，克土=木，木力10/100=10% < 25%
     const factPack = mockFactPack({ 金: 20, 木: 10, 水: 15, 火: 20, 土: 35 })
 
     const result = deriveHuaGe(bazi, strength, factPack)
 
-    expect(result.active).toBe(true)
-    expect(result.huaShen).toBe('土')
-    expect(result.comboPartner).toBe('己')
-    expect(result.comboPosition).toBe('month')
-    expect(result.detail).toContain('真化格')
+    expect(result.active).toBe(false)
+    expect(result.detail).toContain('有根气')
   })
 
-  it('2. 真化格：戊癸合火，时干癸，月令巳得气', () => {
+  it('2. 假化格：日主在地支有根气（寅巳戊余气根），合而不化', () => {
     // 戊日主，时干癸水 → 戊癸合化火
-    // 月支巳 → 在火月令列表中
-    // 克火者=水，mock 水力 < 25%
+    // 地支：寅藏戊(土余气)、巳藏戊(土余气) → 日主戊土有根 → 不合化
     const bazi = makeBazi('甲', '寅', '丙', '巳', '戊', '午', '癸', '亥')
     const strength = makeStrength('中和')
-    // 火化神，克火=水，水力5/100=5% < 25%
     const factPack = mockFactPack({ 金: 10, 木: 30, 水: 5, 火: 35, 土: 20 })
 
     const result = deriveHuaGe(bazi, strength, factPack)
 
-    expect(result.active).toBe(true)
-    expect(result.huaShen).toBe('火')
-    expect(result.comboPartner).toBe('癸')
-    expect(result.comboPosition).toBe('hour')
-    expect(result.detail).toContain('真化格')
+    expect(result.active).toBe(false)
+    expect(result.detail).toContain('有根气')
   })
 
   it('3. 假化格：月令不支持，合而不化', () => {
@@ -142,11 +132,12 @@ describe('deriveHuaGe', () => {
   })
 
   it('5. 假化格：化神被克破（木克土，木力>25%）', () => {
-    // 甲日主，月干己 → 甲己合化土
-    // 月支辰支持土，但木力超阈值
-    const bazi = makeBazi('甲', '寅', '己', '辰', '甲', '子', '乙', '卯')
+    // 甲日主，月干己 → 甲己合化土，月支巳支持土
+    // 地支子(癸)巳(丙庚戊)午(丁己)戌(戊辛丁) → 全无木藏干 → 无根 ✓
+    // 天干丙(食伤)庚(官杀) → 无印比 ✓
+    // 但木力40% > 25% → 克破化神
+    const bazi = makeBazi('丙', '子', '己', '巳', '甲', '午', '庚', '戌')
     const strength = makeStrength('中和')
-    // 土化神，克土=木，木力40/100=40% > 25% → 破格
     const factPack = mockFactPack({ 金: 10, 木: 40, 水: 10, 火: 20, 土: 20 })
 
     const result = deriveHuaGe(bazi, strength, factPack)

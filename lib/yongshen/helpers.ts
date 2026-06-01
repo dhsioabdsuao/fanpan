@@ -1,5 +1,5 @@
 import type { ElementType } from '@/types/bazi'
-import { getStemElement, getTenGod, getBranchElement } from '@/lib/bazi-utils'
+import { getStemElement, getTenGod, getBranchElement, getHiddenStems } from '@/lib/bazi-utils'
 import type {
   GanCategory,
   TiaoHouLevel,
@@ -70,6 +70,24 @@ export function hasBenQiRootInBranches(
   branches: string[],
 ): boolean {
   return branches.some((b) => isBenQiRoot(dayMasterElement, b))
+}
+
+/**
+ * 从格/化格判定用：日主地支中有没有任何根（本气/中气/余气全查）
+ *
+ * 与 hasBenQiRootInBranches 的区别：
+ *   本气根只看地支主气五行（如丑=土）；
+ *   本函数遍历 getHiddenStems 返回的全部藏干，
+ *   任一位置有日主同五行即判为有根。
+ */
+export function hasAnyRootInBranches(
+  dayMasterElement: ElementType,
+  branches: string[],
+): boolean {
+  return branches.some((b) => {
+    const hidden = getHiddenStems(b)
+    return hidden.some((stem) => getStemElement(stem) === dayMasterElement)
+  })
 }
 
 // ── 五合（天干合化）──

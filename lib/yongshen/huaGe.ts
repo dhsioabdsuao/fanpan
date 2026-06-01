@@ -1,13 +1,15 @@
-import type { BaziResult } from '@/types/bazi'
+import type { BaziResult, ElementType } from '@/types/bazi'
 import type { DayMasterStrength } from '@/lib/strength'
 import type { FlowFactPack } from '@/lib/flow'
 import type { HuaGeResult } from './types'
 import {
   FIVE_ELEMENTS,
   CONTROLLED_BY,
+  GENERATED_BY,
   getFiveComboPartner,
   getFiveComboElement,
   isHuaGeMonthAllowed,
+  hasAnyRootInBranches,
 } from './helpers'
 
 export function deriveHuaGe(
@@ -48,7 +50,42 @@ export function deriveHuaGe(
     return { active: false, detail: '五合化神判定异常' }
   }
 
-  // ── 条件 2：月令支持化神 ──
+  // ── 条件 2：日主无根（本气/中气/余气全查）──
+
+  const dayElement = bazi.dayMasterElement as ElementType
+  const branches = [
+    bazi.pillars.year.branch,
+    bazi.pillars.month.branch,
+    bazi.pillars.day.branch,
+    bazi.pillars.hour.branch,
+  ]
+
+  if (hasAnyRootInBranches(dayElement, branches)) {
+    return {
+      active: false,
+      detail: `日主${dayStem}与${comboPosition}干${comboStem}合化${huaShen}，但日主在地支有根气，合而不化`,
+    }
+  }
+
+  // ── 条件 3：天干无印无比劫生扶日主 ──
+
+  const stemElements = [
+    bazi.pillars.year.stemElement,
+    bazi.pillars.month.stemElement,
+    bazi.pillars.hour.stemElement,
+  ]
+  const hasYinOrBiJie = stemElements.some(
+    (el) => el === dayElement || el === GENERATED_BY[dayElement],
+  )
+
+  if (hasYinOrBiJie) {
+    return {
+      active: false,
+      detail: `日主${dayStem}与${comboPosition}干${comboStem}合化${huaShen}，但天干有印星或比劫透出生扶日主，化气不真`,
+    }
+  }
+
+  // ── 条件 4：月令支持化神 ──
 
   if (!isHuaGeMonthAllowed(huaShen, monthBranch)) {
     return {

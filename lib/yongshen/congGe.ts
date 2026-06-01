@@ -8,7 +8,7 @@ import {
   CONTROLS,
   GENERATED_BY,
   CONTROLLED_BY,
-  hasBenQiRootInBranches,
+  hasAnyRootInBranches,
 } from './helpers'
 
 export function deriveCongGe(
@@ -44,11 +44,11 @@ export function deriveCongGe(
       }
     }
 
-    // 条件 3：地支无日主行的本气根
-    if (hasBenQiRootInBranches(dayElement, branches)) {
+    // 条件 3：地支无日主行的任何根气（本气/中气/余气全查）
+    if (hasAnyRootInBranches(dayElement, branches)) {
       return {
         active: false,
-        detail: `日主${dayElement}极弱(totalScore=${strength.totalScore})，但地支有${dayElement}的本气根，为假从格`,
+        detail: `日主${dayElement}极弱(totalScore=${strength.totalScore})，但地支藏干有${dayElement}根气，破格不从`,
       }
     }
 
@@ -82,15 +82,15 @@ export function deriveCongGe(
       }
     }
 
-    // 地支无财官食伤的本气根
+    // 地支无财官食伤的任何根气（本气/中气/余气）
     const hasRestrainRoot = restrainElements.some((el) =>
-      hasBenQiRootInBranches(el, branches),
+      hasAnyRootInBranches(el, branches),
     )
 
     if (hasRestrainRoot) {
       return {
         active: false,
-        detail: `日主${dayElement}极强(totalScore=${strength.totalScore})，但地支有财官食伤的本气根，破格不从`,
+        detail: `日主${dayElement}极强(totalScore=${strength.totalScore})，但地支藏干有财官食伤根气，破格不从`,
       }
     }
 
