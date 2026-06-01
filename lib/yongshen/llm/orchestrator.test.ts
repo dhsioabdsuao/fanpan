@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { generateYongShenReading } from './orchestrator'
 import type { YongShenResult } from '../types'
+import type { BaziResult } from '@/types/bazi'
+import type { DayMasterStrength } from '@/lib/strength'
 import type { LlmProvider } from '@/lib/flow/llm'
 
 // ── 合规文本（与 validator 测试一致，约 313 字去空白）──
@@ -83,13 +85,60 @@ function makeThrowingProvider(msg: string): LlmProvider {
 
 const CLOSING = '\n\n命局给出的是倾向，不是定数。你比命盘更了解自己。'
 
+function makeMockBazi(): BaziResult {
+  return {
+    dayMaster: '戊',
+    dayMasterElement: '土',
+    pillars: {
+      year: { stem: '甲', branch: '子', stemElement: '木', branchElement: '水', hiddenStems: ['癸'] },
+      month: { stem: '丙', branch: '午', stemElement: '火', branchElement: '火', hiddenStems: ['丁', '己'] },
+      day: { stem: '戊', branch: '辰', stemElement: '土', branchElement: '土', hiddenStems: ['戊', '乙', '癸'] },
+      hour: { stem: '庚', branch: '申', stemElement: '金', branchElement: '金', hiddenStems: ['庚', '壬', '戊'] },
+    },
+    zodiac: '马',
+    naYin: { year: '海中金', month: '天河水', day: '大林木', hour: '石榴木' },
+    elementCount: { '金': 2, '木': 1, '水': 2, '火': 1, '土': 3 },
+    tenGods: {
+      yearStem: '七杀',
+      monthStem: '偏印',
+      hourStem: '食神',
+      yearBranch: ['正财'],
+      monthBranch: ['正印', '劫财'],
+      dayBranch: ['比肩', '正官', '正财'],
+      hourBranch: ['食神', '偏财', '比肩'],
+    },
+    solarDate: '1990-06-15',
+    lunarDate: '庚午年五月廿三',
+    inputInfo: {
+      year: 1990, month: 6, day: 15, hour: 10, minute: 0,
+      gender: 'male', isLunar: false,
+    },
+    solarTimeAdjustment: null,
+  }
+}
+
+function makeMockStrength(): DayMasterStrength {
+  return {
+    totalScore: 68,
+    level: '偏强',
+    breakdown: {
+      monthlyOrderScore: 30,
+      branchRootsScore: 20,
+      stemSupportScore: 15,
+      stemDrainScore: 5,
+      hiddenStemsScore: 8,
+    },
+    details: [],
+  }
+}
+
 describe('generateYongShenReading', () => {
   // ── 测试 1：首次成功 ──
   it('首次成功 → source=llm, attempts=1', async () => {
     const ys = makeYongShenResult()
     const provider = makeMockProvider([VALID_TEXT])
 
-    const result = await generateYongShenReading(ys, { provider })
+    const result = await generateYongShenReading(ys, makeMockBazi(), makeMockStrength(), '五行偏枯', { provider })
 
     expect(result.source).toBe('llm')
     expect(result.attempts).toBe(1)
@@ -103,7 +152,7 @@ describe('generateYongShenReading', () => {
     const ys = makeYongShenResult()
     const provider = makeMockProvider([INVALID_ABSOLUTE, VALID_TEXT])
 
-    const result = await generateYongShenReading(ys, { provider })
+    const result = await generateYongShenReading(ys, makeMockBazi(), makeMockStrength(), '五行偏枯', { provider })
 
     expect(result.source).toBe('llm')
     expect(result.attempts).toBe(2)
@@ -116,7 +165,7 @@ describe('generateYongShenReading', () => {
     const ys = makeYongShenResult()
     const provider = makeMockProvider([INVALID_SHORT, INVALID_ABSOLUTE, INVALID_SHORT])
 
-    const result = await generateYongShenReading(ys, { provider })
+    const result = await generateYongShenReading(ys, makeMockBazi(), makeMockStrength(), '五行偏枯', { provider })
 
     expect(result.source).toBe('fallback')
     expect(result.attempts).toBe(3)
@@ -131,7 +180,7 @@ describe('generateYongShenReading', () => {
     const ys = makeYongShenResult()
     const provider = makeMockProvider(['   ', VALID_TEXT])
 
-    const result = await generateYongShenReading(ys, { provider })
+    const result = await generateYongShenReading(ys, makeMockBazi(), makeMockStrength(), '五行偏枯', { provider })
 
     expect(result.source).toBe('llm')
     expect(result.attempts).toBe(1)
@@ -143,7 +192,7 @@ describe('generateYongShenReading', () => {
     const ys = makeYongShenResult()
     const provider = makeThrowingProvider('Network error')
 
-    const result = await generateYongShenReading(ys, { provider })
+    const result = await generateYongShenReading(ys, makeMockBazi(), makeMockStrength(), '五行偏枯', { provider })
 
     expect(result.source).toBe('fallback')
     expect(result.attempts).toBe(0)

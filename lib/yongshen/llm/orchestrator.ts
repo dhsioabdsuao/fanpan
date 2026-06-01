@@ -1,3 +1,5 @@
+import type { BaziResult } from '@/types/bazi'
+import type { DayMasterStrength } from '@/lib/strength'
 import type { YongShenResult } from '../types'
 import type { LlmProvider } from '@/lib/flow/llm'
 import { DeepSeekProvider } from '@/lib/flow/llm'
@@ -10,6 +12,9 @@ const CLOSING_LINE = '\n\n命局给出的是倾向，不是定数。你比命盘
 
 export async function generateYongShenReading(
   yongshenResult: YongShenResult,
+  bazi: BaziResult,
+  strength: DayMasterStrength,
+  structureTone: string,
   options?: {
     provider?: LlmProvider
     maxRetries?: number
@@ -20,7 +25,7 @@ export async function generateYongShenReading(
   attempts: number
   retryReasons: string[]
 }> {
-  const factPack = buildYongShenFactPack(yongshenResult)
+  const factPack = buildYongShenFactPack(yongshenResult, bazi, strength, structureTone)
   const provider = options?.provider ?? new DeepSeekProvider()
   const maxRetries = options?.maxRetries ?? 3
   const retryReasons: string[] = []

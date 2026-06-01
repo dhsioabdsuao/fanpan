@@ -1,20 +1,24 @@
 import { describe, it, expect } from 'vitest'
 import { validateYongShenReading } from './validator'
-import type { YongShenFactPack } from './types'
+import type { YongShenFactPack, StemPresence } from './types'
 import type { ElementType } from '@/types/bazi'
+
+const MISSING: StemPresence = { status: '缺失' }
 
 function makeFactPack(overrides?: Partial<YongShenFactPack>): YongShenFactPack {
   return {
     primaryMethod: '扶抑',
     dayMaster: '戊',
     dayMasterElement: '土' as ElementType,
+    dayMasterStrength: { level: '偏强', score: 68 },
+    structureTone: '五行偏枯，火土过强',
     yongShen: [
-      { gan: '甲', element: '木' as ElementType, tenGod: '七杀', score: 8, reason: '克身平衡' },
-      { gan: '癸', element: '水' as ElementType, tenGod: '正财', score: 7, reason: '调候用水' },
+      { gan: '甲', element: '木' as ElementType, tenGod: '七杀', score: 8, reason: '克身平衡', presence: MISSING },
+      { gan: '癸', element: '水' as ElementType, tenGod: '正财', score: 7, reason: '调候用水', presence: MISSING },
     ],
     jiShen: [
-      { gan: '戊', element: '土' as ElementType, tenGod: '比肩', score: -6, reason: '加重身旺' },
-      { gan: '己', element: '土' as ElementType, tenGod: '劫财', score: -5, reason: '比劫夺财' },
+      { gan: '戊', element: '土' as ElementType, tenGod: '比肩', score: -6, reason: '加重身旺', presence: MISSING },
+      { gan: '己', element: '土' as ElementType, tenGod: '劫财', score: -5, reason: '比劫夺财', presence: MISSING },
     ],
     tiaoHou: {
       active: true,
@@ -110,11 +114,11 @@ describe('validateYongShenReading', () => {
       dayMaster: '庚',
       dayMasterElement: '金' as ElementType,
       yongShen: [
-        { gan: '甲', element: '木' as ElementType, tenGod: '偏财', score: 8, reason: '从财用神' },
-        { gan: '乙', element: '木' as ElementType, tenGod: '正财', score: 7, reason: '从财辅神' },
+        { gan: '甲', element: '木' as ElementType, tenGod: '偏财', score: 8, reason: '从财用神', presence: MISSING },
+        { gan: '乙', element: '木' as ElementType, tenGod: '正财', score: 7, reason: '从财辅神', presence: MISSING },
       ],
       jiShen: [
-        { gan: '戊', element: '土' as ElementType, tenGod: '偏印', score: -6, reason: '破格' },
+        { gan: '戊', element: '土' as ElementType, tenGod: '偏印', score: -6, reason: '破格', presence: MISSING },
       ],
       tiaoHou: { active: false, detail: '' },
     })
