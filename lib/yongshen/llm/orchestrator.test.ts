@@ -56,6 +56,7 @@ function makeYongShenResult(overrides?: Partial<YongShenResult>): YongShenResult
       elementAdjust: { '木': 0, '火': -1, '土': -1, '金': 0, '水': 2 },
       weight: 0.4,
       detail: '夏土需水润局',
+      hasRescue: false,
     },
     ...overrides,
   }

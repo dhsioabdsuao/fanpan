@@ -25,6 +25,7 @@ function makeFactPack(overrides?: Partial<YongShenFactPack>): YongShenFactPack {
       pattern: '火炎土燥',
       needs: ['水' as ElementType],
       detail: '夏土需水润局',
+      hasRescue: false,
     },
     tongGuan: { active: false, detail: '' },
     isSpecialGe: false,
@@ -120,7 +121,7 @@ describe('validateYongShenReading', () => {
       jiShen: [
         { gan: '戊', element: '土' as ElementType, tenGod: '偏印', score: -6, reason: '破格', presence: MISSING },
       ],
-      tiaoHou: { active: false, detail: '' },
+      tiaoHou: { active: false, detail: '', hasRescue: false },
     })
     const text =
       '你的命局走从格路线，甲木和乙木是你的喜用神。'

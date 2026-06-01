@@ -46,9 +46,16 @@ export function computeClimaticBalance(
   // ── 调候需求 ──
   const needs = deriveNeeds(pattern, forceReport, avg)
 
+  // 火炎土燥但有金水救应：金泄土生水，调候已有出路
+  // 古籍："用金泄土，无水金熔" — 必须金水双全才算救应
+  const hasRescue =
+    pattern === '火炎土燥' &&
+    metalForce >= 0.5 * avg &&
+    waterForce >= 0.5 * avg
+
   const detail = `月令${monthBranch}，寒暖${coldWarm}，燥湿${dryWet}，格局${pattern}`
 
-  return { coldWarm, dryWet, pattern, needs, detail }
+  return { coldWarm, dryWet, pattern, needs, detail, hasRescue }
 }
 
 function classifyPattern(

@@ -97,6 +97,7 @@ export interface TiaoHouAdjustment {
   elementAdjust: Record<ElementType, number>  // 每个五行的调候加减分
   weight: number
   detail: string
+  hasRescue: boolean                    // 火炎土燥时金水双全形成调候救应
 }
 
 // ── 扶抑+调候+流通 综合权重配置 ──

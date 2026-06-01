@@ -35,6 +35,15 @@ export function buildYongShenPrompt(
 可以不解释、直接引用；一旦解释，必须贴合古籍原意。`
     : ''
 
+  const rescueBlock = factPack.tiaoHou.active && factPack.tiaoHou.hasRescue
+    ? `
+【调候救应提示】
+此命局虽属火炎土燥，但金水已有流通（金泄土生水），调候有救、不必急补。
+在解读中体现"燥而有救"而非"燥而无救"：
+✓ "火炎土燥但金水流通，调候已有出路"
+✗ 不要写成"急需补水""缺水严重"等急迫语气。`
+    : ''
+
   const tongGuanBlock = factPack.tongGuan.active
     ? `
 【通关层引用要求】
@@ -426,6 +435,7 @@ clashingPair="${factPack.tongGuan.clashingPair?.join('与') || ''}"。
 结尾的"总的来说"白话总结只讲一次，不要重复
 ${specialGeBlock}
 ${tiaoHouBlock}
+${rescueBlock}
 ${tongGuanBlock}
 ==========================================
 【参考样本】

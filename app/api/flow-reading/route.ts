@@ -16,8 +16,8 @@ import { deriveBage } from '@/lib/bage'
 import { buildPatternExplanation } from '@/lib/bage/buildPatternExplanation'
 
 // 每次修改 prompt 逻辑或 factPack 数据后手动 +1，使旧缓存自动失效
-// 8: 喜用神 factPack 增强——presence（透干/藏支/缺失）+ dayMasterStrength + structureTone
-const PROMPT_VERSION = 8
+// 9: 调候火炎土燥金水救应——hasRescue 命局降调候急迫度+prompt 救应提示
+const PROMPT_VERSION = 9
 
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'flow-readings')
 

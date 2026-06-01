@@ -41,6 +41,7 @@ export interface YongShenFactPack {
     pattern?: string
     needs?: string[]
     detail: string
+    hasRescue: boolean
   }
   tongGuan: {
     active: boolean
@@ -128,8 +129,9 @@ export function buildYongShenFactPack(
           pattern: result.tiaoHou.pattern,
           needs: result.tiaoHou.needs,
           detail: result.tiaoHou.detail,
+          hasRescue: result.tiaoHou.hasRescue,
         }
-      : { active: false, detail: '' },
+      : { active: false, detail: '', hasRescue: false },
     tongGuan: result.tongGuan
       ? {
           active: result.tongGuan.active,

@@ -33,7 +33,13 @@ export function deriveTiaoHou(
   const dayElement = bazi.dayMasterElement
   const climatic = factPack.climaticBalance
   const pattern = climatic.pattern
-  const level = getTiaoHouLevel(pattern)
+  let level = getTiaoHouLevel(pattern)
+
+  // 火炎土燥但有金水救应 → 急迫度从强需求降为中等
+  // 古籍"得水方云中和"，金泄土生水已成，调候有出路
+  if (pattern === '火炎土燥' && climatic.hasRescue) {
+    level = 2
+  }
 
   // ── 三级（平衡/木火通明）：不调整 ──
 
@@ -49,6 +55,7 @@ export function deriveTiaoHou(
       active: false,
       weight: 0,
       pattern,
+      hasRescue: false,
     }
   }
 
@@ -93,6 +100,7 @@ export function deriveTiaoHou(
     active: true,
     weight,
     pattern,
+    hasRescue: climatic.hasRescue,
   }
 }
 

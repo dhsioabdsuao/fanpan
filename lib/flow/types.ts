@@ -90,6 +90,7 @@ export interface ClimaticReport {
   pattern: ClimaticPattern
   needs: ElementType[]
   detail: string
+  hasRescue: boolean  // 火炎土燥时金水已到位形成调候救应
 }
 
 // ── 刑冲合 ──

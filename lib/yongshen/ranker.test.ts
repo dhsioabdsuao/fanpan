@@ -30,6 +30,7 @@ function mockTiaoHou(overrides: Partial<TiaoHouAdjustment> = {}): TiaoHouAdjustm
     elementAdjust: { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 },
     weight: 0,
     detail: '',
+    hasRescue: false,
     ...overrides,
   }
 }
