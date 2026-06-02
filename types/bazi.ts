@@ -14,6 +14,13 @@ export type BaziInput = {
 
 export type ElementType = '金' | '木' | '水' | '火' | '土'
 
+export type TenGodName =
+  | '比肩' | '劫财'
+  | '食神' | '伤官'
+  | '偏财' | '正财'
+  | '七杀' | '正官'
+  | '偏印' | '正印'
+
 export type Pillar = {
   stem: string
   branch: string

@@ -15,20 +15,6 @@ const ELEMENT_BG: Record<string, string> = {
 export function ElementChart({ result }: { result: BaziResult }) {
   const { elementCount } = result
 
-  const lines: string[] = []
-  const dominant = ELEMENT_ORDER.filter((e) => elementCount[e] >= 3)
-  const missing = ELEMENT_ORDER.filter((e) => elementCount[e] === 0)
-
-  if (dominant.length > 0) {
-    lines.push(`您的命局五行以 ${dominant.join('、')} 为主(偏旺)`)
-  }
-  if (missing.length > 0) {
-    lines.push(`五行缺 ${missing.join('、')}`)
-  }
-  if (lines.length === 0) {
-    lines.push('五行较为均衡')
-  }
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -48,10 +34,6 @@ export function ElementChart({ result }: { result: BaziResult }) {
             </div>
           </div>
         ))}
-
-        <p className="text-sm text-muted-foreground pt-2 border-t">
-          {lines.join('；')}
-        </p>
       </CardContent>
     </Card>
   )

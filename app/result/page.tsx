@@ -1,22 +1,18 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseSearchParams } from '@/lib/bazi-input-adapter'
-import type { BaziInput } from '@/types/bazi'
 import { calculateBazi } from '@/lib/bazi'
 import { PillarTable } from '@/components/bazi/PillarTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
 import { Interpretation } from '@/components/bazi/Interpretation'
-import { YongShenSection } from './YongShenSection'
-import { BageSection, type BageDisplayData } from './BageSection'
-import type { YongShenResult } from '@/lib/yongshen'
 
 function SkeletonResult() {
   return (
@@ -51,100 +47,6 @@ function ErrorMessage({ message }: { message: string }) {
   )
 }
 
-const FLOW_CLOSING = '命局给出的是倾向,不是定数。你比命盘更了解自己。'
-
-function FlowReadingSection({
-  input,
-  onData,
-  regenerateKey = 0,
-}: {
-  input: BaziInput
-  onData?: (data: { yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback'; bageDisplay?: BageDisplayData }) => void
-  regenerateKey?: number
-}) {
-  const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading')
-  const [reading, setReading] = useState('')
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function load() {
-      try {
-        const res = await fetch('/api/flow-reading', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...input, forceRegenerate: regenerateKey > 0 }),
-          signal: controller.signal,
-        })
-
-        if (!res.ok) {
-          setState('error')
-          return
-        }
-
-        const data = await res.json()
-        setReading(data.reading)
-        setState('loaded')
-        if (data.yongshen) {
-          onData?.({
-            yongshen: data.yongshen,
-            yongshenReading: data.yongshenReading?.text,
-            source: data.yongshenReading?.source,
-            bageDisplay: data.bageDisplay,
-          })
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          setState('error')
-        }
-      }
-    }
-
-    load()
-    return () => controller.abort()
-  }, [regenerateKey])
-
-  const closingIndex = reading.lastIndexOf(FLOW_CLOSING)
-  const mainText = closingIndex > 0 ? reading.slice(0, closingIndex).trim() : reading
-  const hasClosing = closingIndex > 0
-
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <h2 className="font-serif text-xl font-semibold mb-4">五行流通度</h2>
-
-        {state === 'loading' && (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <div className="size-8 animate-spin rounded-full border-4 border-stone-200 border-t-stone-600" />
-            <p className="text-stone-500 text-sm">
-              正在生成你的五行流通度解读……（约需 30-60 秒）
-            </p>
-          </div>
-        )}
-
-        {state === 'error' && (
-          <p className="text-destructive text-sm py-4">
-            解读生成失败，请刷新页面重试
-          </p>
-        )}
-
-        {state === 'loaded' && (
-          <div>
-            <div className="text-base leading-relaxed whitespace-pre-line">
-              {mainText}
-            </div>
-            {hasClosing && (
-              <p className="mt-6 text-center text-sm text-stone-400">
-                {FLOW_CLOSING}
-              </p>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
 function Methodology() {
   const [open, setOpen] = useState(false)
 
@@ -170,9 +72,8 @@ function Methodology() {
           <div className="overflow-hidden">
             <div className="text-sm text-stone-500 leading-relaxed space-y-2">
               <p>
-                本站的八字、五行分布、流通判定等所有命局数据均由代码按子平派
-                算法严格计算，每次结果一致。下方的「五行流通度」解读由大模型
-                根据上述命局数据生成，命局事实不变，但具体措辞可能略有不同。
+                本站的四柱八字、干支五行、藏干十神、纳音、真太阳时等排盘数据
+                均由代码按传统子平派算法计算，每次结果一致。
               </p>
               <p>
                 本站仅作命理参考，不预测具体事件，请勿据此做出重大人生决策。
@@ -187,8 +88,6 @@ function Methodology() {
 
 function ResultContent() {
   const searchParams = useSearchParams()
-  const [flowData, setFlowData] = useState<{ yongshen: YongShenResult; yongshenReading?: string; source?: 'llm' | 'fallback'; bageDisplay?: BageDisplayData } | null>(null)
-  const [regenerateKey, setRegenerateKey] = useState(0)
 
   const input = parseSearchParams(searchParams)
 
@@ -217,37 +116,21 @@ function ResultContent() {
               返回首页
             </Button>
           </Link>
-          <h1 className="font-serif text-2xl md:text-3xl font-semibold">命盘解析</h1>
+          <h1 className="font-serif text-2xl md:text-3xl font-semibold">命盘</h1>
           <div className="w-[92px]" />
         </div>
-
-        {/* Methodology */}
-        <Methodology />
 
         <BasicInfo result={result} />
         <PillarTable result={result} hideHour={noHour === '1'} />
         <ElementChart result={result} />
         <Interpretation result={result} />
-        <FlowReadingSection input={input} onData={setFlowData} regenerateKey={regenerateKey} />
-        {flowData?.yongshen && (
-          <YongShenSection
-            yongshen={flowData.yongshen}
-            reading={flowData.yongshenReading}
-            source={flowData.source}
-            onRegenerate={() => setRegenerateKey((k) => k + 1)}
-          />
-        )}
-        {flowData?.bageDisplay && (
-          <BageSection data={flowData.bageDisplay} />
-        )}
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">
           <CardContent className="py-10 text-center">
             <div className="text-sm leading-relaxed text-stone-600">
-              <p>本站排盘与解读基于子平派传统命理学，</p>
-              <p>可见人生大致方向、性格特质、五行格局。</p>
-              <p>具体事件、流年小事变数较多，不可强求精准。</p>
+              <p>本站排盘基于子平派传统命理学，</p>
+              <p>可见人生大致方向、性格特质、五行分布。</p>
             </div>
             <div className="my-6 font-serif text-2xl text-stone-800">
               知命而不认命，但行好事，莫问前程

@@ -9,8 +9,7 @@
     "lint": "eslint",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "cache:clear": "rm -rf .cache/flow-readings/*.json"
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
