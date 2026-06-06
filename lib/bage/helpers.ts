@@ -1,0 +1,233 @@
+import type { ElementType } from '@/types/bazi'
+import { getStemElement } from '@/lib/bazi-utils'
+
+// ── 规格书 1.3 藏干表 ──
+const SPEC_HIDDEN_STEMS: Record<string, string[]> = {
+  子: ['癸'],
+  丑: ['己', '癸', '辛'],
+  寅: ['甲', '丙', '戊'],
+  卯: ['乙'],
+  辰: ['戊', '乙', '癸'],
+  巳: ['丙', '庚', '戊'],
+  午: ['丁', '己'],
+  未: ['己', '丁', '乙'],
+  申: ['庚', '壬', '戊'],
+  酉: ['辛'],
+  戌: ['戊', '辛', '丁'],
+  亥: ['壬', '甲'],
+}
+
+export function getHiddenStemsSpec(branch: string): string[] {
+  return [...(SPEC_HIDDEN_STEMS[branch] ?? [])]
+}
+
+// ── 规格书 1.4 禄位刃位表 ──
+const LU_POSITIONS: Record<string, string> = {
+  甲: '寅', 乙: '卯', 丙: '巳', 丁: '午', 戊: '巳',
+  己: '午', 庚: '申', 辛: '酉', 壬: '亥', 癸: '子',
+}
+
+const REN_POSITIONS: Record<string, string> = {
+  甲: '卯', 丙: '午', 戊: '午', 庚: '酉', 壬: '子',
+}
+
+export function getLu(dayMaster: string): string {
+  return LU_POSITIONS[dayMaster] ?? ''
+}
+
+export function isYangRen(branch: string, dayMaster: string): boolean {
+  return REN_POSITIONS[dayMaster] === branch
+}
+
+// ── 规格书 2.1.1 地支六冲 ──
+const SIX_CLASHES: [string, string][] = [
+  ['子', '午'], ['丑', '未'], ['寅', '申'],
+  ['卯', '酉'], ['辰', '戌'], ['巳', '亥'],
+]
+
+export function isBranchClash(a: string, b: string): boolean {
+  return SIX_CLASHES.some(
+    ([x, y]) => (x === a && y === b) || (x === b && y === a),
+  )
+}
+
+export function getClashPartner(branch: string): string | null {
+  for (const [x, y] of SIX_CLASHES) {
+    if (x === branch) return y
+    if (y === branch) return x
+  }
+  return null
+}
+
+// ── 规格书 2.1.2 地支六合 ──
+const SIX_HE: [string, string, ElementType][] = [
+  ['子', '丑', '土'],
+  ['寅', '亥', '木'],
+  ['卯', '戌', '火'],
+  ['辰', '酉', '金'],
+  ['巳', '申', '水'],
+  ['午', '未', '土'],
+]
+
+export function getSixHePartner(branch: string): string | null {
+  for (const [x, y] of SIX_HE) {
+    if (x === branch) return y
+    if (y === branch) return x
+  }
+  return null
+}
+
+export function getSixHeTransform(a: string, b: string): ElementType | null {
+  for (const [x, y, el] of SIX_HE) {
+    if ((x === a && y === b) || (x === b && y === a)) return el
+  }
+  return null
+}
+
+// ── 规格书 2.1.3 地支三合 ──
+const SAN_HE: [string[], ElementType][] = [
+  [['申', '子', '辰'], '水'],
+  [['亥', '卯', '未'], '木'],
+  [['寅', '午', '戌'], '火'],
+  [['巳', '酉', '丑'], '金'],
+]
+
+export function getSanHeGroup(branch: string): string[] | null {
+  for (const [members] of SAN_HE) {
+    if (members.includes(branch)) return [...members]
+  }
+  return null
+}
+
+// ── 规格书 2.1.4 地支三会 ──
+const SAN_HUI: [string[], ElementType][] = [
+  [['寅', '卯', '辰'], '木'],
+  [['巳', '午', '未'], '火'],
+  [['申', '酉', '戌'], '金'],
+  [['亥', '子', '丑'], '水'],
+]
+
+export function getSanHuiGroup(branch: string): string[] | null {
+  for (const [members] of SAN_HUI) {
+    if (members.includes(branch)) return [...members]
+  }
+  return null
+}
+
+// ── 规格书 2.1.5 天干五合 ──
+const FIVE_COMBO: [string, string, ElementType][] = [
+  ['甲', '己', '土'],
+  ['乙', '庚', '金'],
+  ['丙', '辛', '水'],
+  ['丁', '壬', '木'],
+  ['戊', '癸', '火'],
+]
+
+export function getFiveComboPartner(stem: string): string | null {
+  for (const [x, y] of FIVE_COMBO) {
+    if (x === stem) return y
+    if (y === stem) return x
+  }
+  return null
+}
+
+export function getFiveComboTransform(a: string, b: string): ElementType | null {
+  for (const [x, y, el] of FIVE_COMBO) {
+    if ((x === a && y === b) || (x === b && y === a)) return el
+  }
+  return null
+}
+
+// ── 地支合会局检测 (规格书 3.2.7) ──
+
+export interface FormedHe {
+  type: '三合' | '三会' | '六合'
+  element: ElementType
+  members: string[]
+}
+
+/** 检测四柱地支中形成的所有合会局 */
+export function detectAllHe(branches: string[]): FormedHe[] {
+  const result: FormedHe[] = []
+  const unique = new Set(branches)
+
+  // 三会
+  for (const [members, element] of SAN_HUI) {
+    if (members.every((m) => unique.has(m))) {
+      result.push({ type: '三会', element, members: [...members] })
+    }
+  }
+
+  // 三合
+  for (const [members, element] of SAN_HE) {
+    if (members.every((m) => unique.has(m))) {
+      result.push({ type: '三合', element, members: [...members] })
+    }
+  }
+
+  // 六合
+  for (const [a, b, element] of SIX_HE) {
+    if (unique.has(a) && unique.has(b)) {
+      result.push({ type: '六合', element, members: [a, b] })
+    }
+  }
+
+  return result
+}
+
+// ── 取格用：月支是否参与三合/三会成局 (B.2) ──
+
+export function monthBranchFormsHe(
+  monthBranch: string,
+  allBranches: string[],
+): { element: ElementType; type: '三合' | '三会' } | null {
+  const unique = new Set(allBranches)
+
+  // 完整三会
+  const huiGroup = getSanHuiGroup(monthBranch)
+  if (huiGroup && huiGroup.every((m) => unique.has(m))) {
+    for (const [members, element] of SAN_HUI) {
+      if (members[0] === huiGroup[0]) return { element, type: '三会' }
+    }
+  }
+
+  // 完整三合
+  const heGroup = getSanHeGroup(monthBranch)
+  if (heGroup && heGroup.every((m) => unique.has(m))) {
+    for (const [members, element] of SAN_HE) {
+      if (members[0] === heGroup[0]) return { element, type: '三合' }
+    }
+  }
+
+  // 半合：月支 + 至少一个其他同组支，且该组总出现数 ≥ 2
+  if (heGroup) {
+    const count = heGroup.filter((m) => unique.has(m)).length
+    if (count >= 2) {
+      for (const [members, element] of SAN_HE) {
+        if (members[0] === heGroup[0]) return { element, type: '三合' }
+      }
+    }
+  }
+
+  return null
+}
+
+// ── 天干五合检测 ──
+
+export function detectStemCombos(stems: string[]): { stem1: string; stem2: string; transform: ElementType }[] {
+  const result: { stem1: string; stem2: string; transform: ElementType }[] = []
+  for (const [a, b, el] of FIVE_COMBO) {
+    if (stems.includes(a) && stems.includes(b)) {
+      result.push({ stem1: a, stem2: b, transform: el })
+    }
+  }
+  return result
+}
+
+// ── 化神是否在天干透出 (2.2.2) ──
+
+export function isHuShenTransparent(element: ElementType, stems: string[]): boolean {
+  return stems.some((s) => getStemElement(s) === element)
+}
+
+export { getStemElement }
