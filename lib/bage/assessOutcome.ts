@@ -13,6 +13,7 @@ import {
   getHiddenStemsSpec,
   getStemElement,
   isHuShenTransparent,
+  elementToTenGod,
 } from './helpers'
 import type { FormedHe } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
@@ -101,24 +102,6 @@ function tenGodToCategory(tg: string): '官杀' | '食伤' | '财' | '印' | nul
   if (tg === '正财' || tg === '偏财') return '财'
   if (tg === '正印' || tg === '偏印') return '印'
   return null
-}
-
-/** 指定五行的十神名称（对日主） */
-function elementToTenGod(
-  element: ElementType,
-  dayMasterElement: ElementType,
-  yinYang: 'same' | 'diff',
-): string {
-  const EL_ORDER = ['木', '火', '土', '金', '水'] as const
-  const dmIdx = EL_ORDER.indexOf(dayMasterElement as typeof EL_ORDER[number])
-  const elIdx = EL_ORDER.indexOf(element)
-  const diff = (elIdx - dmIdx + 5) % 5
-
-  if (diff === 0) return yinYang === 'same' ? '比肩' : '劫财'
-  if (diff === 1) return yinYang === 'same' ? '食神' : '伤官'  // 我生
-  if (diff === 2) return yinYang === 'same' ? '偏财' : '正财'  // 我克
-  if (diff === 3) return yinYang === 'same' ? '七杀' : '正官'  // 克我
-  return yinYang === 'same' ? '偏印' : '正印'                  // 生我
 }
 
 /** 合会局是否形成特定十神类别（官杀/食伤/财/印）

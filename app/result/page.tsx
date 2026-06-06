@@ -13,6 +13,7 @@ import { PillarTable } from '@/components/bazi/PillarTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
 import { Interpretation } from '@/components/bazi/Interpretation'
+import { PatternBlock } from '@/components/bazi/PatternBlock'
 
 function SkeletonResult() {
   return (
@@ -122,6 +123,7 @@ function ResultContent() {
 
         <BasicInfo result={result} />
         <PillarTable result={result} hideHour={noHour === '1'} />
+        <PatternBlock result={result} />
         <ElementChart result={result} />
         <Interpretation result={result} />
 

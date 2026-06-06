@@ -199,16 +199,7 @@ export function monthBranchFormsHe(
     }
   }
 
-  // 半合：月支 + 至少一个其他同组支，且该组总出现数 ≥ 2
-  if (heGroup) {
-    const count = heGroup.filter((m) => unique.has(m)).length
-    if (count >= 2) {
-      for (const [members, element] of SAN_HE) {
-        if (members[0] === heGroup[0]) return { element, type: '三合' }
-      }
-    }
-  }
-
+  // 半合不参与取格（规格书 2.1.3 + B.2）
   return null
 }
 
@@ -228,6 +219,26 @@ export function detectStemCombos(stems: string[]): { stem1: string; stem2: strin
 
 export function isHuShenTransparent(element: ElementType, stems: string[]): boolean {
   return stems.some((s) => getStemElement(s) === element)
+}
+
+// ── 五行 → 十神映射 (用于会支取格 B.2) ──
+
+/** 根据“会成五行”和“日主五行”以及阴阳，返回十神名称 */
+export function elementToTenGod(
+  element: ElementType,
+  dayMasterElement: ElementType,
+  yinYang: 'same' | 'diff',
+): string {
+  const EL_ORDER = ['木', '火', '土', '金', '水'] as const
+  const dmIdx = EL_ORDER.indexOf(dayMasterElement as typeof EL_ORDER[number])
+  const elIdx = EL_ORDER.indexOf(element)
+  const diff = (elIdx - dmIdx + 5) % 5
+
+  if (diff === 0) return yinYang === 'same' ? '比肩' : '劫财'
+  if (diff === 1) return yinYang === 'same' ? '食神' : '伤官'
+  if (diff === 2) return yinYang === 'same' ? '偏财' : '正财'
+  if (diff === 3) return yinYang === 'same' ? '七杀' : '正官'
+  return yinYang === 'same' ? '偏印' : '正印'
 }
 
 export { getStemElement }

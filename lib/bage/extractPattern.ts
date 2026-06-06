@@ -6,6 +6,7 @@ import {
   getSanHeGroup,
   monthBranchFormsHe,
   getStemElement,
+  elementToTenGod,
 } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
 
@@ -135,16 +136,20 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
 
   // ── 分支 B：月支本气非比劫 ──
 
-  // B.1 透干取格
-  const transparent = hidden.filter((hs) => touGanStems.includes(hs))
+  // B.1 透干取格（过滤比劫：比肩/劫财不可独立成格）
+  const transparent = hidden.filter((hs) => {
+    if (!touGanStems.includes(hs)) return false
+    const tg = getTenGod(dayMaster, hs)
+    return tg !== '比肩' && tg !== '劫财'
+  })
 
   if (transparent.length > 0) {
-    // 本气优先
+    // 本气优先（若本气为八格十神且透干）
     let selectedStem: string
-    if (touGanStems.includes(benQi)) {
+    if (transparent.includes(benQi)) {
       selectedStem = benQi
     } else {
-      selectedStem = transparent[0] // 透出的第一个（中气或余气）
+      selectedStem = transparent[0] // 透出的第一个八格十神（中气或余气）
     }
 
     const tenGod = getTenGod(dayMaster, selectedStem)
@@ -161,11 +166,13 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       : pillars.month.stem === selectedStem ? '月干'
       : '时干'
 
+    const qiLabel = selectedStem === benQi ? '本气' : selectedStem === zhongQi ? '中气' : '余气'
+
     return {
       category,
       displayName,
       yongShen: selectedStem,
-      patternGod: `${selectedStem}(${tenGod},月支${monthBranch}${selectedStem === benQi ? '本气' : selectedStem === zhongQi ? '中气' : '余气'}透${pos})`,
+      patternGod: `${selectedStem}(${tenGod},月支${monthBranch}${qiLabel}透${pos})`,
       origin: '透干',
       patternStem: selectedStem,
       patternElement: null,
@@ -173,20 +180,12 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     }
   }
 
-  // B.2 会支取格
+  // B.2 会支取格（三支齐全，规格书 B.2：取会成五行对日主的十神）
   const heResult = monthBranchFormsHe(monthBranch, allBranches)
   if (heResult) {
-    // 会成五行为格 → 找出对应的十神
     const element = heResult.element
-    // 会成的五行对日主的十神
-    const dayEl = getStemElement(dayMaster)
-    const WU_XING_ORDER = ['木', '火', '土', '金', '水'] as const
-
-    // 找到会成五行的代表十神：用月支本气对日主的十神方向
-    // 因为会成的是五行，需要确定是哪个十神
-    // 用月支本气的十神类别来确定
-    const benQiEl = getStemElement(benQi)
-    const tenGod = benQiTenGod // 本气十神方向确定格局类别
+    // 会成五行对日主的十神；局按整体气势论，取‘same’阴阳侧（偏/杀/食/偏印）
+    const tenGod = elementToTenGod(element, bazi.dayMasterElement, 'same')
 
     const category = TEN_GOD_TO_CATEGORY[tenGod]
     const displayName = TEN_GOD_TO_DISPLAY[tenGod]
