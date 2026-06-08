@@ -2,6 +2,7 @@ import type { BaziResult } from '@/types/bazi'
 import type { ElementType } from '@/types/bazi'
 import type { Outcome, PatternCategory } from './types'
 import type { ExtractResult } from './extractPattern'
+import { determineStrength } from '@/lib/strength/determineStrength'
 import {
   isBranchClash,
   getClashPartner,
@@ -622,8 +623,18 @@ export function assessOutcome(
   switch (extract.category) {
     case '官格':
       return assessZhengGuan(ctx, extract)
-    case '杀格':
-      return assessQiSha(ctx, extract)
+    case '杀格': {
+      const result = assessQiSha(ctx, extract)
+      // 七杀格食神制杀成格 → 加身强层次标注（非成格门槛，规格书4.2补充）
+      if (result.outcome === '成格' && result.reason.includes('食神制杀')) {
+        const str = determineStrength(bazi)
+        const layer = str.level === '身强'
+          ? '身强担杀,层次较高'
+          : '日主非身强,食制成立但层次受损'
+        result.reason = result.reason + '; ' + layer
+      }
+      return result
+    }
     case '财格':
       return assessCai(ctx, extract)
     case '印格':
