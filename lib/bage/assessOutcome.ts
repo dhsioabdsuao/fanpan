@@ -137,7 +137,15 @@ function isMonthBranchClashed(ctx: ChartContext): boolean {
   return !isClashResolved(ctx)
 }
 
-/** 会合解冲：冲支是否被会合牵制 */
+/** 地支是否被冲（冲支在命局中存在）。纯存在性检查。 */
+function isBranchClashedInChart(branch: string, ctx: ChartContext): boolean {
+  const cp = getClashPartner(branch)
+  return cp !== null && ctx.branches.includes(cp)
+}
+
+/** 会合解冲：冲支是否被会合牵制。
+ *  二次检查：解冲的合/会是否自身被冲散（合神/会局成员被冲）。
+ *  【本系统决策】暂不做三次检查（冲散之冲再被合解），直接判解冲失效。 */
 function isClashResolved(ctx: ChartContext): boolean {
   const clashPartner = getClashPartner(ctx.monthBranch)
   if (!clashPartner) return false
@@ -145,49 +153,107 @@ function isClashResolved(ctx: ChartContext): boolean {
 
   // 冲支被六合牵制？
   const hePartner = getSixHePartner(clashPartner)
-  if (hePartner && ctx.branches.includes(hePartner)) return true
+  if (hePartner && ctx.branches.includes(hePartner)) {
+    // 二次检查：六合 pair 中 hePartner 是否被其冲支冲散
+    // （clashPartner 的冲支就是 monthBranch，是原冲，不重复计入）
+    const hepClash = getClashPartner(hePartner)
+    if (!hepClash || !ctx.branches.includes(hepClash)) {
+      return true
+    }
+    // hePartner 被冲散，六合失效，继续检查三合/三会
+  }
 
   // 冲支参与三合/三会？
   for (const he of ctx.formedHes) {
-    if (he.members.includes(clashPartner)) return true
+    if (he.members.includes(clashPartner)) {
+      // 二次检查：三合/三会中除 clashPartner 外的成员是否被冲
+      const otherMembers = he.members.filter((m) => m !== clashPartner)
+      const anyClashed = otherMembers.some((m) => isBranchClashedInChart(m, ctx))
+      if (!anyClashed) return true
+    }
   }
 
   return false
 }
 
-/** 印制伤：有印制伏伤官且印未被财克 */
+/** 印制伤：有印制伏伤官且印未被财克、未被合去。
+ *  二次检查A：印是否被财克（财透干或成局）。
+ *  二次检查B：印自身是否被五合合去。
+ *  【本系统决策】暂不做三次检查（比劫制财护印），直接判印救失效。 */
 function hasYinZhiShang(ctx: ChartContext): boolean {
   const hasYin = hasTenGodActive(ctx, '正印') || hasTenGodActive(ctx, '偏印')
   if (!hasYin) return false
 
-  // 印未被财克：财不透干 且 不合会成财局
+  // 二次检查A：印未被财克
   const hasCaiKeYin =
     hasTenGodInStems(ctx, '正财') || hasTenGodInStems(ctx, '偏财') ||
     hesFormTenGodCategory(ctx, '财')
-  return !hasCaiKeYin
+  if (hasCaiKeYin) return false
+
+  // 二次检查B：印自身未被五合合去（印干被合 → 不制伤）
+  const yinStems: string[] = []
+  if (ctx.stemTenGods[0] === '正印' || ctx.stemTenGods[0] === '偏印') yinStems.push(ctx.stems[0])
+  if (ctx.stemTenGods[1] === '正印' || ctx.stemTenGods[1] === '偏印') yinStems.push(ctx.stems[1])
+  if (ctx.stemTenGods[2] === '正印' || ctx.stemTenGods[2] === '偏印') yinStems.push(ctx.stems[3])
+  for (const ys of yinStems) {
+    const p = getFiveComboPartner(ys)
+    if (p && ctx.stems.includes(p)) return false // 印被合去，护官失效
+  }
+
+  return true
 }
 
-/** 财通关：伤官见官时有财通关（伤生财、财生官） */
+/** 财通关：伤官见官时有财通关（伤生财、财生官）。
+ *  二次检查：财是否被比劫夺（比劫透干或成局克制财星）。
+ *  【本系统决策】暂不做三次检查（官杀制比劫护财），比劫夺财直接判财通关失效。 */
 function hasCaiTongGuan(ctx: ChartContext): boolean {
-  return hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
+  const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
+  if (!hasCai) return false
+  // 二次检查：财是否被比劫夺（透干）
+  if (hasTenGodInStems(ctx, '比肩') || hasTenGodInStems(ctx, '劫财')) return false
+  // 二次检查：合会成比劫局
+  for (const he of ctx.formedHes) {
+    if (he.type === '六合' && !isHuShenTransparent(he.element, ctx.stems)) continue
+    const tgSame = elementToTenGod(he.element, ctx.dayMasterElement, 'same')
+    if (tgSame === '比肩' || tgSame === '劫财') return false
+  }
+  return true
 }
 
-/** 食神制杀：食神透干克杀 */
+/** 食神制杀：食神透干克杀。
+ *  二次检查：食神是否被偏印（枭神）夺。
+ *  【本系统决策】暂不做三次检查（财制枭护食），枭夺食直接判食制失效。 */
 function hasShiZhiSha(ctx: ChartContext): boolean {
-  return hasTenGodInStems(ctx, '食神')
+  if (!hasTenGodInStems(ctx, '食神')) return false
+  // 二次检查：食神是否被偏印夺（枭神夺食）
+  if (hasTenGodActive(ctx, '偏印')) return false
+  return true
 }
 
-/** 印星化杀：有印（天干透出或合会成印局）化杀。藏干内单独的印不算。 */
+/** 印星化杀：有印（天干透出或合会成印局）化杀。藏干内单独的印不算。
+ *  二次检查：印是否被财破（财透干或成局克印），逻辑与 hasYinZhiShang 一致。
+ *  【本系统决策】暂不做三次检查（比劫制财护印），财破印直接判印化失效。 */
 function hasYinHuaSha(ctx: ChartContext): boolean {
-  return hasTenGodInStems(ctx, '正印') || hasTenGodInStems(ctx, '偏印') ||
-         hesFormTenGodCategory(ctx, '印')
+  const hasYin = hasTenGodInStems(ctx, '正印') || hasTenGodInStems(ctx, '偏印') ||
+                 hesFormTenGodCategory(ctx, '印')
+  if (!hasYin) return false
+  // 二次检查：印是否被财破
+  const hasCai = hasTenGodInStems(ctx, '正财') || hasTenGodInStems(ctx, '偏财') ||
+                 hesFormTenGodCategory(ctx, '财')
+  if (hasCai) return false
+  return true
 }
 
-/** 合去忌神：指定的干是否被五合 */
+/** 合去忌神：指定的干是否被五合。
+ *  二次检查：争合——同干多现争合神，合不牢。
+ *  【本系统决策】争合暂不判破格，留给以后细化。 */
 function isStemComboed(stem: string, ctx: ChartContext): boolean {
   const partner = getFiveComboPartner(stem)
   if (!partner) return false
-  return ctx.stems.includes(partner)
+  if (!ctx.stems.includes(partner)) return false
+  // 二次检查：争合检测（多干争一合神，合不牢）
+  // 暂不改变结果，留检测点供后续细化
+  return true
 }
 
 // 天干阴阳
