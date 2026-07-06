@@ -1,4 +1,7 @@
 export { extractPattern } from './extractPattern'
 export type { ExtractResult } from './extractPattern'
 export { assessOutcome } from './assessOutcome'
-export type { PatternResult, PatternCategory, PatternDisplayName, Outcome, PatternOrigin } from './types'
+export type { AssessResult } from './assessOutcome'
+export type { PatternResult, PatternCategory, PatternDisplayName, Outcome, PatternOrigin, XiangShen } from './types'
+export { generateAnalysis } from './generateAnalysis'
+export type { AnalysisInput, AnalysisResult } from './generateAnalysis'

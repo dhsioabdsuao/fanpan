@@ -1,6 +1,6 @@
 import type { BaziResult } from '@/types/bazi'
 import type { ElementType } from '@/types/bazi'
-import type { Outcome, PatternCategory } from './types'
+import type { Outcome, PatternCategory, XiangShen } from './types'
 import type { ExtractResult } from './extractPattern'
 import { determineStrength } from '@/lib/strength/determineStrength'
 import {
@@ -256,17 +256,46 @@ function isStemComboed(stem: string, ctx: ChartContext): boolean {
   return true
 }
 
+/** 获取合绊七杀的那个十神名（劫财或伤官）。仅建禄月劫格透杀合绊场景使用。 */
+function getComboGodForSha(ctx: ChartContext): string | null {
+  const shaStems = ctx.stems.filter((s) => {
+    const tg = getTenGod(ctx.dayMaster, s)
+    return tg === '七杀'
+  })
+  for (const s of shaStems) {
+    const partner = getFiveComboPartner(s)
+    if (partner && ctx.stems.includes(partner)) {
+      return getTenGod(ctx.dayMaster, partner)
+    }
+  }
+  return null
+}
+
+/** 辅助：构造 XiangShen 对象 */
+function xs(god: string, role: string): XiangShen {
+  return { god, role }
+}
+
 // 天干阴阳
 const GAN_YIN_YANG: Record<string, '阳' | '阴'> = {
   甲: '阳', 乙: '阴', 丙: '阳', 丁: '阴', 戊: '阳',
   己: '阴', 庚: '阳', 辛: '阴', 壬: '阳', 癸: '阴',
 }
 
+// ── 返回类型 ──
+
+export interface AssessResult {
+  outcome: Outcome
+  reason: string
+  xiangShen: XiangShen | null
+}
+
 // ── 逐格成败判定 ──
 
-function assessZhengGuan(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessZhengGuan(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   const reasons: string[] = []
   let success = false
+  let xiangShen: XiangShen | null = null
 
   // 成格条件：有财生官 OR 有印护官
   const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
@@ -275,10 +304,12 @@ function assessZhengGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
   if (hasCai) {
     success = true
     reasons.push('有财生官')
+    xiangShen = xs('财星', '财生官')
   }
   if (hasYin) {
     success = true
     reasons.push('有印护官')
+    if (!xiangShen) xiangShen = xs('印星', '印护官')
   }
 
   // 破格条件检查
@@ -293,7 +324,13 @@ function assessZhengGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
     if (!yinRescue && !caiRescue) {
       failures.push('伤官见官,无印制伤、无财通关')
     } else {
-      reasons.push(yinRescue ? '印制伤解伤官见官' : '财通关解伤官见官')
+      if (yinRescue) {
+        reasons.push('印制伤解伤官见官')
+        xiangShen = xs('印星', '印制伤护官')
+      } else {
+        reasons.push('财通关解伤官见官')
+        xiangShen = xs('财星', '财通关护官')
+      }
     }
   }
 
@@ -317,17 +354,18 @@ function assessZhengGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
   }
 
   if (failures.length > 0) {
-    return { outcome: '破格', reason: failures.join('; ') }
+    return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
   }
   if (success) {
-    return { outcome: '成格', reason: reasons.join('; ') }
+    return { outcome: '成格', reason: reasons.join('; '), xiangShen }
   }
-  return { outcome: '不成格', reason: '财印俱无、孤官无辅' }
+  return { outcome: '不成格', reason: '财印俱无、孤官无辅', xiangShen: null }
 }
 
-function assessQiSha(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessQiSha(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   const reasons: string[] = []
   let success = false
+  let xiangShen: XiangShen | null = null
 
   // 成格条件：食神制杀 OR 印星化杀
   const shiZhi = hasShiZhiSha(ctx)
@@ -336,10 +374,12 @@ function assessQiSha(ctx: ChartContext, _extract: ExtractResult): { outcome: Out
   if (shiZhi) {
     success = true
     reasons.push('食神制杀')
+    xiangShen = xs('食神', '食神制杀')
   }
   if (yinHua) {
     success = true
     reasons.push('印星化杀')
+    if (!xiangShen) xiangShen = xs('印星', '印星化杀')
   }
 
   // 破格条件检查
@@ -376,17 +416,18 @@ function assessQiSha(ctx: ChartContext, _extract: ExtractResult): { outcome: Out
   }
 
   if (failures.length > 0) {
-    return { outcome: '破格', reason: failures.join('; ') }
+    return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
   }
   if (success) {
-    return { outcome: '成格', reason: reasons.join('; ') }
+    return { outcome: '成格', reason: reasons.join('; '), xiangShen }
   }
-  return { outcome: '不成格', reason: '无食制无印化,未被财党杀、未会成官杀局、未被冲' }
+  return { outcome: '不成格', reason: '无食制无印化,未被财党杀、未会成官杀局、未被冲', xiangShen: null }
 }
 
-function assessCai(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessCai(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   const reasons: string[] = []
   let success = false
+  let xiangShen: XiangShen | null = null
 
   // 成格条件：财生官 OR 食伤生财
   const hasGuan = hasTenGodActive(ctx, '正官')
@@ -395,10 +436,12 @@ function assessCai(ctx: ChartContext, _extract: ExtractResult): { outcome: Outco
   if (hasGuan) {
     success = true
     reasons.push('财生官(官护财)')
+    xiangShen = xs('官星', '官护财')
   }
   if (hasShiShang) {
     success = true
     reasons.push('食伤生财(财有源)')
+    if (!xiangShen) xiangShen = xs('食伤', '食伤生财')
   }
 
   // 破格条件
@@ -423,17 +466,18 @@ function assessCai(ctx: ChartContext, _extract: ExtractResult): { outcome: Outco
   }
 
   if (failures.length > 0) {
-    return { outcome: '破格', reason: failures.join('; ') }
+    return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
   }
   if (success) {
-    return { outcome: '成格', reason: reasons.join('; ') }
+    return { outcome: '成格', reason: reasons.join('; '), xiangShen }
   }
-  return { outcome: '不成格', reason: '财孤(无食伤生、无官护),未被比劫夺尽' }
+  return { outcome: '不成格', reason: '财孤(无食伤生、无官护),未被比劫夺尽', xiangShen: null }
 }
 
-function assessYin(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessYin(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   const reasons: string[] = []
   let success = false
+  let xiangShen: XiangShen | null = null
 
   // 成格条件：官杀生印 OR 印旺用食伤泄秀
   const hasGuanSha = hasTenGodActive(ctx, '正官') || hasTenGodActive(ctx, '七杀')
@@ -442,10 +486,12 @@ function assessYin(ctx: ChartContext, _extract: ExtractResult): { outcome: Outco
   if (hasGuanSha) {
     success = true
     reasons.push('官杀生印')
+    xiangShen = xs('官杀', '官杀生印')
   }
   if (hasShiShang) {
     success = true
     reasons.push('印旺用食伤泄秀')
+    if (!xiangShen) xiangShen = xs('食伤', '食伤泄秀')
   }
 
   // 破格条件
@@ -467,23 +513,25 @@ function assessYin(ctx: ChartContext, _extract: ExtractResult): { outcome: Outco
   }
 
   if (failures.length > 0) {
-    return { outcome: '破格', reason: failures.join('; ') }
+    return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
   }
   if (success) {
-    return { outcome: '成格', reason: reasons.join('; ') }
+    return { outcome: '成格', reason: reasons.join('; '), xiangShen }
   }
-  return { outcome: '不成格', reason: '印孤(无官杀生),未被财破' }
+  return { outcome: '不成格', reason: '印孤(无官杀生),未被财破', xiangShen: null }
 }
 
-function assessShiShen(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessShiShen(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   const reasons: string[] = []
   let success = false
+  let xiangShen: XiangShen | null = null
 
   // 成格条件：食神生财（吐秀生财）—— 规格书：只实现食神生财，不实现食神制杀
   const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
   if (hasCai) {
     success = true
     reasons.push('食神生财(吐秀生财)')
+    xiangShen = xs('财星', '食神生财')
   }
 
   // 破格条件
@@ -502,17 +550,18 @@ function assessShiShen(ctx: ChartContext, _extract: ExtractResult): { outcome: O
   }
 
   if (failures.length > 0) {
-    return { outcome: '破格', reason: failures.join('; ') }
+    return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
   }
   if (success) {
-    return { outcome: '成格', reason: reasons.join('; ') }
+    return { outcome: '成格', reason: reasons.join('; '), xiangShen }
   }
-  return { outcome: '不成格', reason: '食神孤(不生财、未被枭夺)' }
+  return { outcome: '不成格', reason: '食神孤(不生财、未被枭夺)', xiangShen: null }
 }
 
-function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   const reasons: string[] = []
   let success = false
+  let xiangShen: XiangShen | null = null
 
   // 成格条件：伤官生财 OR 伤官佩印 OR 伤官带杀无财
   const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
@@ -523,6 +572,7 @@ function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
   if (hasCai) {
     success = true
     reasons.push('伤官生财')
+    xiangShen = xs('财星', '伤官生财')
   }
 
   // 伤官佩印：印在干支出现 且 印未被财破
@@ -533,6 +583,7 @@ function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
     if (!yinBroken) {
       success = true
       reasons.push('伤官佩印')
+      if (!xiangShen) xiangShen = xs('印星', '伤官佩印')
     }
   }
 
@@ -545,6 +596,7 @@ function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
     if (!shaComboed && !hasCaiActive) {
       success = true
       reasons.push('伤官带杀无财')
+      if (!xiangShen) xiangShen = xs('七杀', '伤官带杀')
     }
   }
 
@@ -556,7 +608,13 @@ function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
     if (!hasYinZhiShang(ctx) && !hasCaiTongGuan(ctx)) {
       failures.push('伤官见官,无印制伤、无财通关')
     } else {
-      reasons.push(hasYinZhiShang(ctx) ? '印制伤解伤官见官' : '财通关解伤官见官')
+      if (hasYinZhiShang(ctx)) {
+        reasons.push('印制伤解伤官见官')
+        xiangShen = xs('印星', '印制伤护官')
+      } else {
+        reasons.push('财通关解伤官见官')
+        xiangShen = xs('财星', '财通关护官')
+      }
     }
   }
 
@@ -571,18 +629,18 @@ function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): { outcome:
   }
 
   if (failures.length > 0) {
-    return { outcome: '破格', reason: failures.join('; ') }
+    return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
   }
   if (success) {
-    return { outcome: '成格', reason: reasons.join('; ') }
+    return { outcome: '成格', reason: reasons.join('; '), xiangShen }
   }
-  return { outcome: '不成格', reason: '伤官孤(不生财、无印佩、无杀配),未见官破' }
+  return { outcome: '不成格', reason: '伤官孤(不生财、无印佩、无杀配),未见官破', xiangShen: null }
 }
 
-function assessLuJie(ctx: ChartContext, extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessLuJie(ctx: ChartContext, extract: ExtractResult): AssessResult {
   // 建禄月劫格：格名已定，成败看天干所透用神，套对应格规则
   if (!extract.luJieYongShenTenGod) {
-    return { outcome: '不成格', reason: '天干无财官杀食可取(纯比劫印)' }
+    return { outcome: '不成格', reason: '天干无财官杀食可取(纯比劫印)', xiangShen: null }
   }
 
   const yongShenTenGod = extract.luJieYongShenTenGod
@@ -593,9 +651,11 @@ function assessLuJie(ctx: ChartContext, extract: ExtractResult): { outcome: Outc
     const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
     const hasYin = hasTenGodActive(ctx, '正印') || hasTenGodActive(ctx, '偏印')
     if (hasCai || hasYin) {
-      return { outcome: '成格', reason: `用神${yongShenTenGod},透官逢${hasCai ? '财' : ''}${hasCai && hasYin ? '/' : ''}${hasYin ? '印' : ''}` }
+      const xsGod = hasCai ? '财星' : '印星'
+      const xsRole = hasCai ? '财生官' : '印护官'
+      return { outcome: '成格', reason: `用神${yongShenTenGod},透官逢${hasCai ? '财' : ''}${hasCai && hasYin ? '/' : ''}${hasYin ? '印' : ''}`, xiangShen: xs(xsGod, xsRole) }
     }
-    return { outcome: '不成格', reason: `用神${yongShenTenGod},财印俱无` }
+    return { outcome: '不成格', reason: `用神${yongShenTenGod},财印俱无`, xiangShen: null }
   }
 
   if (yongShenTenGod === '七杀') {
@@ -608,45 +668,46 @@ function assessLuJie(ctx: ChartContext, extract: ExtractResult): { outcome: Outc
     const shaComboed = shaStems.some((s) => isStemComboed(s, ctx))
 
     if (shiZhi) {
-      return { outcome: '成格', reason: `用神${yongShenTenGod},透杀遇食神制伏` }
+      return { outcome: '成格', reason: `用神${yongShenTenGod},透杀遇食神制伏`, xiangShen: xs('食神', '食神制杀') }
     }
     // 合绊算制约 (3.2.5)，层次受损
     if (shaComboed) {
+      const comboGod = getComboGodForSha(ctx) ?? '劫财'
       const parts = [`用神${yongShenTenGod},透杀被合绊制约(层次受损)`]
       if (yinHua) parts.push('兼有印化')
-      return { outcome: '成格', reason: parts.join('; ') }
+      return { outcome: '成格', reason: parts.join('; '), xiangShen: xs(comboGod, '合绊制杀') }
     }
     if (yinHua) {
-      return { outcome: '成格', reason: `用神${yongShenTenGod},透杀遇印星化杀` }
+      return { outcome: '成格', reason: `用神${yongShenTenGod},透杀遇印星化杀`, xiangShen: xs('印星', '印星化杀') }
     }
 
-    return { outcome: '破格', reason: '透杀无制(无食制、无印化、无合绊)' }
+    return { outcome: '破格', reason: '透杀无制(无食制、无印化、无合绊)', xiangShen: null }
   }
 
   if (yongShenTenGod === '正财' || yongShenTenGod === '偏财') {
     // 透财套财格：需要食伤生财（转劫生财）
     const hasShiShang = hasTenGodActive(ctx, '食神') || hasTenGodActive(ctx, '伤官')
     if (hasShiShang) {
-      return { outcome: '成格', reason: `用神${yongShenTenGod},透财逢食伤(转劫生财)` }
+      return { outcome: '成格', reason: `用神${yongShenTenGod},透财逢食伤(转劫生财)`, xiangShen: xs('食伤', '转劫生财') }
     }
     // 比劫夺财？
     const hasBiJie = hasTenGodActive(ctx, '比肩') || hasTenGodActive(ctx, '劫财')
     // 日主就是比劫之一（建禄月劫本身比劫当令），所以比劫重
     if (!hasShiShang && hasBiJie) {
-      return { outcome: '破格', reason: '透财被比劫夺尽' }
+      return { outcome: '破格', reason: '透财被比劫夺尽', xiangShen: null }
     }
-    return { outcome: '不成格', reason: `用神${yongShenTenGod},配套不全` }
+    return { outcome: '不成格', reason: `用神${yongShenTenGod},配套不全`, xiangShen: null }
   }
 
   if (yongShenTenGod === '食神' || yongShenTenGod === '伤官') {
     // 透食伤泄秀
-    return { outcome: '成格', reason: `用神${yongShenTenGod},透食伤泄秀(无财官时,秀气)` }
+    return { outcome: '成格', reason: `用神${yongShenTenGod},透食伤泄秀(无财官时,秀气)`, xiangShen: xs('食伤', '泄秀') }
   }
 
-  return { outcome: '不成格', reason: `用神${yongShenTenGod},配套不全` }
+  return { outcome: '不成格', reason: `用神${yongShenTenGod},配套不全`, xiangShen: null }
 }
 
-function assessYangRen(ctx: ChartContext, _extract: ExtractResult): { outcome: Outcome; reason: string } {
+function assessYangRen(ctx: ChartContext, _extract: ExtractResult): AssessResult {
   // 阳刃格：用官杀制刃
   const hasGuan = hasTenGodActive(ctx, '正官')
   const hasSha = hasTenGodActive(ctx, '七杀')
@@ -654,7 +715,7 @@ function assessYangRen(ctx: ChartContext, _extract: ExtractResult): { outcome: O
   const hasYin = hasTenGodActive(ctx, '正印') || hasTenGodActive(ctx, '偏印')
 
   if (!hasGuan && !hasSha) {
-    return { outcome: '破格', reason: '阳刃无官煞制(刃失制→破格)' }
+    return { outcome: '破格', reason: '阳刃无官煞制(刃失制→破格)', xiangShen: null }
   }
 
   // 官煞制刃但见伤官 → 破格（无救）
@@ -662,20 +723,27 @@ function assessYangRen(ctx: ChartContext, _extract: ExtractResult): { outcome: O
     const yinRescue = hasYinZhiShang(ctx)
     const caiRescue = hasCaiTongGuan(ctx)
     if (!yinRescue && !caiRescue) {
-      return { outcome: '破格', reason: '官煞制刃但见伤官,无印制伤、无财通关' }
+      return { outcome: '破格', reason: '官煞制刃但见伤官,无印制伤、无财通关', xiangShen: null }
     }
   }
 
   // 制刃的官煞被冲？检查月支
   if (isMonthBranchClashed(ctx)) {
-    return { outcome: '破格', reason: '制刃的官煞(月支)被冲,无会合解' }
+    return { outcome: '破格', reason: '制刃的官煞(月支)被冲,无会合解', xiangShen: null }
   }
 
   const reasons = ['透官煞制刃']
   if (!hasShangGuan) reasons.push('不见伤官')
   if (hasYin) reasons.push('有财印相随')
 
-  return { outcome: '成格', reason: reasons.join('; ') }
+  // 相神：官煞制刃
+  let xiangShen = xs('官杀', '官煞制刃')
+  // 若见伤官被印救，相神升级为印
+  if (hasShangGuan && hasYinZhiShang(ctx)) {
+    xiangShen = xs('印星', '印制伤护官')
+  }
+
+  return { outcome: '成格', reason: reasons.join('; '), xiangShen }
 }
 
 // ── 主入口 ──
@@ -683,7 +751,7 @@ function assessYangRen(ctx: ChartContext, _extract: ExtractResult): { outcome: O
 export function assessOutcome(
   bazi: BaziResult,
   extract: ExtractResult,
-): { outcome: Outcome; reason: string } {
+): AssessResult {
   const ctx = buildContext(bazi)
 
   switch (extract.category) {
@@ -714,6 +782,6 @@ export function assessOutcome(
     case '阳刃格':
       return assessYangRen(ctx, extract)
     default:
-      return { outcome: '不成格', reason: '未知格局类型' }
+      return { outcome: '不成格', reason: '未知格局类型', xiangShen: null }
   }
 }

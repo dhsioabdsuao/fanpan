@@ -15,6 +15,7 @@ import { ElementChart } from '@/components/bazi/ElementChart'
 import { Interpretation } from '@/components/bazi/Interpretation'
 import { PatternBlock } from '@/components/bazi/PatternBlock'
 import { StrengthBlock } from '@/components/bazi/StrengthBlock'
+import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
 
 function SkeletonResult() {
   return (
@@ -126,6 +127,7 @@ function ResultContent() {
         <PillarTable result={result} hideHour={noHour === '1'} />
         <PatternBlock result={result} />
         <StrengthBlock result={result} />
+        <AnalysisBlock result={result} />
         <ElementChart result={result} />
         <Interpretation result={result} />
 

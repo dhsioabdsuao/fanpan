@@ -40,6 +40,15 @@ export function PatternBlock({ result }: { result: BaziResult }) {
           )}
         </div>
 
+        {/* 相神：仅成格时展示 */}
+        {ao.xiangShen && (
+          <div className="text-sm text-stone-600">
+            <span className="text-stone-400">相神 </span>
+            <span className="font-medium">{ao.xiangShen.god}</span>
+            <span className="text-stone-400">（{ao.xiangShen.role}）</span>
+          </div>
+        )}
+
         {/* 格神 */}
         <div className="text-sm text-stone-500">
           <span className="text-stone-400">格神 </span>

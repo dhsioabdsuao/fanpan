@@ -17,6 +17,13 @@ export type Outcome = '成格' | '不成格' | '破格'
 
 export type PatternOrigin = '透干' | '会支' | '不透不会' | '比劫当令'
 
+export interface XiangShen {
+  /** 相神十神名，如 "劫财"、"食神"、"正印" */
+  god: string
+  /** 相神作用描述，如 "合绊制杀"、"食神制杀"、"印制伤护官" */
+  role: string
+}
+
 export interface PatternResult {
   category: PatternCategory
   displayName: PatternDisplayName
