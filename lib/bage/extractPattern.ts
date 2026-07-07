@@ -10,6 +10,7 @@ import {
   isHuaRenWeiYin,
 } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
+import { isCongSha, isCongCai } from './congGe'
 
 // ── 十神 → 格局映射 ──
 const TEN_GOD_TO_CATEGORY: Record<string, PatternCategory> = {
@@ -70,6 +71,45 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     pillars.day.branch,
     pillars.hour.branch,
   ]
+
+  // ── 从格优先判定（《滴天髓》原文·任铁樵注）──
+  // 从格在八格之前判定。真从则直取从格，假从（返回null）继续走八格。
+
+  const congShaResult = isCongSha(bazi)
+  if (congShaResult) {
+    const shaStem = touGanStems.find((s) => {
+      const tg = getTenGod(dayMaster, s)
+      return tg === '正官' || tg === '七杀'
+    })
+    return {
+      category: '从杀格',
+      displayName: '从杀格',
+      yongShen: shaStem ?? '官杀',
+      patternGod: `日主${dayMaster}无根,全局官杀强旺,从杀为格`,
+      origin: '从格',
+      patternStem: shaStem ?? null,
+      patternElement: null,
+      luJieYongShenTenGod: null,
+    }
+  }
+
+  const congCaiResult = isCongCai(bazi)
+  if (congCaiResult) {
+    const caiStem = touGanStems.find((s) => {
+      const tg = getTenGod(dayMaster, s)
+      return tg === '正财' || tg === '偏财'
+    })
+    return {
+      category: '从财格',
+      displayName: '从财格',
+      yongShen: caiStem ?? '财星',
+      patternGod: `日主${dayMaster}无根,全局财星强旺,从财为格`,
+      origin: '从格',
+      patternStem: caiStem ?? null,
+      patternElement: null,
+      luJieYongShenTenGod: null,
+    }
+  }
 
   // 调候特例：化刃为印——戊土日主 + 午月 + 天干透丙丁 + 地支会火局
   // 必须在分流之前检查，因为午月本气丁火为正印，不会进入比劫分支

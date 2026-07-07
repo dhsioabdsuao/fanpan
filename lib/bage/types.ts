@@ -5,6 +5,7 @@ export type PatternCategory =
   | '财格' | '印格'
   | '食神格' | '伤官格'
   | '建禄月劫格' | '阳刃格'
+  | '从杀格' | '从财格'
 
 export type PatternDisplayName =
   | '正官格' | '七杀格'
@@ -12,10 +13,11 @@ export type PatternDisplayName =
   | '正印格' | '偏印格'
   | '食神格' | '伤官格'
   | '建禄月劫格' | '阳刃格'
+  | '从杀格' | '从财格'
 
 export type Outcome = '成格' | '不成格' | '破格'
 
-export type PatternOrigin = '透干' | '会支' | '不透不会' | '比劫当令'
+export type PatternOrigin = '透干' | '会支' | '不透不会' | '比劫当令' | '从格'
 
 export interface XiangShen {
   /** 相神十神名，如 "劫财"、"食神"、"正印" */

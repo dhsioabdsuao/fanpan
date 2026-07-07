@@ -7,6 +7,7 @@ import { isJinShuiShangGuan, isHuaRenWeiYin, isShangGuanStrong, isYinYouGen } fr
 import { getTiaoHouYongShen } from '../bage/tiaoHou'
 import { generateAnalysis } from '../bage/generateAnalysis'
 import { determineStrength } from '../strength/determineStrength'
+import { isCongSha, isCongCai } from '../bage/congGe'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -586,5 +587,37 @@ describe('generateAnalysis 调候建议', () => {
     expect(result.analysis).toContain('从五行调候的角度看')
     expect(result.analysis).toContain('甲木生于子月')
     expect(result.analysis).toContain('丁、庚、丙')
+  })
+})
+
+// ── 从格判定：isCongSha / isCongCai（《滴天髓》原文·任铁樵注）──
+
+describe('从格判定', () => {
+  it('真从杀格：乙木日主，三透七杀，巳酉丑合金局', () => {
+    const bazi = calculateBazi(makeInput({ year: 2002, month: 1, day: 17 }))
+    const result = isCongSha(bazi)
+    expect(result).not.toBeNull()
+    expect(result!.name).toBe('从杀格')
+    expect(result!.reason).toContain('官杀强旺')
+  })
+
+  it('假从杀格：透七杀+会金局，但天干透印星化杀', () => {
+    const bazi = calculateBazi(makeInput({ year: 2003, month: 1, day: 12 }))
+    const result = isCongSha(bazi)
+    expect(result).toBeNull()
+  })
+
+  it('真从财格：癸水日主，透偏财，三巳火局', () => {
+    const bazi = calculateBazi(makeInput({ year: 2005, month: 5, day: 9 }))
+    const result = isCongCai(bazi)
+    expect(result).not.toBeNull()
+    expect(result!.name).toBe('从财格')
+    expect(result!.reason).toContain('财星强旺')
+  })
+
+  it('假从财格：透财+会火局，但官杀透干无食伤制，财党杀', () => {
+    const bazi = calculateBazi(makeInput({ year: 2018, month: 6, day: 20 }))
+    const result = isCongCai(bazi)
+    expect(result).toBeNull()
   })
 })

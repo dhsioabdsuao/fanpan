@@ -839,6 +839,24 @@ export function assessOutcome(
       return assessLuJie(ctx, extract)
     case '阳刃格':
       return assessYangRen(ctx, extract)
+    case '从杀格': {
+      // 从杀格：用神为官杀，相神为生杀之财星
+      const hasCai = hasTenGodInStems(ctx, '正财') || hasTenGodInStems(ctx, '偏财')
+      return {
+        outcome: '成格',
+        reason: '真从杀格，日主无根从官杀之势，格局成立',
+        xiangShen: hasCai ? { god: '财星', role: '财生官杀，助从杀之势' } : null,
+      }
+    }
+    case '从财格': {
+      // 从财格：用神为财星，相神为生财之食伤
+      const hasShiShang = hasTenGodInStems(ctx, '食神') || hasTenGodInStems(ctx, '伤官')
+      return {
+        outcome: '成格',
+        reason: '真从财格，日主无根从财之势，格局成立',
+        xiangShen: hasShiShang ? { god: '食伤', role: '食伤生财，助从财之势' } : null,
+      }
+    }
     default:
       return { outcome: '不成格', reason: '未知格局类型', xiangShen: null }
   }

@@ -53,6 +53,8 @@ const PATTERN_BRIEF: Record<string, string> = {
   '伤官格': '伤官格——你的命局以"伤官"为主导，聪明绝顶，不愿走寻常路',
   '建禄月劫格': '建禄月劫格——你的命局以"比劫"为主导，天性独立，凡事喜欢靠自己，不喜受人摆布',
   '阳刃格': '阳刃格——你的命局以"阳刃"为主导，性格刚烈果断，是天生的行动派',
+  '从杀格': '从杀格——你的命局日主无根，全局官杀强旺，顺势从杀。你天生有强大的压力转化能力和危机嗅觉',
+  '从财格': '从财格——你的命局日主无根，全局财星汇聚，顺势从财。你对资源和机会有极强的吸附能力',
 }
 
 // ── 用神十神获取 ──
@@ -166,6 +168,8 @@ function getChengGeSummary(
     if (cat === '伤官格') return '野马有了骑手，速度和方向都有了'
     if (cat === '建禄月劫格') return '一个人走得快，有了帮手走得远'
     if (cat === '阳刃格') return '宝刀配了鞘，能收能放'
+    if (cat === '从杀格') return '顺风驶船，浪越大你走得越快'
+    if (cat === '从财格') return '钱塘江的潮水来了，你是冲在最前面的浪'
     return '梁柱齐全的房子，住着踏实'
   }
 
@@ -173,6 +177,8 @@ function getChengGeSummary(
   if (cat === '杀格') return '一把快刀，不靠外力，自成锋芒'
   if (cat === '官格') return '独行侠也有规则，不靠别人也走得稳'
   if (cat === '建禄月劫格') return '天生靠自己的命，也走对了方向'
+  if (cat === '从杀格') return '孤狼一头扎进丛林，越危险越强大'
+  if (cat === '从财格') return '天生吸金的体质，不靠别人也能聚沙成塔'
 
   return '自成体系，不假外求，一棵树也能成林'
 }
@@ -203,6 +209,8 @@ function getOriginNote(bazi: BaziResult, pattern: ExtractResult): string {
       return `月令在"${mb}"，本气不透、无合会局，以月支本气取格`
     case '比劫当令':
       return `月令在"${mb}"，本气${benQiTenGod}当令，天干透${pattern.luJieYongShenTenGod ?? '财官'}，取建禄月劫格而以透干为用`
+    case '从格':
+      return `日主无根，全局气势偏于一方，依《滴天髓》"从得真者只论从"取为从格`
     default:
       return `月令在"${mb}"，综合判断取格`
   }
