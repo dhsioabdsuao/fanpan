@@ -1,5 +1,6 @@
-import type { ElementType } from '@/types/bazi'
+import type { ElementType, BaziResult } from '@/types/bazi'
 import { getStemElement } from '@/lib/bazi-utils'
+import { getTenGod } from '@/lib/bazi-utils'
 
 // ── 规格书 1.3 藏干表 ──
 const SPEC_HIDDEN_STEMS: Record<string, string[]> = {
@@ -243,9 +244,62 @@ export function elementToTenGod(
 
 export { getStemElement }
 
-// ── 调候判断 ──
+// ── 十二长生：长生/帝旺位置（定性判断有根无根用）──
 
-import type { BaziResult } from '@/types/bazi'
+const CHANG_SHENG: Record<string, string> = {
+  甲: '亥', 乙: '午', 丙: '寅', 丁: '酉', 戊: '寅',
+  己: '酉', 庚: '巳', 辛: '子', 壬: '申', 癸: '卯',
+}
+
+const WANG_POSITIONS: Record<string, string> = {
+  甲: '卯', 乙: '寅', 丙: '午', 丁: '巳', 戊: '午',
+  己: '巳', 庚: '酉', 辛: '申', 壬: '子', 癸: '亥',
+}
+
+/** 天干在地支是否有强根（长生/禄/帝旺） */
+function stemHasStrongRoot(stem: string, branches: string[]): boolean {
+  const lu = getLu(stem)
+  const changSheng = CHANG_SHENG[stem]
+  const wang = WANG_POSITIONS[stem]
+  return branches.includes(lu) || branches.includes(changSheng) || branches.includes(wang)
+}
+
+// ── 伤官/印强弱判断 ──
+
+/** 伤官是否"旺"：伤官透干，且在地支有强根，或地支三会/三合成伤官局 */
+export function isShangGuanStrong(bazi: BaziResult): boolean {
+  const { dayMaster, pillars } = bazi
+  const touStems = [pillars.year.stem, pillars.month.stem, pillars.hour.stem]
+  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
+
+  const shangGuanStem = touStems.find((s) => getTenGod(dayMaster, s) === '伤官')
+  if (!shangGuanStem) return false
+
+  // 透干的伤官是否有强根
+  if (stemHasStrongRoot(shangGuanStem, branches)) return true
+
+  // 地支是否三会/三合成伤官所属五行局
+  const sgElement = getStemElement(shangGuanStem)
+  const allHe = detectAllHe(branches)
+  return allHe.some((h) => h.element === sgElement && (h.type === '三会' || h.type === '三合'))
+}
+
+/** 印是否有根：印星透干，且在地支有强根（长生/禄/帝旺） */
+export function isYinYouGen(bazi: BaziResult): boolean {
+  const { dayMaster, pillars } = bazi
+  const touStems = [pillars.year.stem, pillars.month.stem, pillars.hour.stem]
+  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
+
+  const yinStem = touStems.find((s) => {
+    const tg = getTenGod(dayMaster, s)
+    return tg === '正印' || tg === '偏印'
+  })
+  if (!yinStem) return false
+
+  return stemHasStrongRoot(yinStem, branches)
+}
+
+// ── 调候判断 ──
 
 /** 化刃为印：戊土日主 + 午月 + 天干透丙丁 + 地支会火局（巳午未/寅午戌）*/
 export function isHuaRenWeiYin(bazi: BaziResult): boolean {

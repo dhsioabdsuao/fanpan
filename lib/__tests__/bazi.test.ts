@@ -3,7 +3,7 @@ import { calculateBazi } from '../bazi'
 import type { BaziInput } from '@/types/bazi'
 import { extractPattern } from '../bage/extractPattern'
 import { assessOutcome } from '../bage/assessOutcome'
-import { isJinShuiShangGuan, isHuaRenWeiYin } from '../bage/helpers'
+import { isJinShuiShangGuan, isHuaRenWeiYin, isShangGuanStrong, isYinYouGen } from '../bage/helpers'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -351,5 +351,80 @@ describe('assessOutcome 食神格弃食就煞而透印', () => {
     expect(ao.outcome).toBe('破格')
     expect(ao.reason).toContain('枭神夺食')
     expect(ao.reason).not.toContain('弃食就煞')
+  })
+})
+
+// ── 伤官格强弱门槛：isShangGuanStrong / isYinYouGen ──
+
+describe('isShangGuanStrong', () => {
+  it('伤官透干 + 地支有强根 → true', () => {
+    // 2016-12-05 08:00 辛酉日, 壬水伤官透干, 壬长生在申(年支) → 有根
+    const b = calculateBazi(makeInput({ year: 2016, month: 12, day: 5, hour: 8 }))
+    expect(isShangGuanStrong(b)).toBe(true)
+  })
+
+  it('伤官透干但无强根/不成局 → false', () => {
+    // 1991-04-12 09:00 壬子日, 乙木伤官透时干, 乙禄卯/长生午/旺寅
+    // 地支未/辰/子/巳 — 无卯/午/寅 → 无强根
+    const b = calculateBazi(makeInput({ year: 1991, month: 4, day: 12, hour: 9 }))
+    // 日主壬, 伤官乙透时干
+    expect(isShangGuanStrong(b)).toBe(false)
+  })
+
+  it('伤官未透干 → false', () => {
+    // 2000-06-15: 甲木日主, 伤官丁火未透干
+    const b = calculateBazi(makeInput({ year: 2000, month: 6, day: 15, hour: 10 }))
+    expect(isShangGuanStrong(b)).toBe(false)
+  })
+})
+
+describe('isYinYouGen', () => {
+  it('印透干 + 地支有强根 → true', () => {
+    // 2016-12-05 08:00: 己土印透月干, 己长生在酉(日支) → 有根
+    const b = calculateBazi(makeInput({ year: 2016, month: 12, day: 5, hour: 8 }))
+    expect(isYinYouGen(b)).toBe(true)
+  })
+
+  it('印透干但无强根 → false', () => {
+    // 1998-01-13 08:00: 戊土印透月干, 戊长生寅/禄巳/旺午
+    // 地支丑/丑/申/辰 — 无寅/巳/午 → 无强根
+    const b = calculateBazi(makeInput({ year: 1998, month: 1, day: 13, hour: 8 }))
+    expect(isYinYouGen(b)).toBe(false)
+  })
+})
+
+describe('assessOutcome 伤官格强弱门槛', () => {
+  it('2016-12-05 辛酉 → 伤官旺 + 印有根 → 成格, 伤官佩印', () => {
+    const b = calculateBazi(makeInput({ year: 2016, month: 12, day: 5, hour: 8 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('伤官格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('伤官佩印')
+  })
+
+  it('1991-04-12 壬子 → 伤官透干但不旺 → 不成格', () => {
+    // 乙木伤官透时干, 但无强根/不成局, 印有根但伤官不旺 → 佩印乏力
+    const b = calculateBazi(makeInput({ year: 1991, month: 4, day: 12, hour: 9 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('伤官格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('不成格')
+    expect(ao.reason).toContain('伤官不旺')
+    expect(ao.reason).toContain('佩印乏力')
+  })
+
+  it('1993-04-18 庚午 → 伤官旺 + 中和 → 成格, 伤官带杀无财', () => {
+    // 庚金日主, 癸水伤官透年干, 癸禄在子(时支) → 伤官旺
+    // 日主中和, 满足带杀前置条件
+    const b = calculateBazi(makeInput({ year: 1993, month: 4, day: 18, hour: 23 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('伤官格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('伤官带杀无财')
   })
 })

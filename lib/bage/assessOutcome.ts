@@ -16,6 +16,8 @@ import {
   isHuShenTransparent,
   elementToTenGod,
   isJinShuiShangGuan,
+  isShangGuanStrong,
+  isYinYouGen,
 } from './helpers'
 import type { FormedHe } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
@@ -577,10 +579,14 @@ function assessShangGuan(
   ctx: ChartContext,
   _extract: ExtractResult,
   isJinShui: boolean,
+  shangGuanStrong: boolean,
+  yinYouGen: boolean,
+  bodyStrong: boolean,
 ): AssessResult {
   const reasons: string[] = []
   let success = false
   let xiangShen: XiangShen | null = null
+  const preFailures: string[] = []
 
   // 成格条件：伤官生财 OR 伤官佩印 OR 伤官带杀无财
   const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
@@ -597,12 +603,21 @@ function assessShangGuan(
   // 伤官佩印：印在干支出现 且 印未被财破
   // "印未被财破"：财必须活跃（透干或合会成局）才算能破印；藏干内单独的财不算
   const hasCaiActive = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
+  const hasShangGuanTou = hasTenGodInStems(ctx, '伤官')
   if (hasYin) {
     const yinBroken = hasCaiActive && !hasTenGodActive(ctx, '比肩') && !hasTenGodActive(ctx, '劫财')
     if (!yinBroken) {
-      success = true
-      reasons.push('伤官佩印')
-      if (!xiangShen) xiangShen = xs('印星', '伤官佩印')
+      // 【本系统决策·定性简化版】伤官佩印需伤官旺、印有根，否则降为不成格
+      if (hasShangGuanTou && !shangGuanStrong) {
+        preFailures.push('伤官不旺(透干但无强根/不成局),佩印乏力')
+      } else if (hasShangGuanTou && !yinYouGen) {
+        preFailures.push('印星无根(透干但地支无长生/禄/旺),佩印乏力')
+      } else if (hasShangGuanTou) {
+        success = true
+        reasons.push('伤官佩印')
+        if (!xiangShen) xiangShen = xs('印星', '伤官佩印')
+      }
+      // 伤官未透干 → 佩印不成立，留给最后的不成格
     }
   }
 
@@ -613,9 +628,17 @@ function assessShangGuan(
     const shaStems = ctx.stems.filter((s) => getTenGod(ctx.dayMaster, s) === '七杀')
     const shaComboed = shaStems.some((s) => isStemComboed(s, ctx))
     if (!shaComboed && !hasCaiActive) {
-      success = true
-      reasons.push('伤官带杀无财')
-      if (!xiangShen) xiangShen = xs('七杀', '伤官带杀')
+      // 【本系统决策·定性简化版】伤官带杀需伤官旺、日主身弱或中和
+      if (hasShangGuanTou && !shangGuanStrong) {
+        preFailures.push('伤官不旺(透干但无强根/不成局),不任带杀')
+      } else if (hasShangGuanTou && bodyStrong) {
+        preFailures.push('日主身强,伤官带杀不成立(身强可直接担杀,无需伤官引化)')
+      } else if (hasShangGuanTou) {
+        success = true
+        reasons.push('伤官带杀无财')
+        if (!xiangShen) xiangShen = xs('七杀', '伤官带杀')
+      }
+      // 伤官未透干 → 带杀不成立，留给最后的不成格
     }
   }
 
@@ -654,6 +677,9 @@ function assessShangGuan(
 
   if (failures.length > 0) {
     return { outcome: '破格', reason: failures.join('; '), xiangShen: null }
+  }
+  if (preFailures.length > 0 && !success) {
+    return { outcome: '不成格', reason: preFailures.join('; '), xiangShen: null }
   }
   if (success) {
     return { outcome: '成格', reason: reasons.join('; '), xiangShen }
@@ -799,8 +825,16 @@ export function assessOutcome(
       return assessYin(ctx, extract)
     case '食神格':
       return assessShiShen(ctx, extract)
-    case '伤官格':
-      return assessShangGuan(ctx, extract, isJinShuiShangGuan(bazi))
+    case '伤官格': {
+      const str = determineStrength(bazi)
+      return assessShangGuan(
+        ctx, extract,
+        isJinShuiShangGuan(bazi),
+        isShangGuanStrong(bazi),
+        isYinYouGen(bazi),
+        str.level === '身强',
+      )
+    }
     case '建禄月劫格':
       return assessLuJie(ctx, extract)
     case '阳刃格':
