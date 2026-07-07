@@ -4,6 +4,9 @@ import type { BaziInput } from '@/types/bazi'
 import { extractPattern } from '../bage/extractPattern'
 import { assessOutcome } from '../bage/assessOutcome'
 import { isJinShuiShangGuan, isHuaRenWeiYin, isShangGuanStrong, isYinYouGen } from '../bage/helpers'
+import { getTiaoHouYongShen } from '../bage/tiaoHou'
+import { generateAnalysis } from '../bage/generateAnalysis'
+import { determineStrength } from '../strength/determineStrength'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -426,5 +429,82 @@ describe('assessOutcome 伤官格强弱门槛', () => {
     const ao = assessOutcome(b, pat)
     expect(ao.outcome).toBe('成格')
     expect(ao.reason).toContain('伤官带杀无财')
+  })
+})
+
+// ── 调候查表：getTiaoHouYongShen ──
+
+describe('getTiaoHouYongShen', () => {
+  it('甲木午月 → 壬、庚、丁', () => {
+    expect(getTiaoHouYongShen('甲', '午')).toEqual(['壬', '庚', '丁'])
+  })
+
+  it('丙火子月 → 甲、戊、庚', () => {
+    expect(getTiaoHouYongShen('丙', '子')).toEqual(['甲', '戊', '庚'])
+  })
+
+  it('庚金子月 → 丙、甲', () => {
+    expect(getTiaoHouYongShen('庚', '子')).toEqual(['丙', '甲'])
+  })
+
+  it('癸水午月 → 庚、辛、癸', () => {
+    expect(getTiaoHouYongShen('癸', '午')).toEqual(['庚', '辛', '癸'])
+  })
+
+  it('未收录的组合返回空数组', () => {
+    expect(getTiaoHouYongShen('甲', '子')).toEqual([])
+    expect(getTiaoHouYongShen('壬', '寅')).toEqual([])
+  })
+
+  it('全部十条规则逐条验证', () => {
+    // 甲木午月
+    expect(getTiaoHouYongShen('甲', '午')).toEqual(['壬', '庚', '丁'])
+    // 乙木午月
+    expect(getTiaoHouYongShen('乙', '午')).toEqual(['癸', '丙'])
+    // 丙火子月
+    expect(getTiaoHouYongShen('丙', '子')).toEqual(['甲', '戊', '庚'])
+    // 丁火子月
+    expect(getTiaoHouYongShen('丁', '子')).toEqual(['甲', '庚'])
+    // 戊土午月
+    expect(getTiaoHouYongShen('戊', '午')).toEqual(['壬', '甲', '丙'])
+    // 己土午月
+    expect(getTiaoHouYongShen('己', '午')).toEqual(['癸', '丙'])
+    // 庚金子月
+    expect(getTiaoHouYongShen('庚', '子')).toEqual(['丙', '甲'])
+    // 辛金子月
+    expect(getTiaoHouYongShen('辛', '子')).toEqual(['丙', '戊', '壬'])
+    // 壬水午月
+    expect(getTiaoHouYongShen('壬', '午')).toEqual(['癸', '庚', '辛'])
+    // 癸水午月
+    expect(getTiaoHouYongShen('癸', '午')).toEqual(['庚', '辛', '癸'])
+  })
+})
+
+// ── 调候诊断接入格局解析文案 ──
+
+describe('generateAnalysis 调候建议', () => {
+  it('甲木午月 → 发展建议含调候内容', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 6, day: 15 }))
+    const pattern = extractPattern(bazi)
+    const outcome = assessOutcome(bazi, pattern)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern, outcome, strength })
+
+    expect(result.analysis).toContain('从五行调候的角度看')
+    expect(result.analysis).toContain('甲木生于午月')
+    expect(result.analysis).toContain('壬、庚、丁')
+    expect(result.analysis).toContain('水（学习/沟通）')
+    expect(result.analysis).toContain('金（技术/专业技能）')
+    expect(result.analysis).toContain('火（展示/分享）')
+  })
+
+  it('甲木子月 → 发展建议不含调候内容', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 12, day: 12 }))
+    const pattern = extractPattern(bazi)
+    const outcome = assessOutcome(bazi, pattern)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern, outcome, strength })
+
+    expect(result.analysis).not.toContain('从五行调候的角度看')
   })
 })

@@ -2,8 +2,9 @@ import type { BaziResult, ElementType } from '@/types/bazi'
 import type { ExtractResult } from './extractPattern'
 import type { AssessResult } from './assessOutcome'
 import type { StrengthResult } from '@/lib/strength/determineStrength'
-import { getHiddenStemsSpec } from './helpers'
+import { getHiddenStemsSpec, getStemElement } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
+import { getTiaoHouYongShen } from './tiaoHou'
 
 // ── 类型 ──
 
@@ -413,6 +414,28 @@ function elementDomain(el: ElementType): string {
   return map[el] ?? el
 }
 
+// ── 调候用神 → 发展建议 ──
+
+const TIAO_HOU_ELEMENT_ADVICE: Record<string, string> = {
+  '金': '技术/专业技能',
+  '水': '学习/沟通',
+  '木': '社交/人脉',
+  '火': '展示/分享',
+  '土': '稳固/储蓄',
+}
+
+function formatTiaoHouAdvice(gods: string[]): string {
+  const seen = new Set<string>()
+  const items: string[] = []
+  for (const stem of gods) {
+    const el = getStemElement(stem)
+    if (seen.has(el)) continue
+    seen.add(el)
+    items.push(`${el}（${TIAO_HOU_ELEMENT_ADVICE[el] || el}）`)
+  }
+  return items.join('、')
+}
+
 // ── 模块4：发展建议 ──
 
 function getAdviceSection(
@@ -421,6 +444,15 @@ function getAdviceSection(
   outcome: AssessResult,
   strength: StrengthResult,
 ): string | null {
+  const tiaoHouGods = getTiaoHouYongShen(bazi.dayMaster, bazi.pillars.month.branch)
+  if (tiaoHouGods.length > 0) {
+    const dmElement = getStemElement(bazi.dayMaster)
+    const dmFull = `${bazi.dayMaster}${dmElement}`
+    const godList = tiaoHouGods.join('、')
+    const elementAdvice = formatTiaoHouAdvice(tiaoHouGods)
+    return `**发展建议**：从五行调候的角度看，${dmFull}生于${bazi.pillars.month.branch}月，最喜${godList}。建议你从${elementAdvice}方向调整。`
+  }
+
   const tiaoHou = getTiaoHouType(bazi)
   const dominant = getDominantElement(bazi)
   const deficient = getDeficientElement(bazi)
