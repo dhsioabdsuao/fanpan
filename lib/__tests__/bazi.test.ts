@@ -432,51 +432,129 @@ describe('assessOutcome 伤官格强弱门槛', () => {
   })
 })
 
-// ── 调候查表：getTiaoHouYongShen ──
+// ── 调候查表：getTiaoHouYongShen（《穷通宝鉴》逐月完整表）──
+
+const ALL_BRANCHES = ['寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子', '丑'] as const
 
 describe('getTiaoHouYongShen', () => {
-  it('甲木午月 → 壬、庚、丁', () => {
-    expect(getTiaoHouYongShen('甲', '午')).toEqual(['壬', '庚', '丁'])
+  it('甲木逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['丙', '癸'], 卯: ['庚', '丙', '丁'], 辰: ['庚', '丁', '壬'],
+      巳: ['癸', '丁', '庚'], 午: ['壬', '庚', '丁'], 未: ['癸', '丁', '壬'],
+      申: ['庚', '丁', '壬'], 酉: ['庚', '丁', '丙'], 戌: ['庚', '甲', '丁'],
+      亥: ['庚', '丁', '丙'], 子: ['丁', '庚', '丙'], 丑: ['丁', '庚', '丙'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('甲', b), `甲木${b}月`).toEqual(expected[b])
+    }
   })
 
-  it('丙火子月 → 甲、戊、庚', () => {
-    expect(getTiaoHouYongShen('丙', '子')).toEqual(['甲', '戊', '庚'])
+  it('乙木逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['丙', '癸'], 卯: ['丙', '癸'], 辰: ['癸', '丙', '戊'],
+      巳: ['癸'], 午: ['癸', '丙'], 未: ['癸', '丙'],
+      申: ['丙', '癸', '己'], 酉: ['癸', '丙', '丁'], 戌: ['癸', '辛'],
+      亥: ['丙', '戊'], 子: ['丙'], 丑: ['丙'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('乙', b), `乙木${b}月`).toEqual(expected[b])
+    }
   })
 
-  it('庚金子月 → 丙、甲', () => {
-    expect(getTiaoHouYongShen('庚', '子')).toEqual(['丙', '甲'])
+  it('丙火逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['壬', '庚'], 卯: ['壬', '己'], 辰: ['壬', '甲'],
+      巳: ['壬', '庚', '癸'], 午: ['壬', '庚'], 未: ['壬', '庚'],
+      申: ['壬', '戊'], 酉: ['壬', '癸'], 戌: ['甲', '壬'],
+      亥: ['甲', '戊', '庚'], 子: ['甲', '戊', '庚'], 丑: ['壬', '甲'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('丙', b), `丙火${b}月`).toEqual(expected[b])
+    }
   })
 
-  it('癸水午月 → 庚、辛、癸', () => {
-    expect(getTiaoHouYongShen('癸', '午')).toEqual(['庚', '辛', '癸'])
+  it('丁火逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['甲', '庚'], 卯: ['庚', '甲'], 辰: ['甲', '庚'],
+      巳: ['甲', '庚'], 午: ['壬', '庚', '癸'], 未: ['甲', '壬', '庚'],
+      申: ['甲', '庚', '丙'], 酉: ['甲', '庚', '丙'], 戌: ['甲', '庚', '戊'],
+      亥: ['甲', '庚'], 子: ['甲', '庚'], 丑: ['甲', '庚'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('丁', b), `丁火${b}月`).toEqual(expected[b])
+    }
   })
 
-  it('未收录的组合返回空数组', () => {
-    expect(getTiaoHouYongShen('甲', '子')).toEqual([])
-    expect(getTiaoHouYongShen('壬', '寅')).toEqual([])
+  it('戊土逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['丙', '甲', '癸'], 卯: ['丙', '甲', '癸'], 辰: ['甲', '丙', '癸'],
+      巳: ['甲', '丙', '癸'], 午: ['壬', '甲', '丙'], 未: ['癸', '丙', '甲'],
+      申: ['丙', '癸', '甲'], 酉: ['丙', '癸'], 戌: ['甲', '丙', '癸'],
+      亥: ['甲', '丙'], 子: ['丙', '甲'], 丑: ['丙', '甲'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('戊', b), `戊土${b}月`).toEqual(expected[b])
+    }
   })
 
-  it('全部十条规则逐条验证', () => {
-    // 甲木午月
-    expect(getTiaoHouYongShen('甲', '午')).toEqual(['壬', '庚', '丁'])
-    // 乙木午月
-    expect(getTiaoHouYongShen('乙', '午')).toEqual(['癸', '丙'])
-    // 丙火子月
-    expect(getTiaoHouYongShen('丙', '子')).toEqual(['甲', '戊', '庚'])
-    // 丁火子月
-    expect(getTiaoHouYongShen('丁', '子')).toEqual(['甲', '庚'])
-    // 戊土午月
-    expect(getTiaoHouYongShen('戊', '午')).toEqual(['壬', '甲', '丙'])
-    // 己土午月
-    expect(getTiaoHouYongShen('己', '午')).toEqual(['癸', '丙'])
-    // 庚金子月
-    expect(getTiaoHouYongShen('庚', '子')).toEqual(['丙', '甲'])
-    // 辛金子月
-    expect(getTiaoHouYongShen('辛', '子')).toEqual(['丙', '戊', '壬'])
-    // 壬水午月
-    expect(getTiaoHouYongShen('壬', '午')).toEqual(['癸', '庚', '辛'])
-    // 癸水午月
-    expect(getTiaoHouYongShen('癸', '午')).toEqual(['庚', '辛', '癸'])
+  it('己土逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['丙', '庚', '甲'], 卯: ['甲', '癸', '丙'], 辰: ['丙', '癸', '甲'],
+      巳: ['癸', '丙'], 午: ['癸', '丙'], 未: ['癸', '丙'],
+      申: ['丙', '癸'], 酉: ['丙', '癸'], 戌: ['甲', '丙', '癸'],
+      亥: ['丙', '甲', '戊'], 子: ['丙', '甲', '戊'], 丑: ['丙', '甲', '戊'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('己', b), `己土${b}月`).toEqual(expected[b])
+    }
+  })
+
+  it('庚金逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['丙', '戊', '甲'], 卯: ['丁', '甲', '丙'], 辰: ['甲', '丁', '壬'],
+      巳: ['壬', '丙', '戊'], 午: ['壬', '癸'], 未: ['丁', '甲'],
+      申: ['丁', '甲'], 酉: ['丁', '甲', '丙'], 戌: ['甲', '壬'],
+      亥: ['丁', '丙'], 子: ['丙', '甲'], 丑: ['丙', '丁', '甲'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('庚', b), `庚金${b}月`).toEqual(expected[b])
+    }
+  })
+
+  it('辛金逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['己', '壬', '庚'], 卯: ['壬', '甲'], 辰: ['壬', '甲'],
+      巳: ['壬', '甲', '癸'], 午: ['壬', '己', '癸'], 未: ['壬', '庚', '甲'],
+      申: ['壬', '甲', '戊'], 酉: ['壬', '甲'], 戌: ['壬', '甲'],
+      亥: ['壬', '丙'], 子: ['丙', '戊', '壬'], 丑: ['丙', '壬', '戊'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('辛', b), `辛金${b}月`).toEqual(expected[b])
+    }
+  })
+
+  it('壬水逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['庚', '丙', '戊'], 卯: ['戊', '辛', '庚'], 辰: ['甲', '庚'],
+      巳: ['壬', '辛', '庚'], 午: ['癸', '庚', '辛'], 未: ['辛', '甲'],
+      申: ['戊', '丁'], 酉: ['甲', '庚'], 戌: ['甲', '丙'],
+      亥: ['戊', '丙', '庚'], 子: ['戊', '丙'], 丑: ['丙', '甲'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('壬', b), `壬水${b}月`).toEqual(expected[b])
+    }
+  })
+
+  it('癸水逐月调候', () => {
+    const expected: Record<string, string[]> = {
+      寅: ['辛', '丙'], 卯: ['庚', '辛'], 辰: ['丙', '辛', '甲'],
+      巳: ['辛'], 午: ['庚', '辛', '癸'], 未: ['庚', '辛', '癸'],
+      申: ['丁'], 酉: ['辛', '丙'], 戌: ['辛', '甲', '壬'],
+      亥: ['庚', '辛', '戊'], 子: ['丙', '辛'], 丑: ['丙', '丁'],
+    }
+    for (const b of ALL_BRANCHES) {
+      expect(getTiaoHouYongShen('癸', b), `癸水${b}月`).toEqual(expected[b])
+    }
   })
 })
 
@@ -498,13 +576,15 @@ describe('generateAnalysis 调候建议', () => {
     expect(result.analysis).toContain('火（展示/分享）')
   })
 
-  it('甲木子月 → 发展建议不含调候内容', () => {
+  it('甲木子月 → 发展建议含调候内容', () => {
     const bazi = calculateBazi(makeInput({ year: 2000, month: 12, day: 12 }))
     const pattern = extractPattern(bazi)
     const outcome = assessOutcome(bazi, pattern)
     const strength = determineStrength(bazi)
     const result = generateAnalysis({ bazi, pattern, outcome, strength })
 
-    expect(result.analysis).not.toContain('从五行调候的角度看')
+    expect(result.analysis).toContain('从五行调候的角度看')
+    expect(result.analysis).toContain('甲木生于子月')
+    expect(result.analysis).toContain('丁、庚、丙')
   })
 })
