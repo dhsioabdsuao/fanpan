@@ -7,6 +7,7 @@ import {
   monthBranchFormsHe,
   getStemElement,
   elementToTenGod,
+  isHuaRenWeiYin,
 } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
 
@@ -69,6 +70,26 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     pillars.day.branch,
     pillars.hour.branch,
   ]
+
+  // 调候特例：化刃为印——戊土日主 + 午月 + 天干透丙丁 + 地支会火局
+  // 必须在分流之前检查，因为午月本气丁火为正印，不会进入比劫分支
+  if (isHuaRenWeiYin(bazi)) {
+    const fireStems = touGanStems.filter((s) => s === '丙' || s === '丁')
+    const primaryFire = fireStems[0]
+    const tenGod = getTenGod(dayMaster, primaryFire)
+    const displayName = tenGod === '偏印' ? '偏印格' : '正印格'
+
+    return {
+      category: '印格',
+      displayName,
+      yongShen: primaryFire,
+      patternGod: `月支午(刃)化火印,${primaryFire}(${tenGod})透干`,
+      origin: '比劫当令',
+      patternStem: primaryFire,
+      patternElement: null,
+      luJieYongShenTenGod: null,
+    }
+  }
 
   // 第一步：判断月支本气对日主的十神
   const benQiTenGod = getTenGod(dayMaster, benQi)

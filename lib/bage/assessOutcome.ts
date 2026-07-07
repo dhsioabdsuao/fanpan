@@ -15,6 +15,7 @@ import {
   getStemElement,
   isHuShenTransparent,
   elementToTenGod,
+  isJinShuiShangGuan,
 } from './helpers'
 import type { FormedHe } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
@@ -526,7 +527,7 @@ function assessShiShen(ctx: ChartContext, _extract: ExtractResult): AssessResult
   let success = false
   let xiangShen: XiangShen | null = null
 
-  // 成格条件：食神生财（吐秀生财）—— 规格书：只实现食神生财，不实现食神制杀
+  // 成格条件1：食神生财（吐秀生财）
   const hasCai = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
   if (hasCai) {
     success = true
@@ -534,13 +535,27 @@ function assessShiShen(ctx: ChartContext, _extract: ExtractResult): AssessResult
     xiangShen = xs('财星', '食神生财')
   }
 
+  // 成格条件2：弃食就煞而透印（《子平真诠》卷九）
+  // 食神格带七杀、无财、透印 → 枭夺食本为破格，但同时有杀时
+  // 印可化杀生身，格局核心从食神转为杀印相生（徐乐吾评注）
+  const hasSha = hasTenGodActive(ctx, '七杀')
+  const hasYin = hasTenGodActive(ctx, '正印') || hasTenGodActive(ctx, '偏印')
+  const isQiShiJiuSha = hasSha && hasYin && !hasCai
+
+  if (isQiShiJiuSha) {
+    success = true
+    reasons.push('弃食就煞而透印(杀印相生)')
+    if (!xiangShen) xiangShen = xs('印星', '化杀生身')
+  }
+
   // 破格条件
   const failures: string[] = []
 
   // ① 枭神夺食（偏印克食，无财制枭）
+  // 但若同时有七杀+印星+无财 → 属于弃食就煞成格，不判破格
   const hasPianYin = hasTenGodActive(ctx, '偏印')
   const hasCaiActive2 = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
-  if (hasPianYin && !hasCaiActive2) {
+  if (hasPianYin && !hasCaiActive2 && !isQiShiJiuSha) {
     failures.push('枭神夺食(偏印克食),无财制枭')
   }
 
@@ -558,7 +573,11 @@ function assessShiShen(ctx: ChartContext, _extract: ExtractResult): AssessResult
   return { outcome: '不成格', reason: '食神孤(不生财、未被枭夺)', xiangShen: null }
 }
 
-function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): AssessResult {
+function assessShangGuan(
+  ctx: ChartContext,
+  _extract: ExtractResult,
+  isJinShui: boolean,
+): AssessResult {
   const reasons: string[] = []
   let success = false
   let xiangShen: XiangShen | null = null
@@ -603,9 +622,14 @@ function assessShangGuan(ctx: ChartContext, _extract: ExtractResult): AssessResu
   // 破格条件
   const failures: string[] = []
 
-  // ① 伤官见官（无印制伤、无财通关）
+  // ① 伤官见官
   if (hasTenGodInStems(ctx, '伤官') && hasTenGodInStems(ctx, '正官')) {
-    if (!hasYinZhiShang(ctx) && !hasCaiTongGuan(ctx)) {
+    // 调候特例：金水伤官喜见官（《穷通宝鉴》）
+    if (isJinShui) {
+      success = true
+      reasons.push('金水伤官喜见官，调候为急，格局反贵')
+      if (!xiangShen) xiangShen = xs('官星', '调候暖局')
+    } else if (!hasYinZhiShang(ctx) && !hasCaiTongGuan(ctx)) {
       failures.push('伤官见官,无印制伤、无财通关')
     } else {
       if (hasYinZhiShang(ctx)) {
@@ -776,7 +800,7 @@ export function assessOutcome(
     case '食神格':
       return assessShiShen(ctx, extract)
     case '伤官格':
-      return assessShangGuan(ctx, extract)
+      return assessShangGuan(ctx, extract, isJinShuiShangGuan(bazi))
     case '建禄月劫格':
       return assessLuJie(ctx, extract)
     case '阳刃格':

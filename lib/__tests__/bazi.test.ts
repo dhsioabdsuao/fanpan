@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { calculateBazi } from '../bazi'
 import type { BaziInput } from '@/types/bazi'
+import { extractPattern } from '../bage/extractPattern'
+import { assessOutcome } from '../bage/assessOutcome'
+import { isJinShuiShangGuan, isHuaRenWeiYin } from '../bage/helpers'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -210,5 +213,143 @@ describe('calculateBazi', () => {
       expect(result.pillars.hour.stem).toBe('壬')
       expect(result.pillars.hour.branch).toBe('申')
     })
+  })
+})
+
+// ── 调候特例：金水伤官喜见官 ──
+
+describe('isJinShuiShangGuan', () => {
+  it('金日主(庚) + 丑月 + 无巳午 → true', () => {
+    // 1998-01-13: 丁丑 癸丑 庚申 庚辰
+    const b = calculateBazi(makeInput({ year: 1998, month: 1, day: 13, hour: 8 }))
+    expect(b.dayMasterElement).toBe('金')
+    expect(b.pillars.month.branch).toBe('丑')
+    expect(isJinShuiShangGuan(b)).toBe(true)
+  })
+
+  it('非金日主 → false', () => {
+    // 2000-06-15: 甲木日主
+    const b = calculateBazi(makeInput({ year: 2000, month: 6, day: 15, hour: 10 }))
+    expect(b.dayMasterElement).not.toBe('金')
+    expect(isJinShuiShangGuan(b)).toBe(false)
+  })
+
+  it('金日主 + 午月 → false', () => {
+    // 2020-06-06: 庚金日主 + 午月
+    const b = calculateBazi(makeInput({ year: 2020, month: 6, day: 6, hour: 10 }))
+    expect(b.dayMasterElement).toBe('金')
+    expect(b.pillars.month.branch).toBe('午')
+    expect(isJinShuiShangGuan(b)).toBe(false)
+  })
+
+})
+
+describe('assessOutcome 金水伤官喜见官', () => {
+  it('1998-01-13 丁丑 癸丑 庚申 庚辰 → 成格, 金水伤官喜见官', () => {
+    const b = calculateBazi(makeInput({ year: 1998, month: 1, day: 13, hour: 8 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('伤官格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('金水伤官喜见官')
+    expect(ao.reason).toContain('格局反贵')
+  })
+
+  it('2016-12-05 丙申 己亥 辛酉 壬辰 → 成格, 伤官佩印 + 金水伤官喜见官', () => {
+    const b = calculateBazi(makeInput({ year: 2016, month: 12, day: 5, hour: 8 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('伤官格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('伤官佩印')
+    expect(ao.reason).toContain('金水伤官喜见官')
+  })
+})
+
+// ── 调候特例：阳刃格化刃为印 ──
+
+describe('isHuaRenWeiYin', () => {
+  it('戊土日主 + 午月 + 丁透干 + 三合寅午戌 → true', () => {
+    // 1998-06-20: 戊寅 戊午 戊戌 丁巳
+    const b = calculateBazi(makeInput({ year: 1998, month: 6, day: 20, hour: 10 }))
+    expect(b.dayMaster).toBe('戊')
+    expect(b.pillars.month.branch).toBe('午')
+    expect(isHuaRenWeiYin(b)).toBe(true)
+  })
+
+  it('非戊土日主 → false', () => {
+    // 2002-06-20: 丙火日主 + 午月
+    const b = calculateBazi(makeInput({ year: 2002, month: 6, day: 20, hour: 10 }))
+    expect(b.dayMaster).not.toBe('戊')
+    expect(isHuaRenWeiYin(b)).toBe(false)
+  })
+
+  it('戊土日主 + 午月 + 无火局 → false', () => {
+    // 1990-06-12: 庚午 壬午 戊申 丙辰（无寅午戌/巳午未合局）
+    const b = calculateBazi(makeInput({ year: 1990, month: 6, day: 12, hour: 8 }))
+    expect(b.dayMaster).toBe('戊')
+    expect(b.pillars.month.branch).toBe('午')
+    expect(isHuaRenWeiYin(b)).toBe(false)
+  })
+
+  it('戊土日主 + 非午月 → false', () => {
+    // 1998-07-20: 戊土日主 + 未月
+    const b = calculateBazi(makeInput({ year: 1998, month: 7, day: 20, hour: 10 }))
+    expect(b.dayMaster).toBe('戊')
+    expect(b.pillars.month.branch).not.toBe('午')
+    expect(isHuaRenWeiYin(b)).toBe(false)
+  })
+})
+
+describe('extractPattern 化刃为印', () => {
+  it('1998-06-20 戊寅 戊午 戊戌 丁巳 → 化刃为印, 印格/正印格', () => {
+    const b = calculateBazi(makeInput({ year: 1998, month: 6, day: 20, hour: 10 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('印格')
+    expect(pat.displayName).toBe('正印格')
+    expect(pat.patternGod).toContain('化火印')
+    expect(pat.origin).toBe('比劫当令')
+    expect(pat.yongShen).toBe('丁')
+  })
+
+  it('1990-06-12 庚午 壬午 戊申 丙辰 → 无火局, 普通印格不化刃', () => {
+    const b = calculateBazi(makeInput({ year: 1990, month: 6, day: 12, hour: 8 }))
+    const pat = extractPattern(b)
+    // 仍然是印格，但不是化刃为印
+    expect(pat.category).toBe('印格')
+    expect(pat.patternGod).not.toContain('化火印')
+    expect(pat.origin).toBe('不透不会')
+  })
+})
+
+// ── 调候特例：食神格弃食就煞而透印 ──
+
+describe('assessOutcome 食神格弃食就煞而透印', () => {
+  it('1990-02-16 庚午 戊寅 壬子 甲辰 → 成格, 弃食就煞而透印', () => {
+    // 壬日主食神格(寅月甲木食神), 七杀戊透月干, 偏印庚透年干, 无财
+    const b = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('食神格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('弃食就煞而透印')
+    expect(ao.reason).toContain('杀印相生')
+    expect(ao.xiangShen?.god).toBe('印星')
+    expect(ao.xiangShen?.role).toBe('化杀生身')
+  })
+
+  it('1991-02-11 辛未 庚寅 壬子 甲辰 → 破格, 有偏印无杀 → 枭神夺食', () => {
+    // 壬日主食神格, 偏印透干但无七杀 → 枭神夺食破格，不触发弃食就煞
+    const b = calculateBazi(makeInput({ year: 1991, month: 2, day: 11, hour: 8 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('食神格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('破格')
+    expect(ao.reason).toContain('枭神夺食')
+    expect(ao.reason).not.toContain('弃食就煞')
   })
 })

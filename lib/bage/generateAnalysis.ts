@@ -255,7 +255,12 @@ function getOutcomeSection(
   outcome: AssessResult,
   strength: StrengthResult,
 ): string {
+  const isJinShui = outcome.reason.includes('金水伤官喜见官')
+
   if (outcome.outcome === '成格') {
+    if (isJinShui) {
+      return `**层次评估**：格局"成格"——而且是金水伤官见官的调候贵格。寻常伤官格见官为破，但你命局金寒水冷，正官之火恰好为你暖局，如同冰天雪地里的一盆炭火，化忌为喜、变废为宝。这是《穷通宝鉴》中记载的著名特例。`
+    }
     if (outcome.xiangShen) {
       return `**层次评估**：格局"成格"，核心结构稳固，用神与相神配合到位。成格，意味着你命局的顶层设计是完整的——就像一栋梁柱齐全的房子，能正常发挥应有的功能。`
     }

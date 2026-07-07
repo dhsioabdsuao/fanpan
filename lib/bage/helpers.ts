@@ -242,3 +242,43 @@ export function elementToTenGod(
 }
 
 export { getStemElement }
+
+// ── 调候判断 ──
+
+import type { BaziResult } from '@/types/bazi'
+
+/** 化刃为印：戊土日主 + 午月 + 天干透丙丁 + 地支会火局（巳午未/寅午戌）*/
+export function isHuaRenWeiYin(bazi: BaziResult): boolean {
+  const { dayMaster, pillars } = bazi
+
+  if (dayMaster !== '戊') return false
+  if (pillars.month.branch !== '午') return false
+
+  const touStems = [pillars.year.stem, pillars.month.stem, pillars.hour.stem]
+  if (!touStems.some((s) => s === '丙' || s === '丁')) return false
+
+  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
+  const unique = new Set(branches)
+  const sanHui = ['巳', '午', '未'].every((b) => unique.has(b))
+  const sanHe = ['寅', '午', '戌'].every((b) => unique.has(b))
+  return sanHui || sanHe
+}
+
+/** 金水伤官喜见官：金日主生于亥子丑月，全局金寒水冷，见官星火反而喜 */
+export function isJinShuiShangGuan(bazi: BaziResult): boolean {
+  const { dayMasterElement, pillars, dayMaster } = bazi
+
+  // 1. 日主为庚金或辛金
+  if (dayMasterElement !== '金') return false
+
+  // 2. 月令为亥、子、丑月（冬季水旺）
+  const monthBranch = pillars.month.branch
+  if (!['亥', '子', '丑'].includes(monthBranch)) return false
+
+  // 3. 火土衰弱：地支无巳午火（无强根），天干火为官星可暖局
+  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
+  const hasFireBranch = branches.some((b) => b === '巳' || b === '午')
+  if (hasFireBranch) return false
+
+  return true
+}
