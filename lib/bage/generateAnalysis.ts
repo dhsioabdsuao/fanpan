@@ -5,6 +5,7 @@ import type { StrengthResult } from '@/lib/strength/determineStrength'
 import { getHiddenStemsSpec, getStemElement } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
 import { getTiaoHouYongShen } from './tiaoHou'
+import { analyzeWuXingLiuTong } from './liuTong'
 
 // ── 类型 ──
 
@@ -245,6 +246,85 @@ function getOriginNote(bazi: BaziResult, pattern: ExtractResult): string {
   }
 }
 
+// ── 相神机制洞察 ──
+
+interface MechanismInsight {
+  /** 相神段落追加的机制说明 */
+  xiangShenNote: string
+  /** 层次评估段落中替换默认文案的定制评估 */
+  outcomeNote: string | null
+}
+
+function getMechanismInsight(outcome: AssessResult): MechanismInsight | null {
+  if (!outcome.xiangShen) return null
+  const { role } = outcome.xiangShen
+
+  if (role === '合绊制杀') {
+    return {
+      xiangShenNote:
+        '合绊是"软制"——像用绳索套住猛虎，虎虽不能伤人，却被困在笼中施展不开。' +
+        '杀力被化解的同时锐气也打了折扣，**层次受损**。',
+      outcomeNote:
+        '格局能成，但因合绊制杀是偏门——好比把老虎拴住而非驯服，' +
+        '猛则猛矣却跑不起来，常有怀才不遇之感。',
+    }
+  }
+
+  if (role === '食神制杀') {
+    return {
+      xiangShenNote:
+        '食制是"硬制"——像驯兽师正面驯服猛虎，干净利落、不拖泥带水。' +
+        '杀力被完整转化为进取的动力，格局**清纯有力**。',
+      outcomeNote:
+        '格局能成，且食神制杀是正格——猛虎被正面驯服，指哪打哪，' +
+        '这是最高效的制约方式，命局层次**清纯有力**。',
+    }
+  }
+
+  if (role === '印星化杀' || role === '化杀生身') {
+    return {
+      xiangShenNote:
+        '印化是"柔制"——像春风化雨，将七杀的锋芒化为滋润的雨露。' +
+        '化敌为师、转压力为动力，**层次清高**。',
+      outcomeNote:
+        '格局能成，印星化杀以柔克刚——将外界的压力悄然转化为内在的成长动力，' +
+        '这是一种优雅而高级的解法，**层次清高**。',
+    }
+  }
+
+  // 食伤生财系
+  if (role.includes('生财') || role.includes('转劫生财')) {
+    return {
+      xiangShenNote:
+        '食伤是财星的"源头活水"——才华不断产出，财富自然随之而来。' +
+        '有源头的水才不会干涸，格局**生生不息**。',
+      outcomeNote: null,
+    }
+  }
+
+  // 财官系
+  if (role.includes('财生官') || role.includes('财通关')) {
+    return {
+      xiangShenNote:
+        '财是官星的"粮草"——有后勤保障的将军才能打胜仗。' +
+        '财星通关让整个格局运转起来，**稳健有力**。',
+      outcomeNote: null,
+    }
+  }
+
+  // 印制伤系
+  if (role.includes('印制伤')) {
+    return {
+      xiangShenNote:
+        '印是伤官的"刹车片"——既能保留伤官的才华输出，' +
+        '又不让它横冲直撞。收放有度，**层次不俗**。',
+      outcomeNote: null,
+    }
+  }
+
+  return null
+}
+
 // ── 模块1：格局结构 ──
 
 function getStructureSection(
@@ -282,7 +362,11 @@ function getStructureSection(
   if (outcome.xiangShen) {
     const { god, role } = outcome.xiangShen
     const godBrief = TEN_GOD_BRIEF[god] ?? `${god}——关键辅助力量`
+    const insight = getMechanismInsight(outcome)
     parts.push(`相神为"${god}"——${godBrief}，它以"${role}"的方式配合用神，帮你稳住阵脚。`)
+    if (insight) {
+      parts.push(insight.xiangShenNote)
+    }
   } else if (outcome.outcome === '成格') {
     parts.push('此格局用神自成体系，不依赖相神辅助。')
   } else {
@@ -294,34 +378,163 @@ function getStructureSection(
 
 // ── 模块2：层次评估 ──
 
+// 各格局成格条件模板
+interface ConditionTemplate {
+  label: string
+  desc: string
+  /** 在 outcome.reason 中匹配该条件已满足的关键词 */
+  match: string[]
+}
+
+const PATTERN_CONDITIONS: Record<string, ConditionTemplate[]> = {
+  '正官格': [
+    { label: '财生官', desc: '财星透干或成局，以财生官', match: ['财生官', '有财生官'] },
+    { label: '印护官', desc: '印星透干或成局，以印护官', match: ['印护官', '有印护官', '印制伤护官'] },
+  ],
+  '七杀格': [
+    { label: '食制杀', desc: '食神透干制伏七杀', match: ['食神制杀', '食神制伏'] },
+    { label: '印化杀', desc: '印星透干或成局化泄七杀', match: ['印星化杀', '印化'] },
+    { label: '合绊制杀', desc: '劫财或伤官合绊七杀', match: ['合绊', '被合绊制约'] },
+  ],
+  '正财格': [
+    { label: '官护财', desc: '官星透干或成局守护财星', match: ['财生官', '官护财'] },
+    { label: '食伤生财', desc: '食伤透干或成局为财之源', match: ['食伤生财', '财有源'] },
+  ],
+  '偏财格': [
+    { label: '官护财', desc: '官星透干或成局守护财星', match: ['财生官', '官护财'] },
+    { label: '食伤生财', desc: '食伤透干或成局为财之源', match: ['食伤生财', '财有源'] },
+  ],
+  '正印格': [
+    { label: '官杀生印', desc: '官杀透干或成局生扶印星', match: ['官杀生印'] },
+    { label: '食伤泄秀', desc: '食伤透干或成局泄印之秀', match: ['食伤泄秀', '印旺用食伤泄秀'] },
+  ],
+  '偏印格': [
+    { label: '官杀生印', desc: '官杀透干或成局生扶印星', match: ['官杀生印'] },
+    { label: '食伤泄秀', desc: '食伤透干或成局泄印之秀', match: ['食伤泄秀', '印旺用食伤泄秀'] },
+  ],
+  '食神格': [
+    { label: '食神生财', desc: '财星透干或成局，食神吐秀生财', match: ['食神生财', '吐秀生财'] },
+    { label: '弃食就煞', desc: '七杀透干、印星透干、无财（杀印相生）', match: ['弃食就煞', '杀印相生'] },
+  ],
+  '伤官格': [
+    { label: '伤官生财', desc: '财星透干或成局，伤官生财', match: ['伤官生财'] },
+    { label: '伤官佩印', desc: '印星透干有根，印制伤护官', match: ['伤官佩印'] },
+    { label: '伤官带杀', desc: '七杀透干无财无食制，伤官带杀', match: ['伤官带杀'] },
+    { label: '金水调候', desc: '金水伤官喜见官，调候为急', match: ['金水伤官喜见官'] },
+  ],
+  '建禄月劫格': [
+    { label: '天干有取用', desc: '天干透出财、官、杀、食之一可取为用神', match: ['用神'] },
+  ],
+  '阳刃格': [
+    { label: '官煞制刃', desc: '官杀透干或成局制伏阳刃', match: ['透官煞制刃', '官煞制刃'] },
+  ],
+  '化土格': [
+    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
+    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
+    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
+    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
+  ],
+  '化金格': [
+    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
+    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
+    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
+    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
+  ],
+  '化水格': [
+    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
+    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
+    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
+    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
+  ],
+  '化木格': [
+    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
+    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
+    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
+    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
+  ],
+  '化火格': [
+    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
+    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
+    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
+    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
+  ],
+  '从杀格': [
+    { label: '日主无根', desc: '日主在地支和藏干中无比劫根气', match: ['无根', '真从杀格'] },
+    { label: '官杀强旺', desc: '全局官杀透干且地支会官杀局', match: ['无根', '真从杀格', '官杀'] },
+  ],
+  '从财格': [
+    { label: '日主无根', desc: '日主在地支和藏干中无比劫根气', match: ['无根', '真从财格'] },
+    { label: '财星强旺', desc: '全局财星透干且地支会财局', match: ['无根', '真从财格', '财星'] },
+  ],
+}
+
+function buildConditionBreakdown(
+  pattern: ExtractResult,
+  outcome: AssessResult,
+): string {
+  const conds = PATTERN_CONDITIONS[pattern.displayName]
+  if (!conds) return `成格依据：${outcome.reason}。`
+
+  const reason = outcome.reason
+
+  if (outcome.outcome === '成格') {
+    const met = conds.filter((c) => c.match.some((m) => reason.includes(m)))
+    const condList = conds.map((c) => c.desc).join('；')
+
+    if (met.length > 0) {
+      const metDetails = met.map((m) => `${m.label}（${m.desc}）`).join('、')
+      return `成格条件为：${condList}。你的命局满足${metDetails}，故格局成立。`
+    }
+    return `成格依据：${reason}。`
+  }
+
+  if (outcome.outcome === '不成格') {
+    const met = conds.filter((c) => c.match.some((m) => reason.includes(m)))
+    const unmet = conds.filter((c) => !c.match.some((m) => reason.includes(m)))
+    const condList = conds.map((c) => c.desc).join('；')
+
+    if (met.length > 0 && unmet.length > 0) {
+      const metPart = met.map((m) => `${m.label}（${m.desc}）`).join('、')
+      const unmetPart = unmet.map((u) => `${u.label}（${u.desc}）`).join('、')
+      return `成格条件为：${condList}。你的命局已满足${metPart}，但未满足${unmetPart}（${reason}），故格局不成立。这并非破格，格局处于待定状态——大运流年一旦补齐缺失条件，格局即可激活。`
+    }
+    return `成格条件为：${condList}。你的命局均未满足（${reason}），故格局不成立。大运流年补齐条件后格局可激活。`
+  }
+
+  // 破格
+  return `格局破败。触发破格条件：${reason}。核心结构遭到破坏，格局无法正常运作。`
+}
+
 function getOutcomeSection(
   outcome: AssessResult,
   strength: StrengthResult,
+  pattern: ExtractResult,
 ): string {
   const isJinShui = outcome.reason.includes('金水伤官喜见官')
+  const insight = getMechanismInsight(outcome)
+  const breakdown = buildConditionBreakdown(pattern, outcome)
 
   if (outcome.outcome === '成格') {
     if (isJinShui) {
       return `**层次评估**：格局"成格"——而且是金水伤官见官的调候贵格。寻常伤官格见官为破，但你命局金寒水冷，正官之火恰好为你暖局，如同冰天雪地里的一盆炭火，化忌为喜、变废为宝。这是《穷通宝鉴》中记载的著名特例。`
     }
-    if (outcome.xiangShen) {
-      return `**层次评估**：格局"成格"，核心结构稳固，用神与相神配合到位。成格，意味着你命局的顶层设计是完整的——就像一栋梁柱齐全的房子，能正常发挥应有的功能。`
+    const parts = [`**层次评估**：格局"成格"。${breakdown}`]
+    if (insight?.outcomeNote) {
+      parts.push(insight.outcomeNote)
+    } else if (outcome.xiangShen) {
+      parts.push('格局成立意味着你命局的顶层设计完整——就像一栋梁柱齐全的房子，能正常发挥应有的功能。')
+    } else {
+      parts.push('格局成立但用神自成体系、不假外求——就像一棵独自矗立的大树，无需依附攀缘，自身就足够稳固。')
     }
-    return `**层次评估**：格局"成格"——用神自成体系，不假外求。成格，就像一棵独自矗立的大树，无需依附攀缘，自身就足够稳固。`
+    return parts.join('')
   }
 
   if (outcome.outcome === '破格') {
-    const reasonPart = outcome.reason
-      ? `具体原因是：${outcome.reason}。`
-      : ''
-    return `**层次评估**：格局"破格"——核心结构遭到了破坏。${reasonPart}但破格不代表人生失败：许多不走寻常路的人恰恰是破格命局，他们的特点是体制内之路不通，反而在体制外能找到属于自己的舞台。`
+    return `**层次评估**：格局"破格"。${breakdown}但破格不代表人生失败：许多不走寻常路的人恰恰是破格命局，他们的特点是体制内之路不通，反而在体制外能找到属于自己的舞台。`
   }
 
   // 不成格
-  const reasonPart = outcome.reason
-    ? `目前的问题出在：${outcome.reason}。`
-    : ''
-  return `**层次评估**：格局"未成"——尚缺关键一环。${reasonPart}这就像一栋房子还差一根顶梁柱，目前住在里面会感到施展不开。但无需焦虑：大运流年一旦补齐缺口，格局就盘活了。`
+  return `**层次评估**：格局"未成"。${breakdown}但无需焦虑：大运流年一旦补齐缺口，格局就盘活了。`
 }
 
 // ── 调候判断 ──
@@ -543,55 +756,177 @@ function getAdviceSection(
 
 // ── 模块5：关键提醒 ──
 
+const PATTERN_WISDOM: Record<string, string> = {
+  '正官格': '守规矩是你的底色，但规则之外也要给自己留喘息的空间。责任是铠甲，偶尔卸下也是一种能力',
+  '七杀格': '你有冲天的干劲，但猛虎需要驯服。找到一件能沉下心打磨的事，把过剩的能量转化为实实在在的成果',
+  '正财格': '你对财富有天然的敏感，但钱是工具不是目的。把钱花在提升自己的地方，让每一分钱为你创造更大的价值',
+  '偏财格': '你善于借势而起、汇聚人脉，但风口上的猪也会落地。在风口之外，悄悄攒一条属于自己的护城河',
+  '正印格': '你领悟力很强，但想得太多容易内耗。把想法变成行动，哪怕只是一个小小的尝试，也比反复推演更有用',
+  '偏印格': '你有独特的偏门才华，但容易钻牛角尖。找到一个能把你的专长"翻译"给世界的人或平台，比闭门造车更重要',
+  '食神格': '你天生懂得如何让生活变得有趣。把这种创造力用在能产生价值的地方，你会发现快乐和成功可以兼得',
+  '伤官格': '你的才华需要出口，但也要注意表达方式。直言不讳是你的特色，但杀伤力过大时伤人也伤己。学会在适当的时候"软着陆"',
+  '建禄月劫格': '你凡事喜欢靠自己，但一个人走得快一群人走得远。学会在适当的时候信任他人、分担责任，路会越走越宽',
+  '阳刃格': '你能扛事、敢决断，但刚则易折。学会在关键时候示弱，反而能赢得更多支持',
+  '从杀格': '你的人生不靠硬扛而是借力打力。顺势而行比逆流而上更有效——找到那条适合你的轨道，别回头',
+  '从财格': '你的人生不靠硬扛而是借力打力。像冲浪一样，等浪来的时候全力冲刺，平时则练习划水和观察',
+  '化土格': '你正在经历一次重要的转变。蜕变的过程可能漫长，但一旦完成，你会发现自己比想象中更厚重、更稳当',
+  '化金格': '你正在经历一次重要的转变。像矿石炼成刀剑——这个过程有高温也有敲打，但最终你会脱胎换骨',
+  '化水格': '你正在经历一次重要的转变。水无常形，你比想象中更有适应力。顺着流变的方向走，你会到达意想不到的地方',
+  '化木格': '你正在经历一次重要的转变。像种子破土重生——旧土壤已不适合你，新土壤会让你长得更高',
+  '化火格': '你正在经历一次重要的转变。从薪柴化为烈焰——你不再是燃料，而是光源本身',
+}
+
 function getWarningSection(
+  bazi: BaziResult,
   pattern: ExtractResult,
   outcome: AssessResult,
-): string | null {
-  const cat = pattern.category
-  const reason = outcome.reason
+): string {
+  const liuTong = analyzeWuXingLiuTong(bazi)
+  const hasBlockage = liuTong.blockage !== null && liuTong.tongGuan !== null
+  const wisdom = PATTERN_WISDOM[pattern.displayName]
+    ?? `${pattern.displayName}代表你的核心特质——顺势而为，找到属于自己的节奏`
 
-  // 七杀相关
-  if (cat === '杀格') {
-    if (reason.includes('合') && outcome.xiangShen) {
-      return `**关键提醒**：你的七杀被合绊，虽然化解了锋芒，但合你的力量（来自朋友、兄弟或合作伙伴）有时候也会成为你的牵绊。注意在亲密关系中保持独立判断，不要因为人情而偏离自己的方向。`
-    }
-    if (outcome.outcome === '破格') {
-      return `**关键提醒**：七杀破格，压力和竞争是你一生的课题。切忌冲动决策，尤其在事业转折点。你的直觉很强，但需要给自己留一个冷静期再拍板。`
-    }
+  // 附加流通提醒
+  let flowNote = ''
+  if (hasBlockage) {
+    const el = liuTong.tongGuan!
+    const dir = ELEMENT_DIRECTION[el] ?? el
+    flowNote = `从五行流通看，你的能量在${liuTong.blockage}处淤堵，补${el}（${dir}）是当下的关键`
+  } else {
+    flowNote = '五行流通顺畅，你的能量没有明显的卡点——这是一份难得的福气，善用它'
   }
 
-  // 伤官相关
-  if (cat === '伤官格') {
-    if (outcome.outcome === '成格') {
-      return `**关键提醒**：伤官格即使成格，天性中仍有不服管束的底色。选择职业时，优先考虑能给你自主空间的环境。被管得太死，你的创造力会被熄火——这比升职加薪更重要。`
-    }
-    return `**关键提醒**：伤官代表反叛精神——你的才华需要出口，但也要注意表达方式。直言不讳是你的特色，但有时杀伤力过大，伤人也伤己。学会在适当的时候"软着落"。`
-  }
-
-  // 官格破格
-  if (cat === '官格' && outcome.outcome === '破格') {
-    return `**关键提醒**：正官格破格，意味着规则和秩序在你的命局中不太稳定。你在体制内的路可能比别人坎坷，但这不一定是坏事——也许你本来就不该被框住。只是需要注意：信守承诺对你比常人更重要，一个失信就可能失去整个局。`
-  }
-
-  // 财格
-  if (cat === '财格' && outcome.outcome !== '成格') {
-    return `**关键提醒**：财格不稳时，财富的波动会比常人大。这不是说你会穷——而是你的收入模式更适合"项目制"而非"死工资"。拥抱这种波动，而不是对抗它。同时注意：不要为了快钱而牺牲积累。`
-  }
-
-  // 建禄月劫格
-  if (cat === '建禄月劫格') {
-    if (outcome.xiangShen?.god === '劫财') {
-      return `**关键提醒**：劫财合杀是你的救应，但劫财也意味着合作中存在利益纠葛。与人合伙做事时，丑话说在前面，账算在明处。情分归情分，规则归规则。`
-    }
-    return `**关键提醒**：建禄月劫格的人天性独立，容易把所有事都揽在自己身上。学会信任和授权，是你一生需要练习的功课。一个人扛得了一时，扛不了一世。`
-  }
-
-  // 破格通用
+  // 破格追加警示
+  let poGeNote = ''
   if (outcome.outcome === '破格') {
-    return `**关键提醒**：格局破格意味着你的路不会一帆风顺——但这恰恰造就了你的韧性和适应力。你比别人更懂得"没有退路时如何找出路"。珍惜这份能力，它是你最大的隐形财富。`
+    poGeNote = '格局破损不意味着失败——它恰恰造就了你的韧性和适应力，你比别人更懂得如何在绝境中找到出路'
+  } else if (outcome.outcome === '不成格') {
+    poGeNote = '格局尚欠火候，但大运流年会补齐缺失的条件。你不是不行，只是时候未到'
   }
 
-  return null
+  const parts = [`**关键提醒**：${wisdom}。${flowNote}。`]
+  if (poGeNote) parts.push(poGeNote)
+
+  return parts.join('')
+}
+
+// ── 五行流通方向映射 ──
+
+const ELEMENT_DIRECTION: Record<string, string> = {
+  '金': '技术、专业技能',
+  '水': '学习、沟通',
+  '木': '社交、人脉',
+  '火': '展示、分享',
+  '土': '稳固、储蓄',
+}
+
+function getLiuTongSection(bazi: BaziResult): string {
+  const { blockage, tongGuan, description } = analyzeWuXingLiuTong(bazi)
+
+  if (blockage && tongGuan) {
+    const dir = ELEMENT_DIRECTION[tongGuan] ?? tongGuan
+    return `**流通诊断**：从五行流通的角度看，命局的能量在${blockage}处形成淤堵，导致气机不畅。通关用神为${tongGuan}，建议从${dir}方向进行调整。（${description}）`
+  }
+
+  return '**流通诊断**：从五行流通的角度看，命局五行能量流转顺畅，无明显的淤堵。'
+}
+
+// ── 模块6：关键建议 ──
+
+const PATTERN_OPENING: Record<string, string> = {
+  '正官格': '正官代表规则与自律',
+  '七杀格': '七杀代表野心与魄力',
+  '正财格': '财星代表价值与目标',
+  '偏财格': '财星代表价值与目标',
+  '正印格': '印星代表学习与思考',
+  '偏印格': '印星代表学习与思考',
+  '食神格': '食神代表创造力与享受',
+  '伤官格': '伤官代表反叛精神',
+  '建禄月劫格': '建禄月劫代表独立自主',
+  '阳刃格': '阳刃代表刚强与决断',
+  '从杀格': '从格代表顺势而行',
+  '从财格': '从格代表顺势而行',
+  '化土格': '化格代表蜕变与新生',
+  '化金格': '化格代表蜕变与新生',
+  '化水格': '化格代表蜕变与新生',
+  '化木格': '化格代表蜕变与新生',
+  '化火格': '化格代表蜕变与新生',
+}
+
+const ROLE_STORY: Record<string, string> = {
+  '财生官': '财星生官，规矩有了底气',
+  '印护官': '印星护官，学识为你护航',
+  '印制伤护官': '印星制伤护官，镇住了叛逆',
+  '财通关护官': '财星通关护官，资源化解了冲突',
+  '食神制杀': '食神制杀，创造力驯服了野心',
+  '印星化杀': '印星化杀，学识化解了压力',
+  '合绊制杀': '劫财合杀，猛虎被困笼中',
+  '官护财': '官星护财，规则守护着财富',
+  '食伤生财': '食伤生财，才华正在变现',
+  '官杀生印': '官杀生印，压力转化为智慧',
+  '食伤泄秀': '食伤泄秀，才华找到了出口',
+  '食神生财': '食神生财，创造力带来价值',
+  '化杀生身': '弃食就煞，杀印相生打通了格局',
+  '伤官生财': '伤官生财，才华落地变现',
+  '伤官佩印': '伤官佩印，锋芒有了分寸',
+  '伤官带杀': '伤官带杀，以锋芒对冲压力',
+  '调候暖局': '金水遇火暖局，冰封的才华见了光',
+}
+
+const TONGGUAN_ACTION: Record<string, string> = {
+  '金': '找到技术这扇窗（金），打磨一项硬技能',
+  '水': '找到学习和沟通的出口（水），沉下心吸纳新知',
+  '木': '拓展人脉和成长的通道（木），向外连接世界',
+  '火': '大胆展示和分享自己（火），让才华被看见',
+  '土': '稳固基础和储蓄习惯（土），一步一个脚印',
+}
+
+function getKeyAdvice(
+  bazi: BaziResult,
+  pattern: ExtractResult,
+  outcome: AssessResult,
+): string {
+  const liuTong = analyzeWuXingLiuTong(bazi)
+  const opening = PATTERN_OPENING[pattern.displayName] ?? `${pattern.displayName}代表你的核心特质`
+  const hasBlockage = liuTong.blockage !== null && liuTong.tongGuan !== null
+  const role = outcome.xiangShen?.role
+
+  // 构建机制故事
+  let mechanism = ''
+  if (outcome.outcome === '破格') {
+    mechanism = '格局破损——核心结构遭到破坏'
+  } else if (outcome.outcome === '不成格') {
+    mechanism = '还差一点火候——关键条件尚未齐备'
+  } else if (role && ROLE_STORY[role]) {
+    mechanism = ROLE_STORY[role]
+  }
+
+  // 构建流通故事
+  let flow = ''
+  if (hasBlockage) {
+    flow = `，但能量在${liuTong.blockage}处淤堵`
+  } else {
+    flow = '，五行流通顺畅'
+  }
+
+  // 构建行动方向
+  let action = ''
+  if (hasBlockage && liuTong.tongGuan) {
+    action = TONGGUAN_ACTION[liuTong.tongGuan] ?? `补${liuTong.tongGuan}来疏通能量`
+  } else if (outcome.outcome === '破格') {
+    action = '从修复格局结构入手，等待时运转机'
+  } else if (outcome.outcome === '不成格') {
+    action = '补齐格局缺失的条件，大运流年可激活'
+  } else if (role === '合绊制杀') {
+    action = '保持独立判断，把憋着的劲放出来'
+  } else if (role) {
+    action = '保持当前的平衡，让能量持续正向循环'
+  } else {
+    action = '自成体系不假外求，保持方向继续深耕'
+  }
+
+  const result = `${opening}——${mechanism}${flow}。${action}。`
+  return result
 }
 
 // ═══════════════════════════════════════════
@@ -610,17 +945,23 @@ export function generateAnalysis(input: AnalysisInput): AnalysisResult {
   const structure = getStructureSection(bazi, pattern, outcome)
   sections.push(structure)
 
-  const outcomeText = getOutcomeSection(outcome, strength)
+  const outcomeText = getOutcomeSection(outcome, strength, pattern)
   sections.push(outcomeText)
 
   const diagnosis = getDiagnosisSection(bazi, pattern, outcome, strength)
   if (diagnosis) sections.push(diagnosis)
 
+  const liuTong = getLiuTongSection(bazi)
+  sections.push(liuTong)
+
   const advice = getAdviceSection(bazi, pattern, outcome, strength)
   if (advice) sections.push(advice)
 
-  const warning = getWarningSection(pattern, outcome)
-  if (warning) sections.push(warning)
+  const warning = getWarningSection(bazi, pattern, outcome)
+  sections.push(warning)
+
+  const keyAdvice = getKeyAdvice(bazi, pattern, outcome)
+  sections.push(`**💡 关键建议**：${keyAdvice}`)
 
   const analysis = sections.join('\n\n')
 

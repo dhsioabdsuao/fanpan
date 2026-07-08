@@ -10,6 +10,7 @@ import { determineStrength } from '../strength/determineStrength'
 import { isCongSha, isCongCai } from '../bage/congGe'
 import { isHuaGe, getHuaQiDayMaster, recalculateShiShen } from '../bage/huaGe'
 import type { HuaQiShiShenResult } from '../bage/huaGe'
+import { analyzeWuXingLiuTong } from '../bage/liuTong'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -783,5 +784,327 @@ describe('assessOutcome + generateAnalysis 化格集成', () => {
     // 不应包含化神相关文案
     expect(analysis.analysis).not.toContain('化神')
     expect(analysis.analysis).not.toContain('新日主')
+  })
+})
+
+// ── 五行流通诊断：analyzeWuXingLiuTong ──
+
+describe('analyzeWuXingLiuTong', () => {
+  it('火炎土燥：2000-06-15 → 堵在土，通关为金', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 6, day: 15 }))
+    const result = analyzeWuXingLiuTong(bazi)
+
+    expect(result.source).toBe('土')
+    expect(result.blockage).toBe('土')
+    expect(result.tongGuan).toBe('金')
+    expect(result.description).toContain('土')
+    expect(result.description).toContain('金')
+  })
+
+  it('金寒水冷：1998-01-13 → 堵在水，通关为木', () => {
+    const bazi = calculateBazi(makeInput({ year: 1998, month: 1, day: 13, hour: 8 }))
+    const result = analyzeWuXingLiuTong(bazi)
+
+    expect(result.blockage).toBe('水')
+    expect(result.tongGuan).toBe('木')
+    expect(result.description).toContain('水')
+    expect(result.description).toContain('木')
+  })
+
+  it('流通顺畅：1990-02-15 → blockage=null, tongGuan=null', () => {
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 15 }))
+    const result = analyzeWuXingLiuTong(bazi)
+
+    expect(result.blockage).toBeNull()
+    expect(result.tongGuan).toBeNull()
+    expect(result.description).toContain('顺畅')
+  })
+})
+
+// ── 五行流通诊断接入解析文案 ──
+
+describe('generateAnalysis 流通诊断', () => {
+  it('火炎土燥(2000-06-15) → 文案含淤堵诊断和通关建议', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 6, day: 15 }))
+    const pattern = extractPattern(bazi)
+    const outcome = assessOutcome(bazi, pattern)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern, outcome, strength })
+
+    expect(result.analysis).toContain('流通诊断')
+    expect(result.analysis).toContain('土')
+    expect(result.analysis).toContain('淤堵')
+    expect(result.analysis).toContain('通关用神为金')
+    expect(result.analysis).toContain('技术、专业技能')
+  })
+
+  it('流通顺畅(1990-02-15) → 文案含流通顺畅诊断', () => {
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 15 }))
+    const pattern = extractPattern(bazi)
+    const outcome = assessOutcome(bazi, pattern)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern, outcome, strength })
+
+    expect(result.analysis).toContain('流通诊断')
+    expect(result.analysis).toContain('无明显的淤堵')
+    expect(result.analysis).not.toContain('通关用神')
+  })
+})
+
+// ── 相神机制文案区分度 ──
+
+describe('generateAnalysis 相神机制区分度', () => {
+  it('印星化杀机制 → 文案含春风化雨、层次清高', () => {
+    // 1990-02-16 食神格·弃食就煞透印 → xiangShen=印星·化杀生身
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    expect(ao.xiangShen?.role).toBe('化杀生身')
+    expect(result.analysis).toContain('春风化雨')
+    expect(result.analysis).toContain('层次清高')
+  })
+})
+
+// ── 层次评估：成格条件逐条分解 ──
+
+describe('generateAnalysis 成格条件分解', () => {
+  it('成格(食神格·弃食就煞) → 列出条件且标记已满足', () => {
+    // 1990-02-16 食神格, 弃食就煞而透印 → 杀印相生成格
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('成格')
+
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    // 应包含成格条件列表
+    expect(result.analysis).toContain('成格条件为')
+    // 应标记满足的具体条件
+    expect(result.analysis).toContain('满足')
+    expect(result.analysis).toContain('弃食就煞')
+    expect(result.analysis).toContain('故格局成立')
+  })
+
+  it('成格(化土格) → 列出化格条件且标记已满足', () => {
+    // 2000-01-17 甲己化土, 化气纯粹成格
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 1, day: 17 }))
+    const pat = extractPattern(bazi)
+    expect(pat.category).toBe('化土格')
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('成格')
+
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    expect(result.analysis).toContain('成格条件为')
+    expect(result.analysis).toContain('满足')
+    expect(result.analysis).toContain('日主合化')
+    expect(result.analysis).toContain('化神透干')
+    expect(result.analysis).toContain('故格局成立')
+  })
+
+  it('不成格(伤官格·伤官不旺) → 列出未满足的条件', () => {
+    // 1991-04-12 伤官格, 伤官不旺 → 不成格
+    const bazi = calculateBazi(makeInput({ year: 1991, month: 4, day: 12, hour: 9 }))
+    const pat = extractPattern(bazi)
+    expect(pat.category).toBe('伤官格')
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('不成格')
+
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    // 应列出成格条件
+    expect(result.analysis).toContain('成格条件为')
+    // 应提示有未满足
+    expect(result.analysis).toContain('未满足')
+    // 应提示大运可补齐
+    expect(result.analysis).toContain('大运流年')
+  })
+
+  it('破格(食神格·枭神夺食) → 列出破格触发条件', () => {
+    // 1991-02-11 食神格, 枭神夺食破格
+    const bazi = calculateBazi(makeInput({ year: 1991, month: 2, day: 11, hour: 8 }))
+    const pat = extractPattern(bazi)
+    expect(pat.category).toBe('食神格')
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('破格')
+
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    expect(result.analysis).toContain('格局破败')
+    expect(result.analysis).toContain('破格条件')
+    expect(result.analysis).toContain('枭神夺食')
+  })
+})
+
+// ── 关键建议：结合格局+流通 ──
+
+function getKeyAdviceText(result: { analysis: string }): string {
+  const marker = '**💡 关键建议**：'
+  const idx = result.analysis.indexOf(marker)
+  return idx >= 0 ? result.analysis.slice(idx + marker.length) : ''
+}
+
+describe('generateAnalysis 关键建议', () => {
+  it('食神格+流通堵点(1990-02-16) → 建议含格局特征和淤堵信息', () => {
+    // 食神格·弃食就煞而透印, blockage=土, tongGuan=金
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const pat = extractPattern(bazi)
+    expect(pat.category).toBe('食神格')
+    const ao = assessOutcome(bazi, pat)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const advice = getKeyAdviceText(result)
+    expect(advice).toContain('食神代表创造力与享受')
+    expect(advice).toContain('能量在土处淤堵')
+    expect(advice).toContain('技术')
+  })
+
+  it('正财格+流通顺畅(1982-05-10) → 建议含流通顺畅、无淤堵', () => {
+    // 正财格·成格, blockage=null
+    const bazi = calculateBazi(makeInput({ year: 1982, month: 5, day: 10, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const advice = getKeyAdviceText(result)
+    expect(advice).toContain('财星代表价值与目标')
+    expect(advice).toContain('五行流通顺畅')
+    expect(advice).not.toContain('淤堵')
+  })
+
+  it('正印格+破格+流通顺畅(1980-02-14) → 建议含格局破损提示', () => {
+    // 正印格·破格, blockage=null
+    const bazi = calculateBazi(makeInput({ year: 1980, month: 2, day: 14, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('破格')
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const advice = getKeyAdviceText(result)
+    expect(advice).toContain('印星代表学习与思考')
+    expect(advice).toContain('格局破损')
+  })
+
+  it('两个同格局不同流通的命局 → 建议有区分', () => {
+    // 两个建禄月劫格：一个有堵点(2000-02-07), 一个无堵点(1980-04-15)
+    const b1 = calculateBazi(makeInput({ year: 2000, month: 2, day: 7, hour: 8 }))
+    const b2 = calculateBazi(makeInput({ year: 1980, month: 4, day: 15, hour: 8 }))
+
+    const p1 = extractPattern(b1)
+    const p2 = extractPattern(b2)
+    expect(p1.category).toBe('建禄月劫格')
+    expect(p2.category).toBe('建禄月劫格')
+
+    const r1 = generateAnalysis({ bazi: b1, pattern: p1, outcome: assessOutcome(b1, p1), strength: determineStrength(b1) })
+    const r2 = generateAnalysis({ bazi: b2, pattern: p2, outcome: assessOutcome(b2, p2), strength: determineStrength(b2) })
+
+    const a1 = getKeyAdviceText(r1)
+    const a2 = getKeyAdviceText(r2)
+
+    // 格局特征相同
+    expect(a1).toContain('建禄月劫代表独立自主')
+    expect(a2).toContain('建禄月劫代表独立自主')
+
+    // 一个淤堵，一个顺畅
+    expect(a1).toContain('淤堵')
+    expect(a2).not.toContain('淤堵')
+
+    // 建议不同
+    expect(a1).not.toBe(a2)
+  })
+})
+
+// ── 关键提醒：所有命局触发 + 融合格局和流通 ──
+
+function getWarningText(result: { analysis: string }): string {
+  const marker = '**关键提醒**：'
+  const idx = result.analysis.indexOf(marker)
+  if (idx < 0) return ''
+  const endIdx = result.analysis.indexOf('**💡 关键建议**', idx)
+  return endIdx > idx
+    ? result.analysis.slice(idx + marker.length, endIdx).trim()
+    : result.analysis.slice(idx + marker.length).trim()
+}
+
+describe('generateAnalysis 关键提醒（全格局触发）', () => {
+  it('成格(食神格·1990-02-16) → 含格局智慧和淤堵信息', () => {
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('成格')
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const warning = getWarningText(result)
+    expect(warning).toBeTruthy()
+    expect(warning).toContain('创造力')
+    expect(warning).toContain('淤堵')
+    expect(warning).toContain('技术、专业技能')
+  })
+
+  it('不成格(伤官格·1991-04-12) → 含格局智慧+不成格提示', () => {
+    const bazi = calculateBazi(makeInput({ year: 1991, month: 4, day: 12, hour: 9 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('不成格')
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const warning = getWarningText(result)
+    expect(warning).toBeTruthy()
+    expect(warning).toContain('才华需要出口')
+    expect(warning).toContain('时候未到')
+  })
+
+  it('破格(食神格·1991-02-11) → 含格局智慧+破格警示', () => {
+    const bazi = calculateBazi(makeInput({ year: 1991, month: 2, day: 11, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('破格')
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const warning = getWarningText(result)
+    expect(warning).toBeTruthy()
+    expect(warning).toContain('创造力')
+    expect(warning).toContain('格局破损')
+    expect(warning).toContain('韧性')
+  })
+
+  it('正财格+流通顺畅(1982-05-10) → 含流畅提醒', () => {
+    const bazi = calculateBazi(makeInput({ year: 1982, month: 5, day: 10, hour: 8 }))
+    const pat = extractPattern(bazi)
+    const ao = assessOutcome(bazi, pat)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const warning = getWarningText(result)
+    expect(warning).toBeTruthy()
+    expect(warning).toContain('财富')
+    expect(warning).toContain('流通顺畅')
+    expect(warning).toContain('福气')
+  })
+
+  it('化土格(2000-01-17) → 含转变主题', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 1, day: 17 }))
+    const pat = extractPattern(bazi)
+    expect(pat.category).toBe('化土格')
+    const ao = assessOutcome(bazi, pat)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    const warning = getWarningText(result)
+    expect(warning).toBeTruthy()
+    expect(warning).toContain('转变')
   })
 })
