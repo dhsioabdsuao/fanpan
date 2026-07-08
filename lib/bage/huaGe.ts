@@ -5,7 +5,7 @@
 
 import type { BaziResult, ElementType } from '@/types/bazi'
 import { getStemElement, getTenGod } from '@/lib/bazi-utils'
-import { detectAllHe } from './helpers'
+import { detectAllHe, getHiddenStemsSpec } from './helpers'
 
 // ── 五合化气映射 ──
 
@@ -107,4 +107,42 @@ export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType 
     name: HUA_NAME_MAP[huaElement],
     huaShen: huaElement,
   }
+}
+
+// ── 化气后十神重排 ──
+
+export interface HuaQiShiShenResult {
+  newDayMaster: string
+  huaElement: ElementType
+  stemTenGods: Record<'year' | 'month' | 'day' | 'hour', string>
+  hiddenTenGods: Record<string, string[]>
+}
+
+/**
+ * 化气成立后，按新日主重算全局四柱天干和地支藏干的十神。
+ * 阳随阳，阴随阴——新日主已由 HUA_QI_MAP 确定。
+ */
+export function recalculateShiShen(
+  bazi: BaziResult,
+  newDayMaster: string,
+): HuaQiShiShenResult {
+  const { pillars } = bazi
+  const huaElement = getStemElement(newDayMaster)
+
+  const stemTenGods = {
+    year: getTenGod(newDayMaster, pillars.year.stem),
+    month: getTenGod(newDayMaster, pillars.month.stem),
+    day: getTenGod(newDayMaster, bazi.dayMaster),
+    hour: getTenGod(newDayMaster, pillars.hour.stem),
+  }
+
+  const branchKeys = ['year', 'month', 'day', 'hour'] as const
+  const hiddenTenGods: Record<string, string[]> = {}
+  for (const key of branchKeys) {
+    const branch = pillars[key].branch
+    const hidden = getHiddenStemsSpec(branch)
+    hiddenTenGods[key] = hidden.map((s) => getTenGod(newDayMaster, s))
+  }
+
+  return { newDayMaster, huaElement, stemTenGods, hiddenTenGods }
 }

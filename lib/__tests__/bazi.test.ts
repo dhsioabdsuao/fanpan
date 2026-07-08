@@ -8,7 +8,8 @@ import { getTiaoHouYongShen } from '../bage/tiaoHou'
 import { generateAnalysis } from '../bage/generateAnalysis'
 import { determineStrength } from '../strength/determineStrength'
 import { isCongSha, isCongCai } from '../bage/congGe'
-import { isHuaGe, getHuaQiDayMaster } from '../bage/huaGe'
+import { isHuaGe, getHuaQiDayMaster, recalculateShiShen } from '../bage/huaGe'
+import type { HuaQiShiShenResult } from '../bage/huaGe'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -658,5 +659,129 @@ describe('化格判定', () => {
     const bazi = calculateBazi(makeInput({ year: 2000, month: 8, day: 24 }))
     const result = isHuaGe(bazi)
     expect(result).toBeNull()
+  })
+})
+
+// ── 化气后十神重排：recalculateShiShen ──
+
+describe('recalculateShiShen', () => {
+  it('甲己化土：新日主戊，天干十神正确', () => {
+    // 2000-01-17: 甲木日主 + 己土合神 → 化土格, 新日主戊
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 1, day: 17 }))
+    const result = recalculateShiShen(bazi, '戊')
+
+    expect(result.newDayMaster).toBe('戊')
+    expect(result.huaElement).toBe('土')
+
+    // 四柱：己卯 丁丑 甲戌 己巳
+    // 从新日主戊(土)看:
+    // 年己(土,阴) → 劫财
+    // 月丁(火,阴) → 正印(火生土, 阴阳不同)
+    // 日甲(木,阳) → 七杀(木克土, 同为阳)
+    // 时己(土,阴) → 劫财
+    expect(result.stemTenGods.year).toBe('劫财')
+    expect(result.stemTenGods.month).toBe('正印')
+    expect(result.stemTenGods.day).toBe('七杀')
+    expect(result.stemTenGods.hour).toBe('劫财')
+
+    // 藏干验证(日支戌: 戊辛丁)
+    // 从戊看: 戊=比肩, 辛=伤官(土生金,阴), 丁=正印
+    const dayHidden = result.hiddenTenGods['day']
+    expect(dayHidden).toEqual(['比肩', '伤官', '正印'])
+  })
+
+  it('乙庚化金：新日主辛，天干十神正确', () => {
+    // 2000-02-07: 乙木日主 + 庚金合神 → 此命例假化(无根)，但单独测函数
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 2, day: 7 }))
+    const result = recalculateShiShen(bazi, '辛')
+
+    expect(result.newDayMaster).toBe('辛')
+    expect(result.huaElement).toBe('金')
+
+    // 四柱：庚辰 戊寅 乙未 辛巳
+    // 从新日主辛(金)看:
+    // 年庚(金,阳) → 劫财(同金, 阴阳不同)
+    // 月戊(土,阳) → 正印(土生金, 阴阳不同)
+    // 日乙(木,阴) → 偏财(金克木, 阴阳相同)
+    // 时辛(金,阴) → 比肩(同金, 同阴)
+    expect(result.stemTenGods.year).toBe('劫财')
+    expect(result.stemTenGods.month).toBe('正印')
+    expect(result.stemTenGods.day).toBe('偏财')
+    expect(result.stemTenGods.hour).toBe('比肩')
+  })
+})
+
+// ── 化气十神重排集成测试 ──
+
+describe('extractPattern 化气十神重排', () => {
+  it('真化格(甲己化土) → huaQiShiShen 不为 null，十神正确', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 1, day: 17 }))
+    const pat = extractPattern(bazi)
+
+    expect(pat.category).toBe('化土格')
+    expect(pat.huaQiShiShen).not.toBeNull()
+
+    const hq = pat.huaQiShiShen!
+    expect(hq.newDayMaster).toBe('戊')
+    expect(hq.huaElement).toBe('土')
+    // 合作伙伴干为己，从新日主戊看己为劫财
+    expect(hq.stemTenGods.year).toBe('劫财')
+  })
+
+  it('假化格(无根) → huaQiShiShen 为 null，走八格', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 2, day: 7 }))
+    const pat = extractPattern(bazi)
+
+    // 假化不触发，走八格
+    expect(pat.category).not.toBe('化金格')
+    expect(pat.huaQiShiShen).toBeNull()
+  })
+
+  it('假化格(克破) → huaQiShiShen 为 null，走八格', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 8, day: 24 }))
+    const pat = extractPattern(bazi)
+
+    expect(pat.category).not.toBe('化土格')
+    expect(pat.huaQiShiShen).toBeNull()
+  })
+})
+
+describe('assessOutcome + generateAnalysis 化格集成', () => {
+  it('真化格 → 成格，用神文案含化神信息', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 1, day: 17 }))
+    const pat = extractPattern(bazi)
+    expect(pat.category).toBe('化土格')
+
+    const ao = assessOutcome(bazi, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('化气纯粹')
+
+    const strength = determineStrength(bazi)
+    const analysis = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    // 取格原因含新日主信息
+    expect(analysis.analysis).toContain('甲(木)合化为土，新日主戊(土)')
+
+    // 用神为化神
+    expect(analysis.analysis).toContain('用神为化神土')
+
+    // 总结文案
+    expect(analysis.summary).toBeTruthy()
+  })
+
+  it('假化格 → 不触发化格，走正常八格流程', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 2, day: 7 }))
+    const pat = extractPattern(bazi)
+    // 假化走八格
+    expect(pat.huaQiShiShen).toBeNull()
+    expect(pat.origin).not.toBe('化格')
+
+    const ao = assessOutcome(bazi, pat)
+    const strength = determineStrength(bazi)
+    const analysis = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
+
+    // 不应包含化神相关文案
+    expect(analysis.analysis).not.toContain('化神')
+    expect(analysis.analysis).not.toContain('新日主')
   })
 })

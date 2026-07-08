@@ -37,9 +37,11 @@ interface ChartContext {
   dayMasterElement: ElementType
 }
 
-function buildContext(bazi: BaziResult): ChartContext {
-  const { pillars, dayMaster, dayMasterElement } = bazi
-  const stems = [pillars.year.stem, pillars.month.stem, dayMaster, pillars.hour.stem]
+function buildContext(bazi: BaziResult, dayMasterOverride?: string): ChartContext {
+  const { pillars, dayMaster: origDayMaster, dayMasterElement: origDmElement } = bazi
+  const dayMaster = dayMasterOverride ?? origDayMaster
+  const dayMasterElement = dayMasterOverride ? getStemElement(dayMasterOverride) : origDmElement
+  const stems = [pillars.year.stem, pillars.month.stem, origDayMaster, pillars.hour.stem]
   const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
 
   // 天干十神（年/月/时，不含日主）
@@ -862,13 +864,14 @@ export function assessOutcome(
     case '化水格':
     case '化木格':
     case '化火格': {
-      // 化格：用神为化神，相神为生扶化神之行（印星）
+      // 化格成败基于化气后十神（新日主视角）
+      const huaCtx = buildContext(bazi, extract.huaQiShiShen?.newDayMaster)
       const huaElement = extract.patternElement as ElementType
       const SHENG_MAP: Record<string, string> = {
         '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
       }
       const shengElement = SHENG_MAP[huaElement]
-      const touStems = [ctx.stems[0], ctx.stems[1], ctx.stems[3]] // 年/月/时
+      const touStems = [huaCtx.stems[0], huaCtx.stems[1], huaCtx.stems[3]]
       const hasSheng = touStems.some((s) => getStemElement(s) === shengElement)
       return {
         outcome: '成格',

@@ -68,6 +68,10 @@ function getYongShenTenGod(bazi: BaziResult, pattern: ExtractResult): string {
   if (pattern.category === '建禄月劫格') {
     return pattern.luJieYongShenTenGod ?? '财官'
   }
+  // 化格：按化气后新日主计算十神
+  if (pattern.huaQiShiShen) {
+    return getTenGod(pattern.huaQiShiShen.newDayMaster, pattern.yongShen)
+  }
   return getTenGod(bazi.dayMaster, pattern.yongShen)
 }
 
@@ -226,8 +230,16 @@ function getOriginNote(bazi: BaziResult, pattern: ExtractResult): string {
       return `月令在"${mb}"，本气${benQiTenGod}当令，天干透${pattern.luJieYongShenTenGod ?? '财官'}，取建禄月劫格而以透干为用`
     case '从格':
       return `日主无根，全局气势偏于一方，依《滴天髓》"从得真者只论从"取为从格`
-    case '化格':
-      return `日主${bazi.dayMaster}与它干相合而化，依《滴天髓》"化得真者只论化"取为化格`
+    case '化格': {
+      const origDm = bazi.dayMaster
+      const origEl = getStemElement(origDm)
+      const newEl = pattern.huaQiShiShen?.huaElement ?? pattern.patternElement
+      const newDm = pattern.huaQiShiShen?.newDayMaster
+      const transDesc = newDm
+        ? `日主${origDm}(${origEl})合化为${newEl}，新日主${newDm}(${newEl})`
+        : `日主${origDm}与它干相合而化`
+      return `${transDesc}，依《滴天髓》"化得真者只论化"取为化格`
+    }
     default:
       return `月令在"${mb}"，综合判断取格`
   }
@@ -255,11 +267,16 @@ function getStructureSection(
   parts.push(getOriginNote(bazi, pattern) + '。')
 
   // 用神
-  const yongLabel =
-    pattern.category === '建禄月劫格'
+  const isHua = !!pattern.huaQiShiShen
+  const yongLabel = isHua
+    ? `化神${pattern.huaQiShiShen!.huaElement}（${pattern.yongShen}·${fullYongShen}）`
+    : pattern.category === '建禄月劫格'
       ? `"${fullYongShen}"`
       : `"${pattern.yongShen}（${fullYongShen}）"`
-  parts.push(`用神为${yongLabel}——${yongShenBrief}。`)
+  const yongShenDesc = isHua
+    ? `化神${pattern.huaQiShiShen!.huaElement}——由原日主合化而来的全新五行气场，是你化气后的核心驱动力`
+    : yongShenBrief
+  parts.push(`用神为${yongLabel}——${yongShenDesc}。`)
 
   // 相神
   if (outcome.xiangShen) {

@@ -11,7 +11,8 @@ import {
 } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
 import { isCongSha, isCongCai } from './congGe'
-import { isHuaGe } from './huaGe'
+import { isHuaGe, recalculateShiShen, getHuaQiDayMaster } from './huaGe'
+import type { HuaQiShiShenResult } from './huaGe'
 
 // ── 十神 → 格局映射 ──
 const TEN_GOD_TO_CATEGORY: Record<string, PatternCategory> = {
@@ -51,6 +52,8 @@ export interface ExtractResult {
   patternElement: string | null
   /** 建禄月劫格：天干所透的用神十神 */
   luJieYongShenTenGod: string | null
+  /** 化格：化气后十神重排数据 */
+  huaQiShiShen: HuaQiShiShenResult | null
 }
 
 export function extractPattern(bazi: BaziResult): ExtractResult {
@@ -91,6 +94,8 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     // 合神（partner stem）即化神五行之干
     const huaPartner = HUA_PARTNER_MAP[dayMaster]
     const huaStem = touGanStems.find((s) => s === huaPartner)
+    const newDayMaster = getHuaQiDayMaster(dayMaster, huaPartner)
+    const huaQiShiShen = newDayMaster ? recalculateShiShen(bazi, newDayMaster) : null
     return {
       category: name as PatternCategory,
       displayName: name as PatternDisplayName,
@@ -100,6 +105,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: huaStem ?? null,
       patternElement: huaShen,
       luJieYongShenTenGod: null,
+      huaQiShiShen,
     }
   }
 
@@ -121,6 +127,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: shaStem ?? null,
       patternElement: null,
       luJieYongShenTenGod: null,
+      huaQiShiShen: null,
     }
   }
 
@@ -139,6 +146,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: caiStem ?? null,
       patternElement: null,
       luJieYongShenTenGod: null,
+      huaQiShiShen: null,
     }
   }
 
@@ -159,6 +167,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: primaryFire,
       patternElement: null,
       luJieYongShenTenGod: null,
+      huaQiShiShen: null,
     }
   }
 
@@ -189,6 +198,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
         patternStem: null,
         patternElement: null,
         luJieYongShenTenGod: null,
+      huaQiShiShen: null,
       }
     }
 
@@ -223,6 +233,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: null,
       patternElement: null,
       luJieYongShenTenGod: selectedYongShen?.tenGod ?? null,
+      huaQiShiShen: null,
     }
   }
 
@@ -269,6 +280,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: selectedStem,
       patternElement: null,
       luJieYongShenTenGod: null,
+      huaQiShiShen: null,
     }
   }
 
@@ -295,6 +307,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       patternStem: null,
       patternElement: element,
       luJieYongShenTenGod: null,
+      huaQiShiShen: null,
     }
   }
 
@@ -316,5 +329,6 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     patternStem: null,
     patternElement: null,
     luJieYongShenTenGod: null,
+    huaQiShiShen: null,
   }
 }
