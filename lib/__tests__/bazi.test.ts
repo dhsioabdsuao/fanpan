@@ -11,6 +11,8 @@ import { isCongSha, isCongCai } from '../bage/congGe'
 import { isHuaGe, getHuaQiDayMaster, recalculateShiShen } from '../bage/huaGe'
 import type { HuaQiShiShenResult } from '../bage/huaGe'
 import { analyzeWuXingLiuTong } from '../bage/liuTong'
+import { getAllShenSha } from '../bage/shensha'
+import type { ShenSha } from '../bage/shensha'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -1106,5 +1108,105 @@ describe('generateAnalysis 关键提醒（全格局触发）', () => {
     const warning = getWarningText(result)
     expect(warning).toBeTruthy()
     expect(warning).toContain('转变')
+  })
+})
+
+// ── 神煞查表：getAllShenSha ──
+
+describe('getAllShenSha', () => {
+  it('返回数组，每条记录包含必要字段', () => {
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const result = getAllShenSha(bazi)
+    expect(Array.isArray(result)).toBe(true)
+    expect(result.length).toBeGreaterThan(0)
+    for (const s of result) {
+      expect(s.name).toBeTruthy()
+      expect(['贵人', '凶星', '泛星']).toContain(s.category)
+      expect(['年柱', '月柱', '日柱', '时柱']).toContain(s.pillar)
+      expect(s.description).toBeTruthy()
+      expect(s.basis).toContain('渊海子平')
+    }
+  })
+
+  it('按柱位排序（年→月→日→时）', () => {
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    const result = getAllShenSha(bazi)
+    const order: Record<string, number> = { '年柱': 0, '月柱': 1, '日柱': 2, '时柱': 3 }
+    for (let i = 1; i < result.length; i++) {
+      expect(order[result[i - 1].pillar]).toBeLessThanOrEqual(order[result[i].pillar])
+    }
+  })
+
+  it('天乙贵人：甲日主(2023-07-15) → 天乙在月柱未', () => {
+    // 甲日主, 天乙在丑/未。月柱己未 → 未=天乙
+    const bazi = calculateBazi(makeInput({ year: 2023, month: 7, day: 15, hour: 8 }))
+    expect(bazi.dayMaster).toBe('甲')
+    expect(bazi.pillars.month.branch).toBe('未')
+    const result = getAllShenSha(bazi)
+    const tianYi = result.filter((s) => s.name === '天乙贵人')
+    expect(tianYi.length).toBeGreaterThanOrEqual(1)
+    expect(tianYi.some((s) => s.pillar === '月柱')).toBe(true)
+  })
+
+  it('文昌贵人：庚日主(2026-07-15 22时) → 文昌在亥，时柱见之', () => {
+    // 庚日主, 文昌在亥。时柱地支为亥。
+    const bazi = calculateBazi(makeInput({ year: 2026, month: 7, day: 15, hour: 22 }))
+    expect(bazi.dayMaster).toBe('庚')
+    expect(bazi.pillars.hour.branch).toBe('亥')
+    const result = getAllShenSha(bazi)
+    const wenChang = result.filter((s) => s.name === '文昌贵人')
+    expect(wenChang.length).toBeGreaterThanOrEqual(1)
+    expect(wenChang.some((s) => s.pillar === '时柱')).toBe(true)
+  })
+
+  it('桃花：申子辰年(2024甲辰) → 桃花在酉', () => {
+    // 年支辰 → 桃花在酉。月柱地支为酉。
+    const bazi = calculateBazi(makeInput({ year: 2024, month: 9, day: 15, hour: 8 }))
+    expect(bazi.pillars.year.branch).toBe('辰')
+    expect(bazi.pillars.month.branch).toBe('酉')
+    const result = getAllShenSha(bazi)
+    const taoHua = result.filter((s) => s.name === '桃花')
+    expect(taoHua.length).toBeGreaterThanOrEqual(1)
+    expect(taoHua.some((s) => s.pillar === '月柱')).toBe(true)
+  })
+
+  it('驿马：2019-02-05 → 年柱见驿马', () => {
+    // 年支亥, 日支酉 → 驿马(y)=巳, 驿马(d)=亥。年柱=亥 → 驿马在年柱
+    const bazi = calculateBazi(makeInput({ year: 2019, month: 2, day: 5, hour: 8 }))
+    expect(bazi.pillars.year.branch).toBe('亥')
+    const result = getAllShenSha(bazi)
+    const yiMa = result.filter((s) => s.name === '驿马')
+    expect(yiMa.length).toBeGreaterThanOrEqual(1)
+    expect(yiMa.some((s) => s.pillar === '年柱')).toBe(true)
+  })
+
+  it('华盖：亥卯未年(2023癸卯) → 华盖在未', () => {
+    // 年支卯 → 华盖在未。月柱己未。
+    const bazi = calculateBazi(makeInput({ year: 2023, month: 7, day: 15, hour: 8 }))
+    expect(bazi.pillars.year.branch).toBe('卯')
+    expect(bazi.pillars.month.branch).toBe('未')
+    const result = getAllShenSha(bazi)
+    const huaGai = result.filter((s) => s.name === '华盖')
+    expect(huaGai.length).toBeGreaterThanOrEqual(1)
+    expect(huaGai.some((s) => s.pillar === '月柱')).toBe(true)
+  })
+
+  it('羊刃：壬日主 → 羊刃在子', () => {
+    // 1990-02-16 壬子日 → 羊刃在日柱
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    expect(bazi.dayMaster).toBe('壬')
+    const result = getAllShenSha(bazi)
+    const yangRen = result.filter((s) => s.name === '羊刃')
+    expect(yangRen.length).toBeGreaterThanOrEqual(1)
+    expect(yangRen.some((s) => s.pillar === '日柱')).toBe(true)
+  })
+
+  it('孤鸾煞：壬子日 → 命中孤鸾', () => {
+    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
+    expect(bazi.dayMaster + bazi.pillars.day.branch).toBe('壬子')
+    const result = getAllShenSha(bazi)
+    const guLuan = result.find((s) => s.name === '孤鸾煞')
+    expect(guLuan).toBeTruthy()
+    expect(guLuan!.pillar).toBe('日柱')
   })
 })
