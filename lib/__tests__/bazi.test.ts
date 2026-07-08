@@ -8,6 +8,7 @@ import { getTiaoHouYongShen } from '../bage/tiaoHou'
 import { generateAnalysis } from '../bage/generateAnalysis'
 import { determineStrength } from '../strength/determineStrength'
 import { isCongSha, isCongCai } from '../bage/congGe'
+import { isHuaGe, getHuaQiDayMaster } from '../bage/huaGe'
 
 function makeInput(overrides: Partial<BaziInput> = {}): BaziInput {
   return {
@@ -618,6 +619,44 @@ describe('从格判定', () => {
   it('假从财格：透财+会火局，但官杀透干无食伤制，财党杀', () => {
     const bazi = calculateBazi(makeInput({ year: 2018, month: 6, day: 20 }))
     const result = isCongCai(bazi)
+    expect(result).toBeNull()
+  })
+})
+
+// ── 化格判定：isHuaGe / getHuaQiDayMaster（《滴天髓》原文·任铁樵注）──
+
+describe('化格判定', () => {
+  it('getHuaQiDayMaster 五组合化映射', () => {
+    expect(getHuaQiDayMaster('甲', '己')).toBe('戊')
+    expect(getHuaQiDayMaster('己', '甲')).toBe('己')
+    expect(getHuaQiDayMaster('乙', '庚')).toBe('辛')
+    expect(getHuaQiDayMaster('庚', '乙')).toBe('庚')
+    expect(getHuaQiDayMaster('丙', '辛')).toBe('壬')
+    expect(getHuaQiDayMaster('辛', '丙')).toBe('癸')
+    expect(getHuaQiDayMaster('丁', '壬')).toBe('乙')
+    expect(getHuaQiDayMaster('壬', '丁')).toBe('甲')
+    expect(getHuaQiDayMaster('戊', '癸')).toBe('丙')
+    expect(getHuaQiDayMaster('癸', '戊')).toBe('丁')
+    expect(getHuaQiDayMaster('甲', '庚')).toBeNull()
+  })
+
+  it('真化格：甲己化土，化神透干有根，无克破', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 1, day: 17 }))
+    const result = isHuaGe(bazi)
+    expect(result).not.toBeNull()
+    expect(result!.name).toBe('化土格')
+    expect(result!.huaShen).toBe('土')
+  })
+
+  it('假化格（化神无根）：乙庚合金，但地支无金根', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 2, day: 7 }))
+    const result = isHuaGe(bazi)
+    expect(result).toBeNull()
+  })
+
+  it('假化格（有克破）：甲己化土有根，但天干透甲木克土', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 8, day: 24 }))
+    const result = isHuaGe(bazi)
     expect(result).toBeNull()
   })
 })

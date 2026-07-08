@@ -11,6 +11,7 @@ import {
 } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
 import { isCongSha, isCongCai } from './congGe'
+import { isHuaGe } from './huaGe'
 
 // ── 十神 → 格局映射 ──
 const TEN_GOD_TO_CATEGORY: Record<string, PatternCategory> = {
@@ -28,6 +29,15 @@ const TEN_GOD_TO_DISPLAY: Record<string, PatternDisplayName> = {
 }
 
 const YANG_GAN = new Set(['甲', '丙', '戊', '庚', '壬'])
+
+/** 五合化气：日主 → 合神 */
+const HUA_PARTNER_MAP: Record<string, string> = {
+  '甲': '己', '己': '甲',
+  '乙': '庚', '庚': '乙',
+  '丙': '辛', '辛': '丙',
+  '丁': '壬', '壬': '丁',
+  '戊': '癸', '癸': '戊',
+}
 
 export interface ExtractResult {
   category: PatternCategory
@@ -71,6 +81,27 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     pillars.day.branch,
     pillars.hour.branch,
   ]
+
+  // ── 化格优先判定（《滴天髓》原文·任铁樵注）──
+  // 优先级最高：化格 > 从格 > 八格。真化直取化格，假化（返回null）继续。
+
+  const huaGeResult = isHuaGe(bazi)
+  if (huaGeResult) {
+    const { name, huaShen } = huaGeResult
+    // 合神（partner stem）即化神五行之干
+    const huaPartner = HUA_PARTNER_MAP[dayMaster]
+    const huaStem = touGanStems.find((s) => s === huaPartner)
+    return {
+      category: name as PatternCategory,
+      displayName: name as PatternDisplayName,
+      yongShen: huaStem ?? huaShen,
+      patternGod: `日主${dayMaster}合${huaPartner}化${huaShen},化气成格`,
+      origin: '化格',
+      patternStem: huaStem ?? null,
+      patternElement: huaShen,
+      luJieYongShenTenGod: null,
+    }
+  }
 
   // ── 从格优先判定（《滴天髓》原文·任铁樵注）──
   // 从格在八格之前判定。真从则直取从格，假从（返回null）继续走八格。

@@ -857,6 +857,27 @@ export function assessOutcome(
         xiangShen: hasShiShang ? { god: '食伤', role: '食伤生财，助从财之势' } : null,
       }
     }
+    case '化土格':
+    case '化金格':
+    case '化水格':
+    case '化木格':
+    case '化火格': {
+      // 化格：用神为化神，相神为生扶化神之行（印星）
+      const huaElement = extract.patternElement as ElementType
+      const SHENG_MAP: Record<string, string> = {
+        '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
+      }
+      const shengElement = SHENG_MAP[huaElement]
+      const touStems = [ctx.stems[0], ctx.stems[1], ctx.stems[3]] // 年/月/时
+      const hasSheng = touStems.some((s) => getStemElement(s) === shengElement)
+      return {
+        outcome: '成格',
+        reason: `真化格，日主合化${huaElement}，化气纯粹，格局成立`,
+        xiangShen: hasSheng
+          ? { god: `${shengElement}行`, role: `${shengElement}生${huaElement}，助化神之势` }
+          : null,
+      }
+    }
     default:
       return { outcome: '不成格', reason: '未知格局类型', xiangShen: null }
   }
