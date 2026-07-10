@@ -1,5 +1,7 @@
 import type { BaziResult } from '@/types/bazi'
 import { Card, CardContent } from '@/components/ui/card'
+import { getAllShenSha } from '@/lib/bage/shensha'
+import type { ShenSha } from '@/lib/bage/shensha'
 
 const ELEMENT_COLORS: Record<string, string> = {
   金: 'text-yellow-600',
@@ -7,6 +9,12 @@ const ELEMENT_COLORS: Record<string, string> = {
   水: 'text-blue-700',
   火: 'text-red-600',
   土: 'text-amber-700',
+}
+
+const CATEGORY_DOT: Record<string, string> = {
+  '贵人': 'text-emerald-600',
+  '凶星': 'text-red-500',
+  '泛星': 'text-slate-400',
 }
 
 function StemBranch({
@@ -38,6 +46,11 @@ function StemBranch({
 
 export function PillarTable({ result, hideHour }: { result: BaziResult; hideHour?: boolean }) {
   const { pillars, tenGods, naYin } = result
+  const shensha = getAllShenSha(result)
+  const pillarKeys = ['year', 'month', 'day', 'hour'] as const
+  const pillarLabelMap: Record<string, '年柱' | '月柱' | '日柱' | '时柱'> = {
+    year: '年柱', month: '月柱', day: '日柱', hour: '时柱',
+  }
 
   const columns = [
     { key: 'year' as const, label: '年柱', pillar: pillars.year, tenGod: tenGods.yearStem, naYin: naYin.year, highlight: false },
@@ -97,6 +110,39 @@ export function PillarTable({ result, hideHour }: { result: BaziResult; hideHour
               </div>
             )
           })}
+        </div>
+
+        {/* Shensha row */}
+        <div className="mt-3 border-t pt-3">
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {pillarKeys.map((key) => {
+              const label = pillarLabelMap[key]
+              const stars = shensha.filter((s) => s.pillar === label)
+              const isHourHidden = hideHour && key === 'hour'
+
+              return (
+                <div key={key} className="px-1">
+                  {isHourHidden ? (
+                    <span className="text-[10px] text-muted-foreground">—</span>
+                  ) : stars.length === 0 ? (
+                    <span className="text-[10px] text-muted-foreground">无</span>
+                  ) : (
+                    <div className="flex flex-col gap-0.5">
+                      {stars.map((s, i) => (
+                        <span
+                          key={i}
+                          className={`text-[10px] leading-tight ${CATEGORY_DOT[s.category] ?? 'text-muted-foreground'}`}
+                          title={s.description}
+                        >
+                          {s.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>

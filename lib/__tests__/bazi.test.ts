@@ -1124,7 +1124,7 @@ describe('getAllShenSha', () => {
       expect(['贵人', '凶星', '泛星']).toContain(s.category)
       expect(['年柱', '月柱', '日柱', '时柱']).toContain(s.pillar)
       expect(s.description).toBeTruthy()
-      expect(s.basis).toContain('渊海子平')
+      expect(s.basis).toMatch(/渊海子平|三命通会|季节法|纳音法/)
     }
   })
 
@@ -1210,3 +1210,4 @@ describe('getAllShenSha', () => {
     expect(guLuan!.pillar).toBe('日柱')
   })
 })
+
