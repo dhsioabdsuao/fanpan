@@ -43,9 +43,9 @@ export function TaijiBackground() {
           {/* Taiji circle — yang half */}
           <circle cx="500" cy="500" r="440" fill="#f5f0e8" clipPath="url(#taiji-yang)" />
 
-          {/* Fish eyes */}
-          <circle cx="500" cy="280" r="32" fill="#f5f0e8" opacity="0.65" />
-          <circle cx="500" cy="720" r="32" fill="#1f1d1a" opacity="0.65" />
+          {/* Fish eyes — 阴中有阳（亮点在左下阴鱼头），阳中有阴（暗点在右上阳鱼头） */}
+          <circle cx="420" cy="780" r="40" fill="#f5f0e8" />
+          <circle cx="580" cy="220" r="40" fill="#1f1d1a" />
 
           {/* Inner ring */}
           <circle
