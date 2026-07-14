@@ -10,7 +10,7 @@ const notoSerifSC = Noto_Serif_SC({
 export default function AboutPage() {
   return (
     <div className="min-h-full px-4 py-12">
-      <div className="mx-auto max-w-2xl space-y-10">
+      <div className="mx-auto max-w-2xl space-y-10 rounded-xl bg-white p-8 shadow-sm">
         <Link
           href="/"
           className="inline-flex items-center text-sm text-stone-500 hover:text-stone-600 transition-colors"

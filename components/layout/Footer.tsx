@@ -10,22 +10,14 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-stone-200 text-sm text-stone-600">
+    <footer className="border-t border-stone-200 bg-white text-sm text-stone-600">
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
           <div>
             <h3 className="mb-2 font-semibold text-stone-500">关于本站</h3>
             <p>
               <Link href="/about" className="hover:text-stone-600 transition-colors">
                 了解更多
-              </Link>
-            </p>
-          </div>
-          <div>
-            <h3 className="mb-2 font-semibold text-stone-500">方法论</h3>
-            <p>
-              <Link href="/about#methodology" className="hover:text-stone-600 transition-colors">
-                子平派命理体系
               </Link>
             </p>
           </div>

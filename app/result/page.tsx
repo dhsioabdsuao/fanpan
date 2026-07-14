@@ -174,7 +174,7 @@ function ResultContent() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="outline" size="sm" className="bg-white">
               <ArrowLeft className="mr-1 size-4" />
               返回首页
             </Button>
@@ -207,7 +207,7 @@ function ResultContent() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <div className="pb-4">{section.render()}</div>
+                      <div className="px-4 pb-4">{section.render()}</div>
                     </div>
                   </div>
                 </CardContent>
