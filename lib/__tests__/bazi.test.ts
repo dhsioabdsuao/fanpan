@@ -945,97 +945,12 @@ describe('generateAnalysis 成格条件分解', () => {
   })
 })
 
-// ── 关键建议：结合格局+流通 ──
-
-function getKeyAdviceText(result: { analysis: string }): string {
-  const marker = '**💡 关键建议**：'
-  const idx = result.analysis.indexOf(marker)
-  return idx >= 0 ? result.analysis.slice(idx + marker.length) : ''
-}
-
-describe('generateAnalysis 关键建议', () => {
-  it('食神格+流通堵点(1990-02-16) → 建议含格局特征和淤堵信息', () => {
-    // 食神格·弃食就煞而透印, blockage=土, tongGuan=金
-    const bazi = calculateBazi(makeInput({ year: 1990, month: 2, day: 16, hour: 8 }))
-    const pat = extractPattern(bazi)
-    expect(pat.category).toBe('食神格')
-    const ao = assessOutcome(bazi, pat)
-    const strength = determineStrength(bazi)
-    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
-
-    const advice = getKeyAdviceText(result)
-    expect(advice).toContain('食神代表创造力与享受')
-    expect(advice).toContain('能量在土处淤堵')
-    expect(advice).toContain('技术')
-  })
-
-  it('正财格+流通顺畅(1982-05-10) → 建议含流通顺畅、无淤堵', () => {
-    // 正财格·成格, blockage=null
-    const bazi = calculateBazi(makeInput({ year: 1982, month: 5, day: 10, hour: 8 }))
-    const pat = extractPattern(bazi)
-    const ao = assessOutcome(bazi, pat)
-    const strength = determineStrength(bazi)
-    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
-
-    const advice = getKeyAdviceText(result)
-    expect(advice).toContain('财星代表价值与目标')
-    expect(advice).toContain('五行流通顺畅')
-    expect(advice).not.toContain('淤堵')
-  })
-
-  it('正印格+破格+流通顺畅(1980-02-14) → 建议含格局破损提示', () => {
-    // 正印格·破格, blockage=null
-    const bazi = calculateBazi(makeInput({ year: 1980, month: 2, day: 14, hour: 8 }))
-    const pat = extractPattern(bazi)
-    const ao = assessOutcome(bazi, pat)
-    expect(ao.outcome).toBe('破格')
-    const strength = determineStrength(bazi)
-    const result = generateAnalysis({ bazi, pattern: pat, outcome: ao, strength })
-
-    const advice = getKeyAdviceText(result)
-    expect(advice).toContain('印星代表学习与思考')
-    expect(advice).toContain('格局破损')
-  })
-
-  it('两个同格局不同流通的命局 → 建议有区分', () => {
-    // 两个建禄月劫格：一个有堵点(2000-02-07), 一个无堵点(1980-04-15)
-    const b1 = calculateBazi(makeInput({ year: 2000, month: 2, day: 7, hour: 8 }))
-    const b2 = calculateBazi(makeInput({ year: 1980, month: 4, day: 15, hour: 8 }))
-
-    const p1 = extractPattern(b1)
-    const p2 = extractPattern(b2)
-    expect(p1.category).toBe('建禄月劫格')
-    expect(p2.category).toBe('建禄月劫格')
-
-    const r1 = generateAnalysis({ bazi: b1, pattern: p1, outcome: assessOutcome(b1, p1), strength: determineStrength(b1) })
-    const r2 = generateAnalysis({ bazi: b2, pattern: p2, outcome: assessOutcome(b2, p2), strength: determineStrength(b2) })
-
-    const a1 = getKeyAdviceText(r1)
-    const a2 = getKeyAdviceText(r2)
-
-    // 格局特征相同
-    expect(a1).toContain('建禄月劫代表独立自主')
-    expect(a2).toContain('建禄月劫代表独立自主')
-
-    // 一个淤堵，一个顺畅
-    expect(a1).toContain('淤堵')
-    expect(a2).not.toContain('淤堵')
-
-    // 建议不同
-    expect(a1).not.toBe(a2)
-  })
-})
-
 // ── 关键提醒：所有命局触发 + 融合格局和流通 ──
 
 function getWarningText(result: { analysis: string }): string {
   const marker = '**关键提醒**：'
   const idx = result.analysis.indexOf(marker)
-  if (idx < 0) return ''
-  const endIdx = result.analysis.indexOf('**💡 关键建议**', idx)
-  return endIdx > idx
-    ? result.analysis.slice(idx + marker.length, endIdx).trim()
-    : result.analysis.slice(idx + marker.length).trim()
+  return idx >= 0 ? result.analysis.slice(idx + marker.length).trim() : ''
 }
 
 describe('generateAnalysis 关键提醒（全格局触发）', () => {

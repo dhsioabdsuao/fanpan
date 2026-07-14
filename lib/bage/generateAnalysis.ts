@@ -831,104 +831,6 @@ function getLiuTongSection(bazi: BaziResult): string {
   return '**流通诊断**：从五行流通的角度看，命局五行能量流转顺畅，无明显的淤堵。'
 }
 
-// ── 模块6：关键建议 ──
-
-const PATTERN_OPENING: Record<string, string> = {
-  '正官格': '正官代表规则与自律',
-  '七杀格': '七杀代表野心与魄力',
-  '正财格': '财星代表价值与目标',
-  '偏财格': '财星代表价值与目标',
-  '正印格': '印星代表学习与思考',
-  '偏印格': '印星代表学习与思考',
-  '食神格': '食神代表创造力与享受',
-  '伤官格': '伤官代表反叛精神',
-  '建禄月劫格': '建禄月劫代表独立自主',
-  '阳刃格': '阳刃代表刚强与决断',
-  '从杀格': '从格代表顺势而行',
-  '从财格': '从格代表顺势而行',
-  '化土格': '化格代表蜕变与新生',
-  '化金格': '化格代表蜕变与新生',
-  '化水格': '化格代表蜕变与新生',
-  '化木格': '化格代表蜕变与新生',
-  '化火格': '化格代表蜕变与新生',
-}
-
-const ROLE_STORY: Record<string, string> = {
-  '财生官': '财星生官，规矩有了底气',
-  '印护官': '印星护官，学识为你护航',
-  '印制伤护官': '印星制伤护官，镇住了叛逆',
-  '财通关护官': '财星通关护官，资源化解了冲突',
-  '食神制杀': '食神制杀，创造力驯服了野心',
-  '印星化杀': '印星化杀，学识化解了压力',
-  '合绊制杀': '劫财合杀，猛虎被困笼中',
-  '官护财': '官星护财，规则守护着财富',
-  '食伤生财': '食伤生财，才华正在变现',
-  '官杀生印': '官杀生印，压力转化为智慧',
-  '食伤泄秀': '食伤泄秀，才华找到了出口',
-  '食神生财': '食神生财，创造力带来价值',
-  '化杀生身': '弃食就煞，杀印相生打通了格局',
-  '伤官生财': '伤官生财，才华落地变现',
-  '伤官佩印': '伤官佩印，锋芒有了分寸',
-  '伤官带杀': '伤官带杀，以锋芒对冲压力',
-  '调候暖局': '金水遇火暖局，冰封的才华见了光',
-}
-
-const TONGGUAN_ACTION: Record<string, string> = {
-  '金': '找到技术这扇窗（金），打磨一项硬技能',
-  '水': '找到学习和沟通的出口（水），沉下心吸纳新知',
-  '木': '拓展人脉和成长的通道（木），向外连接世界',
-  '火': '大胆展示和分享自己（火），让才华被看见',
-  '土': '稳固基础和储蓄习惯（土），一步一个脚印',
-}
-
-function getKeyAdvice(
-  bazi: BaziResult,
-  pattern: ExtractResult,
-  outcome: AssessResult,
-): string {
-  const liuTong = analyzeWuXingLiuTong(bazi)
-  const opening = PATTERN_OPENING[pattern.displayName] ?? `${pattern.displayName}代表你的核心特质`
-  const hasBlockage = liuTong.blockage !== null && liuTong.tongGuan !== null
-  const role = outcome.xiangShen?.role
-
-  // 构建机制故事
-  let mechanism = ''
-  if (outcome.outcome === '破格') {
-    mechanism = '格局破损——核心结构遭到破坏'
-  } else if (outcome.outcome === '不成格') {
-    mechanism = '还差一点火候——关键条件尚未齐备'
-  } else if (role && ROLE_STORY[role]) {
-    mechanism = ROLE_STORY[role]
-  }
-
-  // 构建流通故事
-  let flow = ''
-  if (hasBlockage) {
-    flow = `，但能量在${liuTong.blockage}处淤堵`
-  } else {
-    flow = '，五行流通顺畅'
-  }
-
-  // 构建行动方向
-  let action = ''
-  if (hasBlockage && liuTong.tongGuan) {
-    action = TONGGUAN_ACTION[liuTong.tongGuan] ?? `补${liuTong.tongGuan}来疏通能量`
-  } else if (outcome.outcome === '破格') {
-    action = '从修复格局结构入手，等待时运转机'
-  } else if (outcome.outcome === '不成格') {
-    action = '补齐格局缺失的条件，大运流年可激活'
-  } else if (role === '合绊制杀') {
-    action = '保持独立判断，把憋着的劲放出来'
-  } else if (role) {
-    action = '保持当前的平衡，让能量持续正向循环'
-  } else {
-    action = '自成体系不假外求，保持方向继续深耕'
-  }
-
-  const result = `${opening}——${mechanism}${flow}。${action}。`
-  return result
-}
-
 // ═══════════════════════════════════════════
 // 主入口
 // ═══════════════════════════════════════════
@@ -959,9 +861,6 @@ export function generateAnalysis(input: AnalysisInput): AnalysisResult {
 
   const warning = getWarningSection(bazi, pattern, outcome)
   sections.push(warning)
-
-  const keyAdvice = getKeyAdvice(bazi, pattern, outcome)
-  sections.push(`**💡 关键建议**：${keyAdvice}`)
 
   const analysis = sections.join('\n\n')
 

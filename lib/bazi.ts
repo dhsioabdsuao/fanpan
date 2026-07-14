@@ -1,5 +1,5 @@
-import { Solar, Lunar } from 'lunar-typescript'
-import type { BaziInput, BaziResult, Pillar } from '@/types/bazi'
+import { Solar, Lunar, EightChar } from 'lunar-typescript'
+import type { BaziInput, BaziResult, Pillar, DaYunData } from '@/types/bazi'
 import type { SolarTimeAdjustment } from '@/lib/solarTime/types'
 import { adjustToSolarTime } from '@/lib/solarTime'
 import {
@@ -11,6 +11,7 @@ import {
   getTenGod,
   countElements,
 } from './bazi-utils'
+import { getLiuNianAnnotations } from './bage/liunian'
 
 function validateInput(input: BaziInput): void {
   if (input.year < 1900 || input.year > 2100) {
@@ -112,6 +113,48 @@ export function calculateBazi(input: BaziInput): BaziResult {
     ? solarTimeAdjustment.solarTime.getMinutes()
     : input.minute
 
+  // ── 大运流年 ──
+  const eightChar = EightChar.fromLunar(lunar)
+  const genderCode = input.gender === 'male' ? 1 : 0
+  const yun = eightChar.getYun(genderCode)
+  const daYunList = yun.getDaYun()
+
+  // 四柱干支字符串（用于流年注解）
+  const yearGZ = yearStem + yearBranch
+  const monthGZ = monthStem + monthBranch
+  const dayGZ = dayStem + dayBranch
+  const hourGZ = hourStem + hourBranch
+
+  const decades: DaYunData[] = daYunList
+    .filter((dy) => dy.getGanZhi() !== '')
+    .map((dy) => {
+    const liuNianList = dy.getLiuNian()
+    const dyGZ = dy.getGanZhi()
+    return {
+      index: dy.getIndex(),
+      startYear: dy.getStartYear(),
+      endYear: dy.getEndYear(),
+      startAge: dy.getStartAge(),
+      endAge: dy.getEndAge(),
+      ganZhi: dyGZ,
+      xunKong: dy.getXunKong(),
+      liuNian: liuNianList.map((ln) => ({
+        year: ln.getYear(),
+        age: ln.getAge(),
+        ganZhi: ln.getGanZhi(),
+        xunKong: ln.getXunKong(),
+        annotations: getLiuNianAnnotations({
+          liuNianGanZhi: ln.getGanZhi(),
+          daYunGanZhi: dyGZ,
+          yearGanZhi: yearGZ,
+          monthGanZhi: monthGZ,
+          dayGanZhi: dayGZ,
+          hourGanZhi: hourGZ,
+        }),
+      })),
+    }
+  })
+
   return {
     pillars: {
       year: yearPillar,
@@ -145,5 +188,14 @@ export function calculateBazi(input: BaziInput): BaziResult {
     lunarDate: `${lunar.getYearInGanZhiByLiChun()}年${lunar.getMonthInChinese()}${lunar.getDayInChinese()}`,
     inputInfo: { ...input },
     solarTimeAdjustment,
+    daYun: {
+      startSolar: {
+        year: yun.getStartSolar().getYear(),
+        month: yun.getStartSolar().getMonth(),
+        day: yun.getStartSolar().getDay(),
+      },
+      isForward: yun.isForward(),
+      decades,
+    },
   }
 }

@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { parseSearchParams } from '@/lib/bazi-input-adapter'
 import { calculateBazi } from '@/lib/bazi'
 import { PillarTable } from '@/components/bazi/PillarTable'
+import { DaYunTable } from '@/components/bazi/DaYunTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
 import { Interpretation } from '@/components/bazi/Interpretation'
@@ -19,7 +20,7 @@ import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
 
 function SkeletonResult() {
   return (
-    <div className="min-h-full bg-stone-50 px-4 py-12">
+    <div className="min-h-full px-4 py-12">
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-24" />
@@ -37,7 +38,7 @@ function SkeletonResult() {
 
 function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-stone-50 px-4 py-20">
+    <div className="flex min-h-full flex-col items-center justify-center px-4 py-20">
       <Card className="w-full max-w-md text-center">
         <CardContent className="pt-6 space-y-4">
           <p className="text-destructive font-medium">{message}</p>
@@ -60,9 +61,9 @@ function Methodology() {
           onClick={() => setOpen(!open)}
           className="flex w-full items-center justify-between text-left"
         >
-          <span className="text-sm text-stone-400">关于本站方法论</span>
+          <span className="text-sm text-stone-500">关于本站方法论</span>
           <ChevronDown
-            className={`size-4 text-stone-400 transition-transform duration-200 ${
+            className={`size-4 text-stone-500 transition-transform duration-200 ${
               open ? 'rotate-180' : ''
             }`}
           />
@@ -109,7 +110,7 @@ function ResultContent() {
   const noHour = searchParams.get('noHour')
 
   return (
-    <div className="min-h-full bg-stone-50 px-4 py-12">
+    <div className="min-h-full px-4 py-12">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -119,12 +120,13 @@ function ResultContent() {
               返回首页
             </Button>
           </Link>
-          <h1 className="font-serif text-2xl md:text-3xl font-semibold">命盘</h1>
+          <h1 className="font-serif text-2xl md:text-3xl font-semibold text-[#aa9c82] drop-shadow-[0_0_20px_rgba(0,0,0,0.4)]">命盘</h1>
           <div className="w-[92px]" />
         </div>
 
         <BasicInfo result={result} />
         <PillarTable result={result} hideHour={noHour === '1'} />
+        <DaYunTable result={result} />
         <PatternBlock result={result} />
         <StrengthBlock result={result} />
         <AnalysisBlock result={result} />
@@ -138,10 +140,10 @@ function ResultContent() {
               <p>本站排盘基于子平派传统命理学，</p>
               <p>可见人生大致方向、性格特质、五行分布。</p>
             </div>
-            <div className="my-6 font-serif text-2xl text-stone-800">
+            <div className="my-6 font-serif text-2xl text-stone-500">
               知命而不认命，但行好事，莫问前程
             </div>
-            <div className="text-sm text-stone-500">
+            <div className="text-sm text-stone-600">
               命运掌握在自己手中，请勿据此做出重大人生决策。
             </div>
           </CardContent>

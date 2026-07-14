@@ -148,6 +148,23 @@ export function getTenGod(dayMasterStem: string, otherStem: string): string {
 }
 
 /**
+ * 天干相冲：甲庚冲、乙辛冲、丙壬冲、丁癸冲
+ * 在GAN数组中相隔6位的天干互为相冲
+ */
+export function isStemClash(a: string, b: string): boolean {
+  const ia = getGanIndex(a)
+  const ib = getGanIndex(b)
+  if (ia < 0 || ib < 0) return false
+  return Math.abs(ia - ib) === 6
+}
+
+export function getStemClashPartner(stem: string): string | null {
+  const idx = getGanIndex(stem)
+  if (idx < 0) return null
+  return GAN[(idx + 6) % 10]
+}
+
+/**
  * 统计四柱天干和地支本气（共 8 个）的五行个数
  */
 export function countElements(

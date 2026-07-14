@@ -21,6 +21,31 @@ export type TenGodName =
   | '七杀' | '正官'
   | '偏印' | '正印'
 
+export interface LiuNianAnnotation {
+  type: string
+  label: string
+  detail: string
+}
+
+export interface LiuNianData {
+  year: number
+  age: number
+  ganZhi: string
+  xunKong: string
+  annotations: LiuNianAnnotation[]
+}
+
+export interface DaYunData {
+  index: number
+  startYear: number
+  endYear: number
+  startAge: number
+  endAge: number
+  ganZhi: string
+  xunKong: string
+  liuNian: LiuNianData[]
+}
+
 export type Pillar = {
   stem: string
   branch: string
@@ -59,4 +84,9 @@ export type BaziResult = {
   lunarDate: string
   inputInfo: BaziInput
   solarTimeAdjustment: SolarTimeAdjustment | null
+  daYun?: {
+    startSolar: { year: number; month: number; day: number }
+    isForward: boolean
+    decades: DaYunData[]
+  }
 }

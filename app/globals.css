@@ -129,3 +129,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ── 太极旋转动画 ── */
+
+@keyframes taiji-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.taiji-rotate {
+  animation: taiji-rotate 90s linear infinite;
+}
