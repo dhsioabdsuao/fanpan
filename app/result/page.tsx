@@ -18,6 +18,7 @@ import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac'
 import { PatternBlock } from '@/components/bazi/PatternBlock'
 import { StrengthBlock } from '@/components/bazi/StrengthBlock'
 import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
+import { TiaoHouBlock } from '@/components/bazi/TiaoHouBlock'
 
 function SkeletonResult() {
   return (
@@ -165,6 +166,11 @@ function ResultContent() {
           </p>
         </>
       ),
+    },
+    {
+      id: 'tiaoHou',
+      title: '调候用神',
+      render: () => <TiaoHouBlock result={result} />,
     },
   ]
 

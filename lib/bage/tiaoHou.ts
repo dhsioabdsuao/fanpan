@@ -161,3 +161,57 @@ export function getTiaoHouYongShen(dayMaster: string, monthBranch: string): stri
   if (!inner) return []
   return inner.get(monthBranch) ?? []
 }
+
+// ── 五行计数与调候类型判定 ──
+// 依据：【本系统算法·基于《穷通宝鉴》调候原理】
+
+import type { BaziResult } from '@/types/bazi'
+import { getStemElement, getBranchElement } from '@/lib/bazi-utils'
+
+/**
+ * 统计全局（天干 + 地支本气）各五行数量。
+ * 天干计4个 + 地支本气计4个 = 8个数据点。
+ */
+export function countWuXing(bazi: BaziResult): Record<string, number> {
+  const count: Record<string, number> = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 }
+  const p = bazi.pillars
+  const stems = [p.year.stem, p.month.stem, p.day.stem, p.hour.stem]
+  const branches = [p.year.branch, p.month.branch, p.day.branch, p.hour.branch]
+  for (const s of stems) count[getStemElement(s)]++
+  for (const b of branches) count[getBranchElement(b)]++
+  return count
+}
+
+/**
+ * 调候类型判定。
+ *
+ * 火炎土燥：(夏月（巳午未）∧ 水≤1) ∨ (非冬月（亥子丑）∧ 火+土≥5 ∧ 水≤1)
+ * 金寒水冷：(冬月（亥子丑）∧ 火≤1) ∨ (非夏月（巳午未）∧ 金+水≥5 ∧ 火≤1)
+ * 其他：寒暖适中
+ *
+ * 安全闸：冬月永不判火炎土燥；夏月永不判金寒水冷。
+ */
+export function getTiaoHouType(
+  bazi: BaziResult,
+  wuXingCount?: Record<string, number>,
+): '火炎土燥' | '金寒水冷' | '寒暖适中' {
+  const cnt = wuXingCount ?? countWuXing(bazi)
+  const fire = cnt['火'] ?? 0
+  const water = cnt['水'] ?? 0
+  const earth = cnt['土'] ?? 0
+  const metal = cnt['金'] ?? 0
+
+  const mb = bazi.pillars.month.branch
+  const isSummer = ['巳', '午', '未'].includes(mb)
+  const isWinter = ['亥', '子', '丑'].includes(mb)
+
+  // 火炎土燥
+  if (isSummer && water <= 1) return '火炎土燥'
+  if (!isWinter && fire + earth >= 5 && water <= 1) return '火炎土燥'
+
+  // 金寒水冷
+  if (isWinter && fire <= 1) return '金寒水冷'
+  if (!isSummer && metal + water >= 5 && fire <= 1) return '金寒水冷'
+
+  return '寒暖适中'
+}

@@ -4,7 +4,7 @@ import type { AssessResult } from './assessOutcome'
 import type { StrengthResult } from '@/lib/strength/determineStrength'
 import { getHiddenStemsSpec, getStemElement } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
-import { getTiaoHouYongShen } from './tiaoHou'
+import { getTiaoHouYongShen, getTiaoHouType } from './tiaoHou'
 import { analyzeWuXingLiuTong } from './liuTong'
 
 // ── 类型 ──
@@ -537,24 +537,6 @@ function getOutcomeSection(
   return `**层次评估**：格局"未成"。${breakdown}但无需焦虑：大运流年一旦补齐缺口，格局就盘活了。`
 }
 
-// ── 调候判断 ──
-
-function getTiaoHouType(bazi: BaziResult): '火炎土燥' | '金寒水冷' | null {
-  const mb = bazi.pillars.month.branch
-  const summer = ['巳', '午', '未']
-  const winter = ['亥', '子', '丑']
-
-  if (summer.includes(mb)) {
-    const hasWater = (bazi.elementCount['水'] ?? 0) > 1
-    if (!hasWater) return '火炎土燥'
-  }
-  if (winter.includes(mb)) {
-    const hasFire = (bazi.elementCount['火'] ?? 0) > 1
-    if (!hasFire) return '金寒水冷'
-  }
-  return null
-}
-
 // ── 五行分析帮助 ──
 
 function getDominantElement(bazi: BaziResult): { element: ElementType; count: number } | null {
@@ -669,6 +651,77 @@ function elementDomain(el: ElementType): string {
   return map[el] ?? el
 }
 
+// ── 调候用神与格局喜忌区分 ──
+
+const EL_CONTROLLED_BY: Record<string, ElementType> = { '木':'土', '火':'金', '土':'水', '金':'木', '水':'火' }
+const EL_CONTROLS: Record<string, ElementType> = { '木':'金', '火':'水', '土':'木', '金':'火', '水':'土' }
+const EL_GENERATED: Record<string, ElementType> = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' }
+const EL_GENERATES: Record<string, ElementType> = { '木':'水', '火':'木', '土':'火', '金':'土', '水':'金' }
+
+function getPatternTabooElements(
+  bazi: BaziResult,
+  pattern: ExtractResult,
+): ElementType[] {
+  const dmEl = bazi.dayMasterElement
+  switch (pattern.category) {
+    case '官格':
+      // 伤官见官：伤官 = DM 所生
+      return [EL_GENERATED[dmEl]]
+    case '杀格':
+      // 财生杀党杀 + 官杀混杂
+      return [EL_CONTROLLED_BY[dmEl], EL_CONTROLS[dmEl]]
+    case '财格':
+      // 比劫夺财
+      return [dmEl]
+    case '印格':
+      // 财破印
+      return [EL_CONTROLLED_BY[dmEl]]
+    case '食神格':
+      // 枭神夺食
+      return [EL_GENERATES[dmEl]]
+    case '伤官格':
+      // 伤官见官
+      return [EL_CONTROLS[dmEl]]
+    default:
+      // 建禄月劫格、阳刃格、从格、化格：无普适忌神
+      return []
+  }
+}
+
+const EL_DOMAIN: Record<string, string> = {
+  '金': '技术、专业技能',
+  '水': '智慧、学习资源',
+  '木': '人脉、成长机会',
+  '火': '表达、行动热度',
+  '土': '稳定、物质积累',
+}
+
+const EL_BENEFIT: Record<string, string> = {
+  '金': '通过创造价值',
+  '水': '通过学习沉淀',
+  '木': '通过拓展人脉',
+  '火': '通过展示分享',
+  '土': '通过持续积累',
+}
+
+function getTiaoHouConflictNote(
+  tiaoHouGods: string[],
+  tabooElements: ElementType[],
+): string | null {
+  if (tabooElements.length === 0) return null
+
+  const tiaoHouElements = new Set(tiaoHouGods.map(s => getStemElement(s)).filter(Boolean))
+  const conflict = tabooElements.find(el => tiaoHouElements.has(el))
+  if (!conflict) return null
+
+  const generated = EL_GENERATED[conflict] ?? ''
+  const domain = EL_DOMAIN[conflict] ?? conflict
+  const benefit = generated ? EL_DOMAIN[generated] ?? generated : '更好的状态'
+  const way = EL_BENEFIT[conflict] ?? `通过${conflict}`
+
+  return `\n\n注意：你的格局忌${conflict}，但调候用神中出现了${conflict}。这里的「${conflict}」并非让你直接补${conflict}，而是通过${conflict}来生${generated}——你真正需要的是${generated}。建议从${domain}（${conflict}）入手，${way}来换取${benefit}（${generated}）。`
+}
+
 // ── 调候用神 → 发展建议 ──
 
 const TIAO_HOU_ELEMENT_ADVICE: Record<string, string> = {
@@ -699,18 +752,29 @@ function getAdviceSection(
   outcome: AssessResult,
   strength: StrengthResult,
 ): string | null {
+  const tiaoHou = getTiaoHouType(bazi)
+  const dominant = getDominantElement(bazi)
+  const deficient = getDeficientElement(bazi)
+
+  // 双轨：先判定调候方向，再查表给出具体用神
   const tiaoHouGods = getTiaoHouYongShen(bazi.dayMaster, bazi.pillars.month.branch)
   if (tiaoHouGods.length > 0) {
     const dmElement = getStemElement(bazi.dayMaster)
     const dmFull = `${bazi.dayMaster}${dmElement}`
     const godList = tiaoHouGods.join('、')
     const elementAdvice = formatTiaoHouAdvice(tiaoHouGods)
-    return `**发展建议**：从五行调候的角度看，${dmFull}生于${bazi.pillars.month.branch}月，最喜${godList}。建议你从${elementAdvice}方向调整。`
-  }
+    const prefix = tiaoHou === '寒暖适中'
+      ? `**发展建议**：你命局寒暖适中，但《穷通宝鉴》认为${dmFull}生于${bazi.pillars.month.branch}月，仍可参考${godList}调候。建议从${elementAdvice}方向微调。`
+      : `**发展建议**：从五行调候的角度看，${dmFull}生于${bazi.pillars.month.branch}月，最喜${godList}。建议你从${elementAdvice}方向调整。`
+    let text = prefix
 
-  const tiaoHou = getTiaoHouType(bazi)
-  const dominant = getDominantElement(bazi)
-  const deficient = getDeficientElement(bazi)
+    // 调候用神与格局喜忌冲突检测
+    const tabooEls = getPatternTabooElements(bazi, pattern)
+    const conflictNote = getTiaoHouConflictNote(tiaoHouGods, tabooEls)
+    if (conflictNote) text += conflictNote
+
+    return text
+  }
 
   if (tiaoHou === '火炎土燥') {
     const hasMetal = (bazi.elementCount['金'] ?? 0) > 0
@@ -832,6 +896,70 @@ function getLiuTongSection(bazi: BaziResult): string {
 }
 
 // ═══════════════════════════════════════════
+// ── 模块6：格局解法 ──
+// 综合格局诊断 + 五行流通诊断，生成解法文案。
+// 优先取流通通关用神；若流通顺畅则取格局用神。
+
+const GENERATING: Record<string, string> = {
+  '木': '火', '火': '土', '土': '金', '金': '水', '水': '木',
+}
+
+const PATTERN_CHARACTER: Record<string, string> = {
+  '正官格': '正官格重规则守秩序',
+  '七杀格': '七杀格是猛虎出笼',
+  '正财格': '正财格脚踏实地',
+  '偏财格': '偏财格善借势',
+  '正印格': '正印格厚积薄发',
+  '偏印格': '偏印格剑走偏锋',
+  '食神格': '食神格天生懂得享受',
+  '伤官格': '伤官格才华需要出口',
+  '建禄月劫格': '建禄月劫独立自主',
+  '阳刃格': '阳刃格能扛事敢决断',
+  '从杀格': '从杀格借力打力不硬扛',
+  '从财格': '从财格顺势而为等浪来',
+  '化土格': '化土格正在蜕变重生',
+  '化金格': '化金格百炼方成钢',
+  '化水格': '化水格随形而变',
+  '化木格': '化木格破土重生',
+  '化火格': '化火格从薪柴化烈焰',
+}
+
+const ELEMENT_ADVICE_SHORT: Record<string, string> = {
+  '金': '技术、专业技能',
+  '水': '学习、沟通',
+  '木': '社交、人脉',
+  '火': '展示、分享',
+  '土': '稳固、储蓄',
+}
+
+function getGeJuJieFa(
+  bazi: BaziResult,
+  pattern: ExtractResult,
+  outcome: AssessResult,
+): string {
+  const liuTong = analyzeWuXingLiuTong(bazi)
+  const charLine = PATTERN_CHARACTER[pattern.displayName] ?? `${pattern.displayName}是你的人生底色`
+
+  // Path A：有堵点 → 通关用神
+  if (liuTong.blockage && liuTong.tongGuan) {
+    const blockageEl = liuTong.blockage
+    const tongGuanEl = liuTong.tongGuan
+    const nextEl = GENERATING[tongGuanEl] ?? ''
+    const direction = ELEMENT_ADVICE_SHORT[tongGuanEl] ?? tongGuanEl
+    const outcomeTag = outcome.outcome === '成格' ? '格局成立，但流通受阻' : '困局待破'
+    return `**格局解法**：${charLine}——${outcomeTag}。能量在${blockageEl}处淤堵，通关用神为${tongGuanEl}。${tongGuanEl}能泄${blockageEl}生${nextEl}，凿开困局。建议从${direction}方向突破。`
+  }
+
+  // Path B：流通顺畅 → 格局用神
+  const yongShenEl = pattern.yongShen.length === 1 ? (getStemElement(pattern.yongShen) ?? null) : null
+  const statusLine = outcome.outcome === '成格' ? '格局成立，流通顺畅' : '流通顺畅，格局待成'
+  if (yongShenEl) {
+    const direction = ELEMENT_ADVICE_SHORT[yongShenEl] ?? yongShenEl
+    return `**格局解法**：${charLine}——${statusLine}。你最需要${yongShenEl}，补${yongShenEl}以增强${direction}，把你的天赋引到对的方向上。`
+  }
+  return `**格局解法**：${charLine}——${statusLine}。${outcome.reason ? outcome.reason.slice(0, 30) + '。' : ''}顺势而行，自有出路。`
+}
+
 // 主入口
 // ═══════════════════════════════════════════
 
@@ -858,6 +986,9 @@ export function generateAnalysis(input: AnalysisInput): AnalysisResult {
 
   const advice = getAdviceSection(bazi, pattern, outcome, strength)
   if (advice) sections.push(advice)
+
+  const geJuJieFa = getGeJuJieFa(bazi, pattern, outcome)
+  sections.push(geJuJieFa)
 
   const warning = getWarningSection(bazi, pattern, outcome)
   sections.push(warning)
