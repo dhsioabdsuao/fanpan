@@ -13,7 +13,8 @@ import { PillarTable } from '@/components/bazi/PillarTable'
 import { DaYunTable } from '@/components/bazi/DaYunTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
-import { Interpretation } from '@/components/bazi/Interpretation'
+import { DAY_MASTER_INTERPRETATIONS } from '@/lib/interpretations/dayMaster'
+import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac'
 import { PatternBlock } from '@/components/bazi/PatternBlock'
 import { StrengthBlock } from '@/components/bazi/StrengthBlock'
 import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
@@ -109,6 +110,64 @@ function ResultContent() {
 
   const noHour = searchParams.get('noHour')
 
+  const [openId, setOpenId] = useState<string | null>(null)
+
+  const sections = [
+    { id: 'basic', title: '日主信息', render: () => <BasicInfo result={result} /> },
+    { id: 'dayun', title: '大运流年', render: () => <DaYunTable result={result} /> },
+    { id: 'pattern', title: '格局', render: () => <PatternBlock result={result} /> },
+    { id: 'strength', title: '日主强弱', render: () => <StrengthBlock result={result} /> },
+    { id: 'analysis', title: '格局解析', render: () => <AnalysisBlock result={result} /> },
+    { id: 'element', title: '五行分布', render: () => <ElementChart result={result} /> },
+    {
+      id: 'daymaster',
+      title: '日主解析',
+      render: () => {
+        const i = DAY_MASTER_INTERPRETATIONS[result.dayMaster]
+        return i ? (
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="text-2xl font-serif font-bold">{result.dayMaster}</div>
+              <div className="text-sm text-stone-500">{i.element} {i.yinYang}</div>
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-1">性格特点</h3>
+              <p className="text-base leading-relaxed text-stone-600">{i.personality}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-1">优势特质</h3>
+              <p className="text-base leading-relaxed text-stone-600">{i.strength}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-1">需要注意</h3>
+              <p className="text-base leading-relaxed text-stone-600">{i.weakness}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-1">适合方向</h3>
+              <p className="text-base leading-relaxed text-stone-600">{i.career}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-base text-stone-500">该日主解读尚在编写中</p>
+        )
+      },
+    },
+    {
+      id: 'zodiac',
+      title: '生肖特征',
+      render: () => (
+        <>
+          <div className="text-center mb-4">
+            <div className="text-2xl">{result.zodiac}</div>
+          </div>
+          <p className="text-base leading-relaxed text-stone-600">
+            {ZODIAC_TRAITS[result.zodiac]?.description ?? '暂无解读'}
+          </p>
+        </>
+      ),
+    },
+  ]
+
   return (
     <div className="min-h-full px-4 py-12">
       <div className="mx-auto max-w-4xl space-y-6">
@@ -124,14 +183,39 @@ function ResultContent() {
           <div className="w-[92px]" />
         </div>
 
-        <BasicInfo result={result} />
         <PillarTable result={result} hideHour={noHour === '1'} />
-        <DaYunTable result={result} />
-        <PatternBlock result={result} />
-        <StrengthBlock result={result} />
-        <AnalysisBlock result={result} />
-        <ElementChart result={result} />
-        <Interpretation result={result} />
+
+        {/* ── 折叠面板区 ── */}
+        <div className="space-y-4">
+          {sections.map((section) => {
+            const isOpen = openId === section.id
+            return (
+              <Card key={section.id} className="border-stone-200 overflow-hidden">
+                <CardContent className="p-0">
+                  <button
+                    onClick={() => setOpenId(isOpen ? null : section.id)}
+                    className="flex w-full items-center justify-between py-3 px-4 text-left"
+                  >
+                    <span className={`text-sm font-medium ${isOpen ? 'text-amber-700' : 'text-stone-600'}`}>
+                      {section.title}
+                    </span>
+                    <ChevronDown className={`size-4 text-stone-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <div
+                    className={`grid transition-all duration-200 ${
+                      isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="pb-4">{section.render()}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">
