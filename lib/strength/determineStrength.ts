@@ -106,19 +106,19 @@ export function determineStrength(bazi: BaziResult): StrengthResult {
     ? '地支藏干有日主同五行之根'
     : '地支藏干无日主同五行之字'
 
-  const shiDetail = `帮扶${bangCount}个[${bangList.join(',')}] vs 克泄耗${keCount}个[${keList.join(',')}]`
+  const shiDetail = `帮扶[${bangList.join(',')}] vs 克泄耗[${keList.join(',')}]`
 
   const parts: string[] = []
-  parts.push(`${lingLabel}: ${lingDetail}(1.1)`)
-  parts.push(`${diLabel}: ${diDetail}(1.2)`)
-  parts.push(`${deShi}: ${shiDetail}(1.3)`)
+  parts.push(`${lingLabel}: ${lingDetail}`)
+  parts.push(`${diLabel}: ${diDetail}`)
+  parts.push(`${deShi}: ${shiDetail}`)
 
   if (level === '身强') {
-    parts.push('→ 身强: 得令且得地且得势,三者全帮(2.1)')
+    parts.push('→ 身强: 得令且得地且得势，三者全帮')
   } else if (level === '身弱') {
-    parts.push('→ 身弱: 失令且无根且失势,三者全不帮(2.2)')
+    parts.push('→ 身弱: 失令且无根且失势，三者全不帮')
   } else {
-    parts.push('→ 中和: 三要素不全一致(2.3)')
+    parts.push('→ 中和: 三要素不全一致')
   }
 
   const reason = parts.join('; ')

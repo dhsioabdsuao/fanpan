@@ -86,7 +86,7 @@ export function analyzeWuXingLiuTong(bazi: BaziResult): LiuTongResult {
 
   if (blockage && tongGuan) {
     const nextAfter = GENERATING[tongGuan]
-    const desc = `源头为${source}（${counts[source]}），气行至${blockage}（${counts[blockage]}）→${tongGuan}（${counts[tongGuan]}）时断崖跌落，${tongGuan}气枯竭难接。宜补${tongGuan}通关，引${blockage}之气下注${nextAfter}，恢复流转。`
+    const desc = `源头为${source}，气行至${blockage}→${tongGuan}时断崖跌落，${tongGuan}气枯竭难接。宜补${tongGuan}通关，引${blockage}之气下注${nextAfter}，恢复流转。`
     return { source, blockage, tongGuan, description: desc }
   }
 
