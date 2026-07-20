@@ -1,0 +1,289 @@
+import { StyleSheet, View, ScrollView, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useMemo } from 'react';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/types';
+import { buildBaziInput } from '../adapters/bazi-input-adapter';
+import { calculateBazi } from '@/lib/bazi';
+import { DAY_MASTER_INTERPRETATIONS } from '@/lib/interpretations/dayMaster';
+import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac';
+import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing } from '../theme';
+import PillarTable from '../components/bazi/PillarTable';
+import BasicInfo from '../components/bazi/BasicInfo';
+import DaYunTable from '../components/bazi/DaYunTable';
+import ElementChart from '../components/bazi/ElementChart';
+import PatternBlock from '../components/bazi/PatternBlock';
+import StrengthBlock from '../components/bazi/StrengthBlock';
+import AnalysisBlock from '../components/bazi/AnalysisBlock';
+import TiaoHouBlock from '../components/bazi/TiaoHouBlock';
+import CollapsibleSection from '../components/ui/CollapsibleSection';
+import Card from '../components/ui/Card';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
+
+export default function ResultScreen({ navigation, route }: Props) {
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const { result, error } = useMemo(() => {
+    const input = buildBaziInput(route.params);
+    if (!input) {
+      return { result: null, error: '参数有误，请返回重新填写' };
+    }
+    try {
+      const res = calculateBazi(input);
+      return { result: res, error: null };
+    } catch (e: any) {
+      return { result: null, error: `排盘失败：${e?.message || '未知错误'}` };
+    }
+  }, [route.params]);
+
+  const toggleSection = (id: string) => {
+    setOpenId((prev) => (prev === id ? null : id));
+  };
+
+  if (error || !result) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.backLink} onPress={() => navigation.goBack()}>
+            返回首页
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const Sections = [
+    { id: 'basic', title: '日主信息', component: BasicInfo },
+    { id: 'dayun', title: '大运流年', component: DaYunTable },
+    { id: 'pattern', title: '格局', component: PatternBlock },
+    { id: 'strength', title: '日主强弱', component: StrengthBlock },
+    { id: 'analysis', title: '格局解析', component: AnalysisBlock },
+    { id: 'element', title: '五行分布', component: ElementChart },
+    {
+      id: 'daymaster',
+      title: '日主解析',
+      render: () => {
+        const i = DAY_MASTER_INTERPRETATIONS[result.dayMaster];
+        if (!i) return <Text style={styles.placeholder}>该日主解读尚在编写中</Text>;
+        return (
+          <View style={styles.interpretationWrap}>
+            <View style={styles.dmCenter}>
+              <Text style={styles.dmName}>{result.dayMaster}</Text>
+              <Text style={styles.dmSub}>
+                {i.element} {i.yinYang}
+              </Text>
+            </View>
+            <InterpretSection title="性格特点" text={i.personality} />
+            <InterpretSection title="优势特质" text={i.strength} />
+            <InterpretSection title="需要注意" text={i.weakness} />
+            <InterpretSection title="适合方向" text={i.career} />
+          </View>
+        );
+      },
+    },
+    {
+      id: 'zodiac',
+      title: '生肖特征',
+      render: () => (
+        <View style={styles.interpretationWrap}>
+          <View style={styles.dmCenter}>
+            <Text style={styles.dmName}>{result.zodiac}</Text>
+          </View>
+          <Text style={styles.interpretBody}>
+            {ZODIAC_TRAITS[result.zodiac]?.description ?? '暂无解读'}
+          </Text>
+        </View>
+      ),
+    },
+    { id: 'tiaoHou', title: '调候用神', component: TiaoHouBlock },
+  ];
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.backLink} onPress={() => navigation.goBack()}>
+            ← 返回首页
+          </Text>
+          <Text style={styles.headerTitle}>命盘</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Pillar Table */}
+        <PillarTable result={result} />
+
+        {/* Collapsible Sections */}
+        <View style={styles.sections}>
+          {Sections.map((section) => {
+            const isOpen = openId === section.id;
+            return (
+              <CollapsibleSection
+                key={section.id}
+                title={section.title}
+                isOpen={isOpen}
+                onToggle={() => toggleSection(section.id)}
+              >
+                {section.render
+                  ? section.render()
+                  : section.component && <section.component result={result} />}
+              </CollapsibleSection>
+            );
+          })}
+        </View>
+
+        {/* Disclaimer */}
+        <View style={styles.disclaimerCard}>
+          <View style={styles.disclaimerContent}>
+            <Text style={styles.disclaimerText}>
+              本站排盘基于子平派传统命理学，
+            </Text>
+            <Text style={styles.disclaimerText}>
+              可见人生大致方向、性格特质、五行分布。
+            </Text>
+            <Text style={styles.motto}>知命而不认命，但行好事，莫问前程</Text>
+            <Text style={styles.disclaimerText}>
+              命运掌握在自己手中，请勿据此做出重大人生决策。
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ── Sub-components ──
+
+function InterpretSection({ title, text }: { title: string; text: string }) {
+  return (
+    <View style={interpretStyles.section}>
+      <Text style={interpretStyles.heading}>{title}</Text>
+      <Text style={interpretStyles.body}>{text}</Text>
+    </View>
+  );
+}
+
+const interpretStyles = StyleSheet.create({
+  section: {
+    marginTop: Spacing.md,
+  },
+  heading: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  body: {
+    fontSize: FontSize.base,
+    lineHeight: 24,
+    color: Colors.textSecondary,
+  },
+});
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  container: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxl * 2,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  headerTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.semibold,
+    color: Colors.goldText,
+    fontFamily: FONT_SERIF,
+  },
+  headerSpacer: {
+    width: 80,
+  },
+  backLink: {
+    fontSize: FontSize.base,
+    color: Colors.goldText,
+    fontWeight: FontWeight.medium,
+    padding: Spacing.xs,
+  },
+  sections: {
+    marginTop: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  placeholder: {
+    fontSize: FontSize.base,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  interpretationWrap: {
+    gap: Spacing.sm,
+  },
+  dmCenter: {
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  dmName: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    fontFamily: FONT_SERIF,
+    color: Colors.textPrimary,
+  },
+  dmSub: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  interpretBody: {
+    fontSize: FontSize.base,
+    lineHeight: 24,
+    color: Colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.md,
+  },
+  errorText: {
+    fontSize: FontSize.md,
+    color: Colors.destructive,
+    textAlign: 'center',
+  },
+  disclaimerCard: {
+    marginTop: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    borderRadius: 12,
+  },
+  disclaimerContent: {
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  disclaimerText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  motto: {
+    fontSize: FontSize.xxl,
+    fontFamily: FONT_SERIF,
+    color: Colors.textSecondary,
+    marginVertical: Spacing.md,
+  },
+});

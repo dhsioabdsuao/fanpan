@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "四柱八字",
+    "slug": "bazi-app-sdk52",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f5f0e8",
+    "splash": {
+      "backgroundColor": "#f5f0e8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bazi.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f5f0e8",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
