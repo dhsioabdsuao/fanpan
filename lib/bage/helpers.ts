@@ -266,22 +266,37 @@ function stemHasStrongRoot(stem: string, branches: string[]): boolean {
 
 // ── 伤官/印强弱判断 ──
 
-/** 伤官是否"旺"：伤官透干，且在地支有强根，或地支三会/三合成伤官局 */
+/** 伤官是否"旺"：
+ *  ① 伤官透干 + 地支有强根（长生/禄/帝旺）
+ *  ② 地支三会/三合成伤官五行局
+ *  ③ 伤官当令（月支本气即伤官）+ 地支有强根（不要求透干）【本系统决策·定性简化版】 */
 export function isShangGuanStrong(bazi: BaziResult): boolean {
   const { dayMaster, pillars } = bazi
   const touStems = [pillars.year.stem, pillars.month.stem, pillars.hour.stem]
   const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
 
   const shangGuanStem = touStems.find((s) => getTenGod(dayMaster, s) === '伤官')
-  if (!shangGuanStem) return false
 
-  // 透干的伤官是否有强根
-  if (stemHasStrongRoot(shangGuanStem, branches)) return true
+  // ① 伤官透干 + 强根
+  if (shangGuanStem && stemHasStrongRoot(shangGuanStem, branches)) return true
 
-  // 地支是否三会/三合成伤官所属五行局
-  const sgElement = getStemElement(shangGuanStem)
-  const allHe = detectAllHe(branches)
-  return allHe.some((h) => h.element === sgElement && (h.type === '三会' || h.type === '三合'))
+  // ② 地支三合/三会伤官局
+  if (shangGuanStem) {
+    const sgElement = getStemElement(shangGuanStem)
+    const allHe = detectAllHe(branches)
+    if (allHe.some((h) => h.element === sgElement && (h.type === '三会' || h.type === '三合'))) return true
+  }
+
+  // ③ 伤官当令（月支本气即伤官）+ 有强根
+  const monthPrimaryQi = getHiddenStemsSpec(pillars.month.branch)[0]
+  if (monthPrimaryQi) {
+    const monthPrimaryTenGod = getTenGod(dayMaster, monthPrimaryQi)
+    if (monthPrimaryTenGod === '伤官' && stemHasStrongRoot(monthPrimaryQi, branches)) {
+      return true
+    }
+  }
+
+  return false
 }
 
 /** 印是否有根：印星透干，且在地支有强根（长生/禄/帝旺） */

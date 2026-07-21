@@ -380,9 +380,15 @@ describe('isShangGuanStrong', () => {
     expect(isShangGuanStrong(b)).toBe(false)
   })
 
-  it('伤官未透干 → false', () => {
-    // 2000-06-15: 甲木日主, 伤官丁火未透干
+  it('伤官未透干但当令有根 → true（方案二放宽）', () => {
+    // 2000-06-15: 甲木日主, 伤官丁火未透干, 但月支午本气丁=伤官当令, 午为丁禄 → 有根
     const b = calculateBazi(makeInput({ year: 2000, month: 6, day: 15, hour: 10 }))
+    expect(isShangGuanStrong(b)).toBe(true)
+  })
+
+  it('伤官未透干且不当令 → false', () => {
+    // 2000-05-15: 巳月本气丙, 癸水日主时丙为正财(非伤官), 伤官甲不透干无合局 → false
+    const b = calculateBazi(makeInput({ year: 2000, month: 5, day: 15, hour: 10 }))
     expect(isShangGuanStrong(b)).toBe(false)
   })
 })
@@ -435,6 +441,19 @@ describe('assessOutcome 伤官格强弱门槛', () => {
     const ao = assessOutcome(b, pat)
     expect(ao.outcome).toBe('成格')
     expect(ao.reason).toContain('伤官带杀无财')
+  })
+
+  it('2002-07-05 壬午 丙午 甲戌 壬申 → 伤官当令有根(未透干) + 印有根 → 成格, 伤官佩印', () => {
+    // 甲木日主, 午月丁火伤官当令但未透干, 丁禄在午 → 伤官当令有根(方案二放宽)
+    // 壬水偏印双透, 壬长生在申 → 印有根
+    // 伤官有表达 + 伤官旺 + 印有根 → 佩印成格
+    const b = calculateBazi(makeInput({ year: 2002, month: 7, day: 5, hour: 15 }))
+    const pat = extractPattern(b)
+    expect(pat.category).toBe('伤官格')
+
+    const ao = assessOutcome(b, pat)
+    expect(ao.outcome).toBe('成格')
+    expect(ao.reason).toContain('伤官佩印')
   })
 })
 

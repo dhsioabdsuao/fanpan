@@ -606,20 +606,22 @@ function assessShangGuan(
   // "印未被财破"：财必须活跃（透干或合会成局）才算能破印；藏干内单独的财不算
   const hasCaiActive = hasTenGodActive(ctx, '正财') || hasTenGodActive(ctx, '偏财')
   const hasShangGuanTou = hasTenGodInStems(ctx, '伤官')
+  // 伤官有表达：透干 或 当令有根（isShangGuanStrong 放宽后含当令条件）【本系统决策·定性简化版】
+  const sgExpressed = hasShangGuanTou || shangGuanStrong
   if (hasYin) {
     const yinBroken = hasCaiActive && !hasTenGodActive(ctx, '比肩') && !hasTenGodActive(ctx, '劫财')
     if (!yinBroken) {
-      // 【本系统决策·定性简化版】伤官佩印需伤官旺、印有根，否则降为不成格
-      if (hasShangGuanTou && !shangGuanStrong) {
+      // 【本系统决策·定性简化版】伤官佩印需伤官有表达、伤官旺、印有根，否则降为不成格
+      if (sgExpressed && !shangGuanStrong) {
         preFailures.push('伤官不旺(透干但无强根/不成局),佩印乏力')
-      } else if (hasShangGuanTou && !yinYouGen) {
+      } else if (sgExpressed && !yinYouGen) {
         preFailures.push('印星无根(透干但地支无长生/禄/旺),佩印乏力')
-      } else if (hasShangGuanTou) {
+      } else if (sgExpressed) {
         success = true
         reasons.push('伤官佩印')
         if (!xiangShen) xiangShen = xs('印星', '伤官佩印')
       }
-      // 伤官未透干 → 佩印不成立，留给最后的不成格
+      // 伤官无表达 → 佩印不成立，留给最后的不成格
     }
   }
 
@@ -631,16 +633,16 @@ function assessShangGuan(
     const shaComboed = shaStems.some((s) => isStemComboed(s, ctx))
     if (!shaComboed && !hasCaiActive) {
       // 【本系统决策·定性简化版】伤官带杀需伤官旺、日主身弱或中和
-      if (hasShangGuanTou && !shangGuanStrong) {
+      if (sgExpressed && !shangGuanStrong) {
         preFailures.push('伤官不旺(透干但无强根/不成局),不任带杀')
-      } else if (hasShangGuanTou && bodyStrong) {
+      } else if (sgExpressed && bodyStrong) {
         preFailures.push('日主身强,伤官带杀不成立(身强可直接担杀,无需伤官引化)')
-      } else if (hasShangGuanTou) {
+      } else if (sgExpressed) {
         success = true
         reasons.push('伤官带杀无财')
         if (!xiangShen) xiangShen = xs('七杀', '伤官带杀')
       }
-      // 伤官未透干 → 带杀不成立，留给最后的不成格
+      // 伤官无表达 → 带杀不成立，留给最后的不成格
     }
   }
 
