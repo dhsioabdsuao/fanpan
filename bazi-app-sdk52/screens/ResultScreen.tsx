@@ -1,10 +1,11 @@
 import { StyleSheet, View, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { buildBaziInput } from '../adapters/bazi-input-adapter';
 import { calculateBazi } from '@/lib/bazi';
+import { extractPattern, assessOutcome } from '@/lib/bage';
 import { DAY_MASTER_INTERPRETATIONS } from '@/lib/interpretations/dayMaster';
 import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac';
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing } from '../theme';
@@ -18,6 +19,7 @@ import AnalysisBlock from '../components/bazi/AnalysisBlock';
 import TiaoHouBlock from '../components/bazi/TiaoHouBlock';
 import CollapsibleSection from '../components/ui/CollapsibleSection';
 import Card from '../components/ui/Card';
+import { saveRecord } from '../services/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
@@ -36,6 +38,32 @@ export default function ResultScreen({ navigation, route }: Props) {
       return { result: null, error: `排盘失败：${e?.message || '未知错误'}` };
     }
   }, [route.params]);
+
+  // 计算成功后自动保存到本地历史记录
+  useEffect(() => {
+    if (!result) return;
+    try {
+      const brief = [
+        `${result.pillars.year.stem}${result.pillars.year.branch}`,
+        `${result.pillars.month.stem}${result.pillars.month.branch}`,
+        `${result.pillars.day.stem}${result.pillars.day.branch}`,
+        `${result.pillars.hour.stem}${result.pillars.hour.branch}`,
+      ].join(' ');
+
+      const pattern = extractPattern(result);
+      const ao = assessOutcome(result, pattern);
+
+      saveRecord(route.params, {
+        baziBrief: brief,
+        patternDisplay: pattern.displayName,
+        patternOutcome: ao.outcome,
+        patternResult: ao.reason.split(';')[0].trim(),
+        dayMaster: result.dayMaster,
+      });
+    } catch {
+      // 保存失败不影响排盘结果展示
+    }
+  }, [result]);
 
   const toggleSection = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
