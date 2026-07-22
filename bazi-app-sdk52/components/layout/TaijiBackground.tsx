@@ -4,14 +4,18 @@ import Svg, { Rect, Circle, Path, ClipPath, Defs, G, Text as SvgText } from 'rea
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-export default function TaijiBackground() {
+interface Props {
+  opacity?: number;
+}
+
+export default function TaijiBackground({ opacity = 0.7 }: Props) {
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
-        duration: 90000, // 90s — same as website
+        duration: 180000, // 180s — slower, more meditative
         easing: Easing.linear,
         useNativeDriver: true,
       }),
@@ -26,7 +30,7 @@ export default function TaijiBackground() {
   });
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ rotate }] }]} pointerEvents="none">
+    <Animated.View style={[styles.container, { transform: [{ rotate }], opacity }]} pointerEvents="none">
       <Svg viewBox="0 0 1000 1000" style={styles.svg}>
         <Defs>
           {/* S-curve dividing the entire viewport — yin bg clip */}
@@ -50,7 +54,7 @@ export default function TaijiBackground() {
           fill="none"
           stroke="#a09888"
           strokeWidth="1"
-          opacity="0.25"
+          opacity="0.12"
         />
 
         {/* Taiji circle background — yin */}
@@ -63,19 +67,19 @@ export default function TaijiBackground() {
         <Circle cx="580" cy="220" r="40" fill="#1f1d1a" />
 
         {/* Inner ring */}
-        <Circle cx="500" cy="500" r="440" fill="none" stroke="#a09888" strokeWidth="1.5" opacity="0.35" />
+        <Circle cx="500" cy="500" r="440" fill="none" stroke="#a09888" strokeWidth="1.5" opacity="0.15" />
         {/* Outer ring */}
-        <Circle cx="500" cy="500" r="465" fill="none" stroke="#a09888" strokeWidth="0.5" opacity="0.2" />
+        <Circle cx="500" cy="500" r="465" fill="none" stroke="#a09888" strokeWidth="0.5" opacity="0.08" />
 
         {/* Bagua trigrams */}
-        <SvgText x="500" y="40" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☰</SvgText>
-        <SvgText x="840" y="172" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☱</SvgText>
-        <SvgText x="960" y="500" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☲</SvgText>
-        <SvgText x="840" y="828" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☳</SvgText>
-        <SvgText x="500" y="960" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☷</SvgText>
-        <SvgText x="160" y="828" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☶</SvgText>
-        <SvgText x="40" y="500" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☵</SvgText>
-        <SvgText x="160" y="172" fontSize="34" fill="#a09888" opacity="0.45" textAnchor="middle" alignmentBaseline="central">☴</SvgText>
+        <SvgText x="500" y="40" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☰</SvgText>
+        <SvgText x="840" y="172" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☱</SvgText>
+        <SvgText x="960" y="500" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☲</SvgText>
+        <SvgText x="840" y="828" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☳</SvgText>
+        <SvgText x="500" y="960" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☷</SvgText>
+        <SvgText x="160" y="828" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☶</SvgText>
+        <SvgText x="40" y="500" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☵</SvgText>
+        <SvgText x="160" y="172" fontSize="34" fill="#a09888" opacity="0.18" textAnchor="middle" alignmentBaseline="central">☴</SvgText>
       </Svg>
     </Animated.View>
   );

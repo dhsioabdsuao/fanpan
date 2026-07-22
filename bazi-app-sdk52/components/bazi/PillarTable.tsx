@@ -41,8 +41,9 @@ export default function PillarTable({ result, hideHour }: Props) {
   ];
 
   return (
-    <Card>
-      <View style={styles.content}>
+    <View style={styles.classicalFrame}>
+      <View style={styles.innerFrame}>
+        <View style={styles.content}>
         {/* 4-column grid */}
         <View style={styles.grid}>
           {columns.map((col) => {
@@ -128,11 +129,25 @@ export default function PillarTable({ result, hideHour }: Props) {
           </View>
         </View>
       </View>
-    </Card>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  classicalFrame: {
+    borderWidth: 1,
+    borderColor: '#d6d3d1',
+    borderRadius: BorderRadius.lg,
+    padding: 4,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  innerFrame: {
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+  },
   content: {
     padding: Spacing.md,
     paddingTop: Spacing.md,
@@ -149,9 +164,9 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
   },
   columnHighlight: {
-    backgroundColor: Colors.dayMasterBg,
+    backgroundColor: '#fef2f0',
     borderWidth: 1,
-    borderColor: Colors.dayMasterBorder,
+    borderColor: '#f5c6c2',
   },
   titleRow: {
     flexDirection: 'row',
@@ -164,7 +179,7 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   dayMasterBadge: {
-    backgroundColor: Colors.dayMasterBadge,
+    backgroundColor: '#f5c6c2',
     borderRadius: BorderRadius.sm,
     paddingHorizontal: 4,
     paddingVertical: 1,
@@ -172,7 +187,7 @@ const styles = StyleSheet.create({
   dayMasterBadgeText: {
     fontSize: 9,
     fontWeight: FontWeight.medium,
-    color: '#854d0e',
+    color: '#9b2c2c',
   },
   tenGod: {
     fontSize: FontSize.xs,

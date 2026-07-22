@@ -134,20 +134,16 @@ export default function ResultScreen({ navigation, route }: Props) {
           })}
         </View>
 
-        {/* Disclaimer */}
-        <View style={styles.disclaimerCard}>
-          <View style={styles.disclaimerContent}>
-            <Text style={styles.disclaimerText}>
-              本站排盘基于子平派传统命理学，
-            </Text>
-            <Text style={styles.disclaimerText}>
-              可见人生大致方向、性格特质、五行分布。
-            </Text>
-            <Text style={styles.motto}>知命而不认命，但行好事，莫问前程</Text>
-            <Text style={styles.disclaimerText}>
-              命运掌握在自己手中，请勿据此做出重大人生决策。
-            </Text>
-          </View>
+        {/* Disclaimer — 古籍批注风格 */}
+        <View style={styles.disclaimerContainer}>
+          <View style={styles.disclaimerDivider} />
+          <Text style={styles.disclaimerText}>
+            本站排盘基于子平派传统命理学，可见人生大致方向、性格特质、五行分布。
+          </Text>
+          <Text style={styles.motto}>知命而不认命，但行好事，莫问前程</Text>
+          <Text style={styles.disclaimerNote}>
+            —— 命运掌握在自己手中，请勿据此做出重大人生决策
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -185,7 +181,7 @@ const interpretStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
   scroll: {
     flex: 1,
@@ -261,29 +257,36 @@ const styles = StyleSheet.create({
     color: Colors.destructive,
     textAlign: 'center',
   },
-  disclaimerCard: {
-    marginTop: Spacing.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    borderRadius: 12,
-  },
-  disclaimerContent: {
-    paddingVertical: Spacing.xl,
+  disclaimerContainer: {
+    marginTop: Spacing.xl,
+    alignItems: 'flex-end',
     paddingHorizontal: Spacing.md,
-    alignItems: 'center',
-    gap: Spacing.sm,
+  },
+  disclaimerDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: Colors.surfaceBorder,
+    marginBottom: Spacing.md,
   },
   disclaimerText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
+    fontSize: 10,
+    color: Colors.textMuted,
+    textAlign: 'right',
+    lineHeight: 18,
+    writingDirection: 'ltr' as const,
+  },
+  disclaimerNote: {
+    fontSize: 10,
+    color: Colors.textSubtle,
+    textAlign: 'right',
+    lineHeight: 18,
+    marginTop: Spacing.xs,
   },
   motto: {
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.md,
     fontFamily: FONT_SERIF,
-    color: Colors.textSecondary,
-    marginVertical: Spacing.md,
+    color: Colors.textMuted,
+    textAlign: 'right',
+    marginVertical: Spacing.sm,
   },
 });

@@ -177,7 +177,7 @@ export default function BirthForm() {
   }));
 
   return (
-    <Card style={styles.card}>
+    <View style={styles.card}>
       <Text style={styles.cardTitle}>输入您的出生信息</Text>
 
       <View style={styles.formContent}>
@@ -449,6 +449,7 @@ export default function BirthForm() {
         {/* Submit */}
         <View style={styles.submitContainer}>
           <Button
+            variant="seal"
             title={form.formState.isSubmitting ? '排盘中...' : '开始排盘'}
             onPress={form.handleSubmit(onSubmit)}
             disabled={!canSubmit || form.formState.isSubmitting}
@@ -460,7 +461,7 @@ export default function BirthForm() {
       <View style={styles.footer}>
         <Text style={styles.footerText}>本站内容仅供娱乐参考</Text>
       </View>
-    </Card>
+    </View>
   );
 }
 

@@ -16,23 +16,27 @@ export default function HomeScreen() {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
-        {/* Title */}
-        <Text style={styles.title}>四柱八字</Text>
-        <Text style={styles.subtitle}>输入生辰，知晓命局</Text>
+          {/* Title */}
+          <Text style={styles.title}>四柱八字</Text>
+          <Text style={styles.subtitle}>输入生辰，知晓命局</Text>
 
-        {/* Description */}
-        <View style={styles.descContainer}>
-          <Text style={styles.desc}>
-            本站基于《渊海子平》《三命通会》《滴天髓》《穷通宝鉴》等经典古籍，辅以现代天文算法（真太阳时校正、节气精确匹配），对您的生辰八字进行系统化排盘分析。
-          </Text>
-          <Text style={styles.desc}>
-            愿您知命而行，顺势而为。
-          </Text>
-        </View>
+          {/* Decorative divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerDiamond}>◆</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-        {/* Form */}
-        <BirthForm />
-      </ScrollView>
+          {/* One-line tagline */}
+          <Text style={styles.tagline}>
+            古籍算法 · 真太阳时校正 · 节气匹配
+          </Text>
+
+          {/* Form */}
+          <View style={styles.formWrapper}>
+            <BirthForm />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -41,7 +45,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
   flex: {
     flex: 1,
@@ -55,12 +59,12 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl * 2,
   },
   title: {
-    fontSize: FontSize.huge,
+    fontSize: FontSize.xxxl,
     fontWeight: '700',
     color: Colors.goldText,
     textAlign: 'center',
     fontFamily: FONT_SERIF,
-    textShadowColor: 'rgba(0,0,0,0.1)',
+    textShadowColor: 'rgba(0,0,0,0.08)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
@@ -72,16 +76,39 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     fontFamily: FONT_SERIF,
   },
-  descContainer: {
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: Spacing.lg,
-    marginBottom: Spacing.xl,
-    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
   },
-  desc: {
-    fontSize: FontSize.sm,
-    fontWeight: '500',
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.goldTextSubtle as string,
+  },
+  dividerDiamond: {
+    marginHorizontal: Spacing.md,
+    fontSize: FontSize.xs,
     color: Colors.goldTextSubtle as string,
+  },
+  tagline: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
     textAlign: 'center',
-    lineHeight: 20,
+    marginBottom: Spacing.lg,
+  },
+  formWrapper: {
+    backgroundColor: 'rgba(255,255,255,0.82)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
 });

@@ -7,7 +7,7 @@ import TaijiBackground from './components/layout/TaijiBackground';
 export default function App() {
   return (
     <View style={styles.root}>
-      <TaijiBackground />
+      <TaijiBackground opacity={0.7} />
       <SafeAreaProvider>
         <NavigationContainer>
           <AppNavigator />

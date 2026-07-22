@@ -11,8 +11,8 @@ export const Colors = {
   goldTextSubtle: '#aa9c82b3',  // ~70% opacity gold
 
   // UI surface colors
-  background: '#ffffff',
-  surface: '#fafaf9',       // stone-50
+  background: '#f5f0e8',       // 宣纸色
+  surface: 'rgba(255,255,255,0.85)',   // 毛玻璃卡片底色
   surfaceBorder: '#e7e5e4', // stone-200
 
   // Text
