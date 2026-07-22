@@ -6,6 +6,9 @@ import type { RootStackParamList } from '../navigation/types';
 import { buildBaziInput } from '../adapters/bazi-input-adapter';
 import { calculateBazi } from '@/lib/bazi';
 import { extractPattern, assessOutcome } from '@/lib/bage';
+import { generateNarrative } from '@/lib/bage/narrative';
+import { analyzeWuXingLiuTong } from '@/lib/bage/liuTong';
+import { determineStrength } from '@/lib/strength/determineStrength';
 import { DAY_MASTER_INTERPRETATIONS } from '@/lib/interpretations/dayMaster';
 import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac';
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing } from '../theme';
@@ -62,6 +65,19 @@ export default function ResultScreen({ navigation, route }: Props) {
       });
     } catch {
       // 保存失败不影响排盘结果展示
+    }
+  }, [result]);
+
+  const narrative = useMemo(() => {
+    if (!result) return '';
+    try {
+      const pattern = extractPattern(result);
+      const outcome = assessOutcome(result, pattern);
+      const strength = determineStrength(result);
+      const liuTong = analyzeWuXingLiuTong(result);
+      return generateNarrative(result, pattern, outcome, strength, liuTong);
+    } catch {
+      return '';
     }
   }, [result]);
 
@@ -142,6 +158,14 @@ export default function ResultScreen({ navigation, route }: Props) {
 
         {/* Pillar Table */}
         <PillarTable result={result} />
+
+        {/* Narrative */}
+        {narrative ? (
+          <View style={styles.narrativeCard}>
+            <Text style={styles.narrativeTitle}>命局叙事</Text>
+            <Text style={styles.narrativeBody}>{narrative}</Text>
+          </View>
+        ) : null}
 
         {/* Collapsible Sections */}
         <View style={styles.sections}>
@@ -239,6 +263,26 @@ const styles = StyleSheet.create({
     color: Colors.goldText,
     fontWeight: FontWeight.medium,
     padding: Spacing.xs,
+  },
+  narrativeCard: {
+    marginTop: Spacing.lg,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    borderRadius: 12,
+    padding: Spacing.lg,
+  },
+  narrativeTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    color: Colors.goldText,
+    fontFamily: FONT_SERIF,
+    marginBottom: Spacing.md,
+  },
+  narrativeBody: {
+    fontSize: FontSize.base,
+    lineHeight: 26,
+    color: Colors.textSecondary,
   },
   sections: {
     marginTop: Spacing.lg,

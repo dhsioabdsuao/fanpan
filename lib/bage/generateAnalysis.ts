@@ -6,6 +6,7 @@ import { getHiddenStemsSpec, getStemElement } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
 import { getTiaoHouYongShen, getTiaoHouType } from './tiaoHou'
 import { analyzeWuXingLiuTong } from './liuTong'
+import { generateNarrative } from './narrative'
 
 // ── 类型 ──
 
@@ -21,6 +22,8 @@ export interface AnalysisResult {
   summary: string
   /** 专业解析：按5个模块组织 */
   analysis: string
+  /** 人格化叙事：300-500字，有态度、有判断力 */
+  narrative: string
 }
 
 // ── 专业名词白话解释 ──
@@ -1122,5 +1125,8 @@ export function generateAnalysis(input: AnalysisInput): AnalysisResult {
 
   const analysis = sections.join('\n\n')
 
-  return { summary, analysis }
+  const liuTongResult = analyzeWuXingLiuTong(bazi)
+  const narrative = generateNarrative(bazi, pattern, outcome, strength, liuTongResult)
+
+  return { summary, analysis, narrative }
 }
