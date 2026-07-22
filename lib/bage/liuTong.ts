@@ -25,6 +25,8 @@ export interface LiuTongResult {
   blockage: ElementType | null
   /** 通关用神（需补的五行以恢复流转）。若流通顺畅则为 null */
   tongGuan: ElementType | null
+  /** 源头到堵点的强弱落差（0 = 流通顺畅） */
+  drop: number
   /** 流通诊断描述文本 */
   description: string
 }
@@ -87,13 +89,14 @@ export function analyzeWuXingLiuTong(bazi: BaziResult): LiuTongResult {
   if (blockage && tongGuan) {
     const nextAfter = GENERATING[tongGuan]
     const desc = `源头为${source}，气行至${blockage}→${tongGuan}时断崖跌落，${tongGuan}气枯竭难接。宜补${tongGuan}通关，引${blockage}之气下注${nextAfter}，恢复流转。`
-    return { source, blockage, tongGuan, description: desc }
+    return { source, blockage, tongGuan, drop: maxDrop, description: desc }
   }
 
   return {
     source,
     blockage: null,
     tongGuan: null,
+    drop: 0,
     description: '五行流通顺畅，气机生生不息，无显著堵点。',
   }
 }
