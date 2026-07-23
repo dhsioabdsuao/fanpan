@@ -211,54 +211,63 @@ function scanFeatures(ctx: Ctx): Feature[] {
     // 坐七杀
     if (rel === '七杀') {
       const isYou = dayBranch === '酉';
+      const dmChar = ctx.dm.includes('壬') ? '表面随和、好说话——壬水天生擅长融入，跟谁都能聊。' :
+        ctx.dm.includes('己') ? '己土本来就偏柔，不习惯正面对抗。' :
+        ctx.dm.includes('甲') ? '甲木天生有向上冲的劲头。' : '';
       features.push({
-        score: 65,
+        score: 72,
         text: isYou
           ? `乙酉日柱——乙木坐在刀刃上。日支酉金七杀直接贴着日主，你的内在审判者不是「对自己要求高」那种温和的程度。你对自己说过最狠的话，别人一辈子都不会对你说。`
-          : `${ctx.dm}坐${dayBranch}七杀——日支本气为七杀，你内心深处有一个严厉的自我审判者。表面随和，但你自己知道——那个标准很高，别人觉得你够好了，你自己觉得不够。`,
+          : `${ctx.dm}坐${dayBranch}七杀——你有两副面孔。${dmChar}但日支七杀贴身——内心深处有一个很严的自我标准，别人觉得你够好了，你不觉得。这种内外反差是你最累的地方——对外你在迁就，对内你在审判。`,
+        tags: ['personality'],
       });
     }
     // 坐正官
     if (rel === '正官') {
       features.push({
-        score: 60,
-        text: `${ctx.dm}坐${dayBranch}正官——日支正官贴身。你对自己有天然的约束力，不需要别人给你立规矩——你心里的那条线，比外部的规则更清晰。`,
+        score: 65,
+        text: `${ctx.dm}坐${dayBranch}正官——日支正官贴身。你对自己有天然的约束力，不需要别人给你立规矩——你心里的那条线，比外部的规则更清晰。你被架在「对的位置」上，做正经事、走正经路。但骨子里那个不被约束的自己，一直在。`,
+        tags: ['personality'],
       });
     }
-    // 坐禄（日主同五行+临官位）
+    // 坐禄
     const luMap: Record<string, string> = { '甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午','庚':'申','辛':'酉','壬':'亥','癸':'子' };
     if (luMap[dayStem] === dayBranch) {
       const isYiMao = dayStem === '乙' && dayBranch === '卯';
-      const isDingWu = dayStem === '丁';
+      const isDingHuo = dayStem === '丁';
       features.push({
-        score: 60,
+        score: 65,
         text: isYiMao
-          ? `乙卯日柱——乙木自坐禄地，外面看起来柔顺，骨子里硬得很。乙木是藤萝，卯木是它的根——你对「靠自己」有一种近乎本能的信念。别人帮你是锦上添花，不帮你也照走不误。`
-          : isDingWu
-          ? `丁火坐巳火禄地——日主有根，你不是浮萍。丁火是灯烛之火，不靠爆发力，靠的是持续燃烧。`
+          ? `乙卯日柱——乙木自坐禄地，外面看起来柔顺，骨子里硬得很。乙木是藤萝，卯木是它的根——你对「靠自己」有一种近乎本能的信念。别人帮你是锦上添花，不帮你也照走不误。这是乙卯的自尊，也是乙卯的孤独。`
+          : isDingHuo
+          ? `丁巳日柱——丁火自坐巳火禄地。有根有底，不是浮萍。丁火坐巳是「自燃」属性——不依赖外部能源，自己就能发光。时干丁火比肩再帮一把，你不是一个人在撑，别人看到的你只是你的一半。`
           : `${ctx.dm}自坐禄地——日主有根有底，不是虚浮的。你有一种不需要外界认可的内在底气。`,
+        tags: ['personality'],
       });
     }
     // 坐刃
     const renMap: Record<string, string> = { '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子' };
     if (renMap[dayStem] === dayBranch) {
       features.push({
-        score: 55,
+        score: 60,
         text: `${ctx.dm}坐羊刃——日主自坐刃地，内在有一股不服输的狠劲。你比看起来更刚烈，只是平常不显。`,
+        tags: ['personality'],
       });
     }
     // 坐印
     if (rel === '正印' || rel === '偏印') {
       features.push({
-        score: 55,
-        text: `${ctx.dm}坐${dayBranch}印星——日主被保护得很好。${dayBranch}贴身相生，让你有一种天然的安逸感。这是好事（你不容易焦虑），也是限制（你缺少那种紧迫感）。`,
+        score: 60,
+        text: `${ctx.dm}坐${dayBranch}印星——日主被保护得很好。${ctx.dm.includes('戊') ? '成长环境给了你安稳的底气，但也让你少了那种「不拼不行」的紧迫感。日子可以过得不错，但不错不等于对。' : '这种安逸感让你不容易焦虑，但也让你在面对挑战时倾向于等一等、看一看——不是不敢动，是太习惯舒服的状态了。'}`,
+        tags: ['personality'],
       });
     }
     // 坐财
     if (rel === '正财' || rel === '偏财') {
       features.push({
-        score: 50,
-        text: `${ctx.dm}坐${dayBranch}财星——你对价值和回报有天生的敏感。财富对你来说不是身外之物，是安全感的一部分。`,
+        score: 55,
+        text: `${ctx.dm}坐${dayBranch}财星——你对价值和回报有天生的敏感。财富对你来说不是身外之物，是安全感的一部分。你对价值的判断在骨子里，不是后天学会的。`,
+        tags: ['personality'],
       });
     }
   }
@@ -577,13 +586,10 @@ export function generateNarrative(
     .filter((f) => !f.tags?.includes('career') && !f.tags?.includes('identity'))
     .sort((a, b) => b.score - a.score);
 
-  // 组合：identity(日主性格) + top3核心特征 + career(职业)
+  // 组合：identity + top5核心特征 + career
   const picked: Feature[] = [];
-  // 1. 日主性格（必有）
   if (identity.length > 0) picked.push(identity[0]);
-  // 2. 取分数最高的 3 个非固定特征
-  picked.push(...rest.slice(0, 3));
-  // 3. 职业方向（必有，放最后）
+  picked.push(...rest.slice(0, 5));
   if (career.length > 0) picked.push(career[0]);
 
   if (picked.length === 0) {
