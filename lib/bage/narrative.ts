@@ -5,8 +5,8 @@ import type { StrengthResult } from '@/lib/strength/determineStrength';
 import type { LiuTongResult } from './liuTong';
 import { getTenGod } from '@/lib/bazi-utils';
 
-// ── 五行→能力映射 ──
-const ELEMENT_ABILITY: Record<string, string> = {
+// ── 五行能力映射 ──
+const EL_ABILITY: Record<string, string> = {
   '金': '纪律、执行力、技术深耕',
   '水': '情绪调节、变通力、智慧沉淀',
   '木': '人脉拓展、成长性、灵活性',
@@ -14,283 +14,337 @@ const ELEMENT_ABILITY: Record<string, string> = {
   '土': '稳定、储蓄、承载力',
 };
 
-const ELEMENT_DIRECTION: Record<string, string> = {
-  '金': '技术、专业技能方向',
-  '水': '学习、沟通方向',
-  '木': '社交、人脉方向',
-  '火': '展示、分享方向',
-  '土': '稳固、储蓄方向',
+// ── 天干合映射 ──
+const STEM_COMBINE: Record<string, string> = {
+  '甲己': '土', '己甲': '土',
+  '乙庚': '金', '庚乙': '金',
+  '丙辛': '水', '辛丙': '水',
+  '丁壬': '木', '壬丁': '木',
+  '戊癸': '火', '癸戊': '火',
 };
 
-// ── 辅助判断 ──
+const COMBINE_MEANING: Record<string, string> = {
+  '甲己': '甲木被己土合住——本该向上生长的力量，被现实的考量拉住了',
+  '乙庚': '乙木被庚金合住——柔韧被刚硬约束，温柔中多了原则',
+  '丙辛': '丙火被辛金合住——热烈的光芒被冷静的规则包裹，外冷内热',
+  '丁壬': '丁火被壬水合住——燃烧的热情被智慧调和，不会烧过头',
+  '戊癸': '戊土被癸水合住——厚重的根基被柔情渗透，刚中有柔',
+  '己甲': '甲木被己土合住——本该向上生长的力量，被现实的考量拉住了',
+  '庚乙': '乙木被庚金合住——柔韧被刚硬约束，温柔中多了原则',
+  '辛丙': '丙火被辛金合住——热烈的光芒被冷静的规则包裹，外冷内热',
+  '壬丁': '丁火被壬水合住——燃烧的热情被智慧调和，不会烧过头',
+  '癸戊': '戊土被癸水合住——厚重的根基被柔情渗透，刚中有柔',
+};
 
-function zeroElements(bazi: BaziResult): string[] {
-  return (['金', '木', '水', '火', '土'] as ElementType[])
-    .filter((el) => bazi.elementCount[el] === 0);
-}
+// ── 数据类型 ──
 
-function isFireEarthDry(bazi: BaziResult): boolean {
-  const ec = bazi.elementCount;
-  return ec['火'] >= 2 && ec['土'] >= 3 && ec['水'] === 0;
-}
-
-function hasMonthStemLeaked(pattern: ExtractResult, bazi: BaziResult): boolean {
-  // 月干是否被坐支泄气（月支本气生月干？相反，月支本气是月干所生则泄）
-  const monthStem = bazi.pillars.month.stem;
-  const monthBranchMainQi = bazi.pillars.month.hiddenStems[0];
-  if (!monthBranchMainQi) return false;
-  const relation = getTenGod(monthStem, monthBranchMainQi);
-  return relation === '食神' || relation === '伤官'; // 月干生月支本气 = 泄气
-}
-
-function getMonthTenGod(bazi: BaziResult): string {
-  return bazi.tenGods?.monthStem ?? getTenGod(bazi.dayMaster, bazi.pillars.month.stem);
-}
-
-// ── 原型匹配 ──
-
-interface Archetype {
-  name: string;
-  match: (ctx: ArchetypeInput) => number; // 返回匹配分数 0-100
-  narrative: (ctx: ArchetypeInput) => string;
-}
-
-interface ArchetypeInput {
+interface Ctx {
   bazi: BaziResult;
   pattern: ExtractResult;
   outcome: AssessResult;
   strength: StrengthResult;
-  liuTong: LiuTongResult;
-  zero: string[];
-  dry: boolean;
-  monthLeaked: boolean;
-  monthTenGod: string;
-  blockage: ElementType | null;
-  tongGuan: ElementType | null;
-  drop: number;
-  missing: string;
-  tongGuanDir: string;
+  lt: LiuTongResult;
+  dayEl: ElementType;
+  dm: string;       // "戊土"
   isStrong: boolean;
+  zero: string[];
+  stems: string[];  // 4 heavenly stems
+  branches: string[]; // 4 earthly branches
+  tenGods: string[];
+  hiddenAll: string[];
 }
 
-function buildContext(bazi: BaziResult, pattern: ExtractResult, outcome: AssessResult, strength: StrengthResult, liuTong: LiuTongResult): ArchetypeInput {
-  const zero = zeroElements(bazi);
-  const missing = zero.length > 0 ? zero.join('和') : '';
-  const blockage = liuTong.blockage;
-  const tongGuan = liuTong.tongGuan;
-  const drop = liuTong.drop;
+interface Feature {
+  score: number;
+  text: string;
+}
+
+// ── 上下文构建 ──
+
+function buildCtx(
+  bazi: BaziResult,
+  pattern: ExtractResult,
+  outcome: AssessResult,
+  strength: StrengthResult,
+  lt: LiuTongResult,
+): Ctx {
+  const p = bazi.pillars;
+  const stems = [p.year.stem, p.month.stem, p.day.stem, p.hour.stem];
+  const branches = [p.year.branch, p.month.branch, p.day.branch, p.hour.branch];
+  const tenGods = [bazi.tenGods.yearStem, bazi.tenGods.monthStem, '日主', bazi.tenGods.hourStem];
+  const hiddenAll: string[] = [];
+  for (const br of branches) {
+    for (const h of bazi.pillars.year.hiddenStems) {
+      // Use getHiddenStemsSpec indirectly via the pillars
+    }
+  }
+  // Get all hidden stems from pillars
+  for (const key of ['year', 'month', 'day', 'hour'] as const) {
+    for (const h of p[key].hiddenStems) hiddenAll.push(h);
+  }
+
+  const zero = (['金', '木', '水', '火', '土'] as ElementType[])
+    .filter((el) => bazi.elementCount[el] === 0);
+
   return {
-    bazi, pattern, outcome, strength, liuTong, zero,
-    dry: isFireEarthDry(bazi),
-    monthLeaked: hasMonthStemLeaked(pattern, bazi),
-    monthTenGod: getMonthTenGod(bazi),
-    blockage,
-    tongGuan,
-    drop,
-    missing,
-    tongGuanDir: tongGuan ? (ELEMENT_DIRECTION[tongGuan] ?? tongGuan) : '',
+    bazi, pattern, outcome, strength, lt,
+    dayEl: bazi.dayMasterElement,
+    dm: `${bazi.dayMaster}${bazi.dayMasterElement}`,
     isStrong: strength.level === '身强',
+    zero,
+    stems,
+    branches,
+    tenGods,
+    hiddenAll,
   };
 }
 
-// ── 8个原型 ──
+// ── 特征扫描器：返回 (score, text) ──
 
-const ARCHETYPES: Archetype[] = [
+function scanFeatures(ctx: Ctx): Feature[] {
+  const features: Feature[] = [];
+  const { bazi, stems, branches, lt, pattern, outcome, zero } = ctx;
+  const p = bazi.pillars;
 
-  // 1. 正统叛逃者 — 偏印/伤官 + 正官透被泄 + 身强
-  {
-    name: '正统叛逃者',
-    match(ctx) {
-      let s = 0;
-      if (ctx.pattern.displayName.includes('偏印') || ctx.pattern.displayName.includes('伤官')) s += 40;
-      if (ctx.monthTenGod === '正官' && ctx.monthLeaked) s += 30;
-      if (ctx.isStrong) s += 20;
-      return s;
-    },
-    narrative(ctx) {
-      const dm = `${ctx.bazi.dayMaster}${ctx.bazi.dayMasterElement}`;
-      return `${ctx.pattern.displayName}，骨子里不是走寻常路的人。但月干透出${ctx.monthTenGod}，你大概率被要求走过一条「正路」——读书、体制、或者家里安排的方向。${ctx.monthTenGod}坐支被泄，规矩在你身上立不住，你多半已经从那条路上跑偏了。
-
-${dm}身强，${ctx.missing ? `全局缺${ctx.missing}——` : ''}表面扛得住事，但${ctx.dry ? '没有情绪冷却机制。压力来了硬扛，不消化' : '内在的自己未必像外在看起来那么稳'}。${ctx.dry ? '像烈日下烤干的泥巴，表面硬，敲一下直接碎掉。' : ''}
-
-${ctx.blockage && ctx.tongGuan ? `五行流通在${ctx.blockage}→${ctx.tongGuan}处断裂${ctx.drop > 0 ? `，落差${ctx.drop}` : ''}。这意味着你的能量在${ctx.blockage}这一环积累了很多，但无法顺畅转化为${ctx.tongGuan}所代表的${ctx.tongGuanDir}。${ctx.drop >= 4 ? '问题不是不够努力，是努力的方向卡住了。' : '稍加疏通就能改善。'}` : '五行流通顺畅，你的能量转换效率很高——这是难得的优势，善用它。'}
-
-你需要${ctx.tongGuan ? ctx.tongGuan + '来' + (ctx.tongGuan === '金' ? '泄土生水' : ctx.tongGuan === '水' ? '流通全局' : ctx.tongGuan === '木' ? '疏通堵点' : ctx.tongGuan === '火' ? '点燃动力' : '稳住根基') + '。' + ctx.tongGuanDir + '，是你命局中关键的突破口。' : '找到那个能让你把才华兑现的出口。'}`;
-    },
-  },
-
-  // 2. 地下的岩浆 — 成格+堵塞≥3+火炎土燥
-  {
-    name: '地下的岩浆',
-    match(ctx) {
-      let s = 0;
-      if (ctx.outcome.outcome === '成格') s += 30;
-      if (ctx.drop >= 3) s += 30;
-      if (ctx.dry) s += 30;
-      return s;
-    },
-    narrative(ctx) {
-      const dm = `${ctx.bazi.dayMaster}${ctx.bazi.dayMasterElement}`;
-      return `格局「${ctx.outcome.outcome}」——命局的顶层设计是完整的。但成格不代表顺畅，恰恰相反：${ctx.dry ? '火炎土燥，全局缺水，你心里常年像烧着一锅快干的水，越搅越焦。' : ''}
-
-${dm}${ctx.isStrong ? '身强，内在能量充沛，但问题出在出口上' : '中和偏弱，好在格局给你兜了底'}。${ctx.blockage && ctx.tongGuan ? `五行流通在${ctx.blockage}→${ctx.tongGuan}出现断崖${ctx.drop >= 4 ? '——不是微堵，是严重断裂' : '——明显受阻'}。` + (ctx.tongGuan === '金' ? '你有很多想法（土），但难以转化为持续的行动和作品（金）。想法➔行动的转化链路断了。不是你懒，是五行结构决定的。' : ctx.tongGuan === '水' ? '你的行动力（金）转化不成智慧沉淀（水），做事容易停留在表面，难以深入。' : `能量在${ctx.blockage}处积累但到${ctx.tongGuan}时卡住，你的${ctx.blockage}特质过于突出而${ctx.tongGuan}迟迟发展不起来。`) : '五行流通没有明显卡点，你的能量转化效率还不错。'}
-
-${ctx.missing ? `另外，全局缺${ctx.missing}。${ctx.missing.includes('金') ? '金代表纪律和深耕——你不是不能吃苦，是吃不了枯燥的苦。能熬大夜赶一个感兴趣的项目，但很难每天固定时间做同一件事。' : ''}${ctx.missing.includes('水') ? '水代表情绪调节和智慧沉淀——你是那种「看起来没事，其实一直在内耗」的人。' : ''}${ctx.missing.includes('木') ? '木代表灵活性和成长——你可能在某些方面过于固执，缺少变通。' : ''}${ctx.missing.includes('火') ? '火代表表达和感染力——你可能做了很多事但不善于展示自己。' : ''}${ctx.missing.includes('土') ? '土代表稳定和承载力——你或许缺一点脚踏实地的耐心。' : ''}` : ''}
-
-${ctx.tongGuan ? `\n\n${ctx.tongGuanDir}是你的补丁。不是让你变成另一个人，是给现有的能量找个对的方向出口。` : ''}`;
-    },
-  },
-
-  // 3. 迟开的花 — 不成格+印格/印星无根
-  {
-    name: '迟开的花',
-    match(ctx) {
-      let s = 0;
-      if (ctx.outcome.outcome === '不成格') s += 40;
-      if (ctx.pattern.category === '印格' || ctx.pattern.displayName.includes('印')) s += 30;
-      return s;
-    },
-    narrative(ctx) {
-      return `格局「不成格」——这三个字不是对你的否定。${ctx.pattern.displayName}的底子摆在那里，只是时辰未到。大运流转会补齐缺失的条件。你不是不行，是时候未到。
-
-${ctx.outcome.reason ? `具体来说：${ctx.outcome.reason.split(';').slice(0, 2).join('；')}。这些问题不是你的错——是你命局的时间线还没走到那一步。` : ''}
-
-${ctx.isStrong ? '身强的你，能量其实在线，只是格局的拼图还缺一块。' : '身弱的你，能量确实需要更多时间和环境来积蓄。'}${ctx.missing ? ` 全局缺${ctx.missing}，这既是一个短板，也是一个明确的信号——你需要从缺失的方向补上。` : ''}
-
-你还在蓄力期。在这个阶段，与其急于求成，不如把精力放在${ctx.tongGuanDir || '打磨自己的核心能力'}上。竹子前四年只长三厘米，第五年冲天而起。你的「第五年」还没到，但根已经在扎了。`;
-    },
-  },
-
-  // 4. 孤军奋战 — 建禄/阳刃+身强+比劫多
-  {
-    name: '孤军奋战',
-    match(ctx) {
-      let s = 0;
-      if (ctx.pattern.displayName.includes('建禄') || ctx.pattern.displayName.includes('阳刃')) s += 40;
-      if (ctx.isStrong) s += 30;
-      if (ctx.bazi.elementCount[ctx.bazi.dayMasterElement] >= 3) s += 20;
-      return s;
-    },
-    narrative(ctx) {
-      const dm = `${ctx.bazi.dayMaster}${ctx.bazi.dayMasterElement}`;
-      return `${ctx.pattern.displayName}，凡事喜欢靠自己。${dm}身强，${ctx.bazi.dayMasterElement}气在命局中占了三席以上——你不是没有帮手，是天生不习惯求助。
-
-一个人扛了太多事情。走过的弯路、做过的错误决定、浪费的时间——大概率都是因为「不好意思开口」。${ctx.dry ? '加上全局缺水，你不会自我调节。压力堆积如山，表面上还跟没事人一样。' : ''}
-
-${ctx.blockage && ctx.tongGuan ? `五行堵在${ctx.blockage}→${ctx.tongGuan}。` + (ctx.tongGuan === '木' ? '你需要的不只是做事能力（金），更是借力生长的智慧（木）。一个人走得快，一群人走得远——这句话对别人是鸡汤，对你来说是解药。' : `能量出口在${ctx.tongGuan}方向——${ctx.tongGuanDir}是你需要补上的一环。`) : ''}
-
-${ctx.tongGuanDir ? `试着从${ctx.tongGuanDir}打开局面。找到几个你真正信得过的人，学会把后背交给他们。` : '试着找到你能信得过的人——不是让你变软弱，是让你变强。'}`;
-    },
-  },
-
-  // 5. 缺水的鱼 — 金水缺失+火土旺+身强
-  {
-    name: '缺水的鱼',
-    match(ctx) {
-      let s = 0;
-      if (ctx.zero.includes('金') && ctx.zero.includes('水')) s += 40;
-      if (ctx.bazi.elementCount['火'] >= 2 && ctx.bazi.elementCount['土'] >= 3) s += 30;
-      if (ctx.isStrong) s += 20;
-      return s;
-    },
-    narrative(ctx) {
-      return `全局金水双缺，火土独旺——你就像一个被烈日烤着的炉子，火力充沛但没有冷却系统。${ctx.isStrong ? '身强说明你确实能扛' : ''}，但扛得住不等于消化得了。
-
-${ctx.missing.includes('金') ? '缺金意味着缺乏执行力出口。土的能量无法泄到金，所有念头都在内部打转——你脑子里的想法比手头做的事多十倍。' : ''}
-${ctx.missing.includes('水') ? '缺水意味着缺乏情绪调节。水主智慧和流通——没有水，情绪没有出口，压力没有化解渠道。你不是脆弱，是没有缓冲层。' : ''}
-
-${ctx.blockage && ctx.tongGuan ? `流通在${ctx.blockage}→${ctx.tongGuan}堵了${ctx.drop >= 4 ? '——而且是明显堵塞' : ''}。${ctx.tongGuan}是通关用神，${ctx.tongGuanDir}是破局的方向。` : ''}
-
-你需要的不是「更努力」。你已经够努力了。你需要的是给这台过热的引擎加一套冷却系统。${ctx.tongGuanDir ? `从${ctx.tongGuanDir}入手——不是一夜之间改变，是给自己一个缓慢但持续的出口。` : '找到一个能让你安静下来的习惯——哪怕只是每天散步半小时，让水汽慢慢渗透进来。'}`;
-    },
-  },
-
-  // 6. 锋芒藏鞘 — 伤官格+印有根+身强
-  {
-    name: '锋芒藏鞘',
-    match(ctx) {
-      let s = 0;
-      if (ctx.pattern.displayName.includes('伤官')) s += 40;
-      if (ctx.isStrong) s += 25;
-      return s;
-    },
-    narrative(ctx) {
-      return `${ctx.pattern.displayName}——你的才华是刀锋，但刀不总是要出鞘的。你天性直言，思维锐利，能看到别人看不到的盲点。但伤官最大的问题是「杀伤力过大时伤人也伤己」。
-
-${ctx.isStrong ? '身强让你有底气去冲撞，但世界不总是按照你的逻辑运转的。' : ''}${ctx.outcome.outcome === '成格' ? '好在你格局成立，说明你的才华有承载——不是无的放矢。' : '格局还没完全成立，说明才华需要更多打磨才能兑现。'}
-
-${ctx.blockage && ctx.tongGuan ? `五行堵在${ctx.blockage}→${ctx.tongGuan}。你的表达欲（${ctx.blockage}）需要转化为${ctx.tongGuan}的输出——${ctx.tongGuanDir}是你该走的路。` : ''}
-
-学会「收得住」比学会「放得开」更难。但一旦学会，你的锐利会变成精准，而非泛泛的杀伤。选对战场，比你赢多少场都重要。`;
-    },
-  },
-
-  // 7. 蜕皮成长 — 化格
-  {
-    name: '蜕皮成长',
-    match(ctx) {
-      return ctx.pattern.displayName.includes('化') ? 80 : 0;
-    },
-    narrative(ctx) {
-      const dm = `${ctx.bazi.dayMaster}${ctx.bazi.dayMasterElement}`;
-      return `化格——你正在经历一次脱胎换骨的蜕变。${dm}化为${ctx.bazi.dayMasterElement === '土' ? '另一种土的形态' : '新的五行方向'}，这个过程本身就是一场自我重塑。
-
-旧壳裂了，新壳还没硬。这段时间你可能觉得自己既不像过去的自己，也不确定未来的自己是怎样的——这种感觉是对的。化格就是如此：你不再是你，但你正在成为一个更坚固的版本。
-
-${ctx.outcome.outcome === '成格' ? '格局成立，说明蜕变正在往对的方向前进。' : '格局还需要时间打磨——蜕变不是一蹴而就的。'}
-
-${ctx.blockage && ctx.tongGuan ? `能量在${ctx.blockage}→${ctx.tongGuan}有淤堵，说明你的转变过程中${ctx.blockage}太重而${ctx.tongGuan}不足。${ctx.tongGuanDir}是当下最关键的突破点。` : ''}
-
-别着急。蜕变途中的人不需要跑起来。站稳了，壳裂了没关系——新壳在长。`;
-    },
-  },
-
-  // 8. 逆风翻盘 — 破格+身弱/中和
-  {
-    name: '逆风翻盘',
-    match(ctx) {
-      let s = 0;
-      if (ctx.outcome.outcome === '破格') s += 50;
-      if (ctx.strength.level !== '身强') s += 30;
-      return s;
-    },
-    narrative(ctx) {
-      return `格局「破格」——很多人在看到这两个字时会觉得命不好，但恰恰相反。破格的人往往经历了更多摔打，但摔打本身就是锻造。
-
-${ctx.outcome.reason ? `破格的原因：${ctx.outcome.reason.split(';').slice(0, 2).join('；')}。这些问题暴露了你的短板，但也正因为暴露，你才比别人更清楚自己需要补什么。` : ''}
-
-${ctx.isStrong ? '' : '身不强——你不是天生的强者，但你有后天磨出来的韧性。'}${ctx.blockage && ctx.tongGuan ? `五行堵在${ctx.blockage}→${ctx.tongGuan}，${ctx.tongGuanDir}是你的翻盘点。你缺的不是方向，是补上那一块关键的拼图。` : ''}
-
-格局破损不是终点。破而后立——破碎之后重建的，往往比原来的更坚固。你比别人更早经历了风浪，这意味着你比别人更早知道什么叫「站住了」。`;
-    },
-  },
-];
-
-// ── 默认叙事（不匹配任何原型时的兜底） ──
-
-function fallbackNarrative(ctx: ArchetypeInput): string {
-  const dm = `${ctx.bazi.dayMaster}${ctx.bazi.dayMasterElement}`;
-  const lines: string[] = [];
-
-  lines.push(`${ctx.pattern.displayName}，${dm}日主，${ctx.isStrong ? '身强有力' : ctx.strength.level === '中和' ? '中和平衡' : '身弱需扶'}。格局「${ctx.outcome.outcome}」——${ctx.outcome.outcome === '成格' ? '命局的顶层设计完整，基础扎实。' : ctx.outcome.outcome === '不成格' ? '火候尚欠，但方向是明确的。' : '有破损，但破损本身也是一种结构。'}`);
-
-  if (ctx.missing) {
-    const parts: string[] = [];
-    for (const el of ctx.zero) {
-      parts.push(`${el}（${ELEMENT_ABILITY[el]}）`);
+  // ── 1. 天干合 ──
+  const stemPairs: [number, number, string, string][] = [
+    [0, 1, '年', '月'], [1, 2, '月', '日'], [2, 3, '日', '时'],
+    [0, 2, '年', '日'], [0, 3, '年', '时'], [1, 3, '月', '时'],
+  ];
+  for (const [i, j, la, lb] of stemPairs) {
+    const key = stems[i] + stems[j];
+    if (COMBINE_MEANING[key]) {
+      const tgI = ctx.tenGods[i];
+      const tgJ = ctx.tenGods[j];
+      // 用神被合 → 高分
+      const isYongShen = tgI === '七杀' || tgJ === '七杀' || tgI === '正官' || tgJ === '正官';
+      const baseScore = isYongShen ? 90 : 65;
+      // 确定谁是七杀/正官
+      const guanShaTG = tgI === '七杀' || tgI === '正官' ? tgI : (tgJ === '七杀' || tgJ === '正官' ? tgJ : '');
+      const otherTG = tgI === guanShaTG ? tgJ : tgI;
+      const yongShenText = guanShaTG === '七杀'
+        ? `七杀本是你的鞭子，催你前进，但它被${otherTG}合住了。野心刚冒出来，就被一股更舒服的力量按回去。你不是没有冲劲——是那股冲劲不够疼。`
+        : guanShaTG === '正官'
+        ? `正官代表规矩和方向，但它被${otherTG}牵走了。你被要求走一条很正的路，但你内在的${otherTG}力量让你不愿意乖乖就范。`
+        : '用神被合，格局的力量打了一个折扣。你有这个底子，但发力的时候总觉得被什么东西绊了一下。';
+      features.push({
+        score: baseScore,
+        text: `${la}干${stems[i]}（${tgI}）与${lb}干${stems[j]}（${tgJ}）相合。${isYongShen ? yongShenText : `${tgI}和${tgJ}绑在一起——这两个特质在你身上不是分开的，而是互相拉扯的。`}`,
+      });
     }
-    lines.push(`全局缺${parts.join('、')}。这不是缺陷，是明确的信号——你需要从这些方向补上。`);
   }
 
-  if (ctx.blockage && ctx.tongGuan) {
-    lines.push(`五行流通在${ctx.blockage}→${ctx.tongGuan}处受阻${ctx.drop > 0 ? `（落差${ctx.drop}）` : ''}。能量卡在${ctx.blockage}这一环，${ctx.tongGuan}是你当下的通关关键——建议从${ctx.tongGuanDir}方向调整。`);
+  // ── 2. 月干坐支被泄（正官/七杀坐支被泄 → 高分） ──
+  const monthStem = stems[1];
+  const monthBranch = branches[1];
+  const monthMainQi = p.month.hiddenStems[0];
+  if (monthMainQi) {
+    const rel = getTenGod(monthStem, monthMainQi);
+    const monthTG = ctx.tenGods[1];
+    if (rel === '食神' || rel === '伤官') {
+      const isGuanSha = monthTG === '正官' || monthTG === '七杀';
+      features.push({
+        score: isGuanSha ? 85 : 50,
+        text: `月干${monthStem}（${monthTG}）坐${monthBranch}火——${monthStem === '甲' ? '木' : monthStem}被${monthBranch}支所泄。${isGuanSha ? `你被要求走过一条正统的路——读书、体制、或者家里安排的方向。但${monthTG}坐支被泄，规矩在你身上立不住。你大概率已经从那条路上跑偏了。` : `你对外展现的${monthTG}特质，其实在内部被消解了一部分。表面看到的样子，不是全部的你。`}`,
+      });
+    }
+    // 坐支生干（印生身/官生印等）
+    if (rel === '正印' || rel === '偏印') {
+      const isRiZhu = stems[1] === bazi.dayMaster;
+      features.push({
+        score: 55,
+        text: `月干${monthStem}坐${monthBranch}——${monthBranch}支的${monthMainQi}气生扶${monthStem}。${isRiZhu ? '日主在月令得生，你天然有一种被保护的感觉，成长环境对你不错。' : `这种「坐支来生」让${monthStem}的力量更扎实，不是虚浮在天干上的。`}`,
+      });
+    }
+  }
+
+  // ── 3. 日主坐支关系 ──
+  const dayStem = stems[2];
+  const dayBranch = branches[2];
+  const dayMainQi = p.day.hiddenStems[0];
+  if (dayMainQi) {
+    const rel = getTenGod(dayStem, dayMainQi);
+    if (rel === '七杀') {
+      features.push({
+        score: 55,
+        text: `${ctx.dm}坐${dayBranch}——日支本气为七杀，你内心深处有一个严厉的自我审判者。对自己要求很高，别人看到的你已经不错了，你自己觉得不够。`,
+      });
+    }
+    if (rel === '正印' || rel === '偏印') {
+      features.push({
+        score: 50,
+        text: `${ctx.dm}坐${dayBranch}印星——日主本身被保护得很好。${dayBranch}火贴身相生，让你有一种天然的安逸感。这既是好事（你不容易焦虑），也是限制（你缺少那种「不拼不行」的紧迫感）。`,
+      });
+    }
+    if (rel === '正财' || rel === '偏财') {
+      features.push({
+        score: 50,
+        text: `${ctx.dm}坐${dayBranch}财星——你对价值和回报有天生的敏感。钱和资源对你来说不是身外之物，是你安全感的来源之一。`,
+      });
+    }
+  }
+
+  // ── 4. 五行缺失 ──
+  if (zero.length > 0) {
+    const parts = zero.map((el) => `${el}（${EL_ABILITY[el]}）`);
+    const missingTexts: Record<string, string> = {
+      '金': '金代表纪律和执行——你不是懒，是把土的能量转化成金的那种机制没建立起来。能熬大夜赶一个感兴趣的项目，但很难每天固定时间做同一件事',
+      '水': '水代表情绪调节和变通——你是那种「看起来没事，其实一直在内耗」的人。压力来了硬扛，不消化',
+      '木': '木代表灵活性和成长——你可能在某些方面过于固执，缺少变通，这不是缺点，但会让你在一些路口多绕几圈',
+      '火': '火代表表达和感染力——你可能做了很多事但不善于展示自己。不是没有才华，是才华没有被别人看见的渠道',
+      '土': '土代表稳定和承载力——你或许缺一点脚踏实地的耐心。想法跑得比行动快，但不总能落地',
+    };
+    let score = 60;
+    // 金水双缺 → 重要
+    if (zero.includes('金') && zero.includes('水')) score = 80;
+    const desc = zero.map((el) => missingTexts[el] || '').filter(Boolean).join('。');
+    features.push({
+      score,
+      text: `全局缺${parts.join('、')}。${desc}。`,
+    });
+  }
+
+  // ── 5. 五行过旺 ──
+  for (const el of ['金', '木', '水', '火', '土'] as ElementType[]) {
+    if (bazi.elementCount[el] >= 4 && el === ctx.dayEl) {
+      features.push({
+        score: 50,
+        text: `${el}气在命局中占了${bazi.elementCount[el]}席——根基深厚，但也意味着你过于依赖${el}所代表的${EL_ABILITY[el].split('、')[0]}。凡事靠自己，不习惯开口求助。`,
+      });
+    }
+  }
+
+  // ── 6. 流通断崖 ──
+  if (lt.blockage && lt.tongGuan && lt.drop >= 4) {
+    const elAct = EL_ABILITY[lt.tongGuan]?.split('、')[0] || lt.tongGuan;
+    features.push({
+      score: 70,
+      text: `五行流通在${lt.blockage}→${lt.tongGuan}出现断崖，落差${lt.drop}。你的${lt.blockage}能量积累极多，但转化不成${lt.tongGuan}所代表的产出——${elAct}是你命局最缺的一环。问题不是不够努力，是努力的方向被卡住了。`,
+    });
+  }
+
+  // ── 7. 火炎土燥 ──
+  const ec = bazi.elementCount;
+  if (ec['火'] >= 2 && ec['土'] >= 3 && ec['水'] === 0) {
+    features.push({
+      score: 65,
+      text: `火炎土燥——你心里常年像烧着一锅快干的水，越搅越焦。${ctx.isStrong ? '身强让你扛得住，但扛得住不等于消化得了。' : ''}你没有情绪冷却机制，压力堆积如山，表面上还跟没事人一样。`,
+    });
+  }
+
+  // ── 8. 伤官佩印 / 官杀生印 等十神制衡组合 ──
+  const patternCat = pattern.category;
+  const monthBranchQi = p.month.hiddenStems[0];
+  const monthQiTG = monthBranchQi ? getTenGod(bazi.dayMaster, monthBranchQi) : '';
+  // 伤官佩印：伤官格 + 印星透干
+  if ((patternCat === '伤官格' || monthQiTG === '伤官') && (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印' || ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印')) {
+    const yinPos: string[] = [];
+    if (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印') yinPos.push('年');
+    if (ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印') yinPos.push('时');
+    const yinDesc = yinPos.join('、');
+    features.push({
+      score: 80,
+      text: `伤官佩印——月令伤官是你的才华和表达欲，${yinDesc ? yinDesc + '的印星帮你刹车' : '印星帮你刹车'}。你知道什么时候该说，什么时候该停。这点比大多数伤官格的人都强——不是被规则管住，是被智慧管住。`,
+    });
+  }
+  // 官杀生印：官杀透干 + 印格
+  if ((patternCat === '印格' || pattern.displayName.includes('印')) && (ctx.tenGods[0] === '正官' || ctx.tenGods[0] === '七杀' || ctx.tenGods[1] === '正官' || ctx.tenGods[1] === '七杀' || ctx.tenGods[3] === '正官' || ctx.tenGods[3] === '七杀')) {
+    features.push({
+      score: 65,
+      text: `官杀生印——月令印星是你的根基，${ctx.tenGods[1] === '正官' || ctx.tenGods[1] === '七杀' ? '月干' : '天干'}透出的官杀是来「助攻」的。压力不会压垮你，反而会转化成智慧和沉淀。这是典型的「越挫越稳」体质。`,
+    });
+  }
+
+  // ── 9. 天干相生（偏财生杀/杀生印 等关键生扶链）──
+  const stemElements = stems.map((s) => {
+    const elMap: Record<string, string> = { '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水' };
+    return elMap[s] || '';
+  });
+  const generating: Record<string, string> = { '水':'木', '木':'火', '火':'土', '土':'金', '金':'水' };
+  for (const [i, j, la, lb] of stemPairs) {
+    if (generating[stemElements[i]] === stemElements[j] && i !== j) {
+      const tgI = ctx.tenGods[i];
+      const tgJ = ctx.tenGods[j];
+      // 偏财生七杀 或 杀生印 — 高分
+      const isKeySheng = (tgI === '偏财' && tgJ === '七杀') || (tgI === '七杀' && tgJ === '偏印') || (tgI === '正官' && tgJ === '正印');
+      if (isKeySheng && i !== 2 && j !== 2) {
+        features.push({
+          score: 70,
+          text: `${la}干${stems[i]}（${tgI}）生${lb}干${stems[j]}（${tgJ}）——${tgI === '偏财' && tgJ === '七杀' ? '偏财生七杀：你对机会的嗅觉天生敏锐，而这种敏锐会直接转化为冲劲。钱和资源对你来说不是目的——是引擎。' : tgI === '七杀' && tgJ === '偏印' ? '七杀生偏印：压力在你这里不会白费——每一次压榨都会转化成独特的智慧和洞察。别人被压力压垮，你被压力喂大。' : '这种天干之间的生扶让你的格局更稳——不是单打独斗，而是有来有往。'}`,
+        });
+      }
+    }
+  }
+
+  // ── 10. 天干双透 ──
+  const tgCount: Record<string, number> = {};
+  for (let i = 0; i < 4; i++) {
+    if (i === 2) continue; // skip day master
+    const tg = ctx.tenGods[i];
+    tgCount[tg] = (tgCount[tg] || 0) + 1;
+  }
+  for (const [tg, count] of Object.entries(tgCount)) {
+    if (count >= 2) {
+      // Find which positions
+      const positions: string[] = [];
+      const posLabels = ['年', '月', '日', '时'];
+      for (let i = 0; i < 4; i++) {
+        if (i === 2) continue;
+        if (ctx.tenGods[i] === tg) positions.push(posLabels[i]);
+      }
+      features.push({
+        score: 55,
+        text: `${tg}双透——${positions.join('、')}两头都有。${tg === '偏印' ? '像左右两个护卫，替你把局势兜住了。你不缺智慧，甚至有时候想得比做得快太多。' : tg === '正印' ? '你的学习能力和贵人运天然比别人多一倍。但印星过旺也会让你安于被保护的状态。' : tg === '七杀' ? '压力来自四面八方——但两只老虎如果方向一致，反而比一只更容易驾驭。' : tg === '正官' ? '规矩和责任感在你身上加倍——你不是不想放松，是不知道该对谁放松。' : `你身上${tg}的特质比一般人更明显——这是双倍的礼物，也可能是双倍的负担。`}`,
+      });
+    }
+  }
+
+  // ── 11. 格局成/破/不成 ──
+  if (outcome.outcome === '成格') {
+    features.push({
+      score: 40,
+      text: `格局「${outcome.outcome}」——命局的顶层设计完整，${pattern.displayName}的底子扎实。`,
+    });
+  } else if (outcome.outcome === '破格') {
+    const reason = outcome.reason.split(';')[0] || '';
+    features.push({
+      score: 75,
+      text: `格局「破格」——${reason ? `原因是${reason}。` : ''}破碎不是终点。很多人看到破格两个字觉得命不好，但恰恰相反——破格的人经历了更多摔打，而摔打本身就是锻造。破而后立，重建的往往比原来的更坚固。`,
+    });
+  } else if (outcome.outcome === '不成格') {
+    features.push({
+      score: 65,
+      text: `格局「不成格」——${pattern.displayName}的底子是有的，只是火候还差一点。大运流转，属于你的时机还在后头。竹子前四年只长三厘米，第五年冲天而起。你不是不行，是时候未到。`,
+    });
+  }
+
+  // ── 12. 地支特殊 — 重复地支 ──
+  const brCount: Record<string, number> = {};
+  for (const br of branches) brCount[br] = (brCount[br] || 0) + 1;
+  for (const [br, count] of Object.entries(brCount)) {
+    if (count >= 2) {
+      const el = p.year.branchElement || '';
+      features.push({
+        score: 45,
+        text: `地支双${br}——${el ? `${el}气在你命局中被放大了一倍。` : ''}${br === '午' ? '午火双现，热情和焦躁同时翻倍。你内心比外表看起来热烈得多。' : br === '子' ? '子水双现，智慧和敏感同时放大。你想得比别人深，也容易想得比别人多。' : ''}`,
+      });
+    }
+  }
+
+  // ── 13. 身强/身弱 ──
+  if (ctx.isStrong) {
+    features.push({
+      score: 35,
+      text: `${ctx.dm}身强，${ctx.strength.deLing ? '得令' : ''}${ctx.strength.deDi ? '得地' : ''}${ctx.strength.deShi === '得势' ? '得势' : ''}——你的能量在线，${ctx.dm === '戊土' || ctx.dm === '己土' ? '像一座山，扛得住事。' : ctx.dayEl === '火' ? '像一团火，热情和感染力是你的武器。' : ctx.dayEl === '金' ? '像一把刀，干脆利落不拖泥带水。' : ctx.dayEl === '水' ? '像一条江，表面平静底下暗流涌动。' : '像一棵树，有自己生长的方向和节奏。'}`,
+    });
   } else {
-    lines.push('五行流通顺畅，能量转换没有明显卡点。这是一个好的基本面。');
+    features.push({
+      score: 35,
+      text: `${ctx.dm}${ctx.strength.level === '中和' ? '中和平衡' : '身弱'}——你不是硬扛型的人。${ctx.strength.level === '身弱' ? '但你比身强的人更懂借力——知道自己的局限在哪里，反而能用巧劲化解很多问题。' : '不多不少，刚好够用。你有自己的节奏，不疾不徐。'}`,
+    });
   }
 
-  lines.push(`${ctx.pattern.displayName}不是终点——它是你理解自己的起点。顺势而行，自有出路。`);
-
-  return lines.join('\n\n');
+  return features;
 }
 
 // ── 主入口 ──
@@ -300,24 +354,39 @@ export function generateNarrative(
   pattern: ExtractResult,
   outcome: AssessResult,
   strength: StrengthResult,
-  liuTong: LiuTongResult,
+  lt: LiuTongResult,
 ): string {
-  const ctx = buildContext(bazi, pattern, outcome, strength, liuTong);
+  const ctx = buildCtx(bazi, pattern, outcome, strength, lt);
+  const features = scanFeatures(ctx);
 
-  // 找匹配度最高的原型
-  let best: Archetype | null = null;
-  let bestScore = 0;
-  for (const archetype of ARCHETYPES) {
-    const score = archetype.match(ctx);
-    if (score > bestScore) {
-      bestScore = score;
-      best = archetype;
-    }
+  // 按分数降序，取 top 4
+  const top = features.sort((a, b) => b.score - a.score).slice(0, 4);
+
+  if (top.length === 0) {
+    return `${ctx.dm}日主，${pattern.displayName}，格局${outcome.outcome}。${ctx.isStrong ? '身强有力' : '中和平衡'}。顺势而行，自有出路。`;
   }
 
-  if (best && bestScore >= 60) {
-    return best.narrative(ctx);
+  // 组合：top[0]详细叙事 + top[1]转折 + top[2]补充 + top[3]收尾
+  const parts: string[] = [];
+
+  // 第一段 — 核心特征（完整展开）
+  parts.push(top[0].text);
+
+  // 第二段 — 如果有第二个特征，作为转折或深化
+  if (top.length >= 2) {
+    // 去掉和第一段重复的信息，做承接
+    parts.push(top[1].text);
   }
 
-  return fallbackNarrative(ctx);
+  // 第三段 — 补充特征（如果有≥3）
+  if (top.length >= 3) {
+    parts.push(top[2].text);
+  }
+
+  // 第四段 — 收尾（如果有第4个特征，用它收尾；否则用第3个）
+  if (top.length >= 4) {
+    parts.push(top[3].text);
+  }
+
+  return parts.join('\n\n');
 }
