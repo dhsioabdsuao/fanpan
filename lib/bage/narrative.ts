@@ -69,7 +69,7 @@ interface Ctx {
   tenGods: string[];
 }
 
-interface Feature { score: number; text: string; }
+interface Feature { score: number; text: string; tags?: string[]; }
 
 function buildCtx(
   bazi: BaziResult, pattern: ExtractResult, outcome: AssessResult,
@@ -494,14 +494,68 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
 
-  // ── 15. 缺单一元素的深度补丁 ──
-  if (zero.length === 1) {
-    const missingEl = zero[0];
-    const parent = Object.entries(GENERATING).find(([, child]) => child === missingEl)?.[0];
-    if (parent && ec[parent as ElementType] >= 2 && lt.blockage && lt.tongGuan && lt.blockage === parent) {
-      // 这个已经在五行缺失中处理了
-    }
+  // ── 16. 日主性格画像（必有）──
+  const dmPersonality: Record<string, string> = {
+    '甲木': '甲木是参天大树——你不是那种可以低调的人。天生就有一种向上的力量，目标感强、不习惯低头。甲木的人走到哪里都有自己的节奏和方向，别人很难左右你。',
+    '乙木': '乙木是藤萝——你不是硬碰硬的类型。柔韧、善变、擅长在夹缝中找到出路。表面看起来随和好相处，骨子里有一股不认输的韧劲。乙木从来不是最强的那一个，但往往是最久的那一个。',
+    '丙火': '丙火是太阳——你的热情和感染力是天生的。走到哪里都能照亮一片，别人会自然而然被你吸引。但太阳也有落山的时候——你的能量是外放型的，独处太久会枯萎。',
+    '丁火': '丁火是灯烛之火——不是熊熊烈火，是持续燃烧的那一盏。你不靠爆发力取胜，靠的是长久的恒温。丁火的人不显眼，但熄不掉——这才是你最可怕的地方。',
+    '戊土': '戊土是城墙之土——厚重、可靠、能扛。你不是那种轻飘飘的人，任何事到了你这里都会变得扎实。戊土的问题是太稳了——稳到有时候缺少「动起来」的紧迫感。',
+    '己土': '己土是田园之土——你不是靠体量取胜，靠的是涵养和吸收力。己土的人天生懂得如何滋养别人，也善于从环境里汲取养分。比起戊土的厚重，你更灵活、更善于变通。',
+    '庚金': '庚金是刀剑——干脆利落，不拖泥带水。你有天然的行动力和决断力，不喜欢拐弯抹角。庚金的问题是太硬了——有时候砍得太快，没给人留余地，也没给自己留余地。',
+    '辛金': '辛金是珠宝之金——精致、敏感、有天然的审美和分寸感。你不像庚金那样大刀阔斧，但你更懂细节和品质。辛金的人对自己和身边的人都有不低的标准。',
+    '壬水': '壬水是江河——水性流动、善变、适应力极强。你不是那种待在原地等答案的人，你会自己去找。壬水的人走到哪里都能融入，但也容易流得太快、停不下来。',
+    '癸水': '癸水是雨露——细腻、渗透力强、润物无声。你不像壬水那样奔腾，但你更能深入到细节里去。癸水的人敏感、直觉好，是那种「不需要说太多就懂了」的类型。',
+  };
+  const dmKey = (['甲','乙'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '甲' ? '甲木' : '乙木') :
+    (['丙','丁'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '丙' ? '丙火' : '丁火') :
+    (['戊','己'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '戊' ? '戊土' : '己土') :
+    (['庚','辛'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '庚' ? '庚金' : '辛金') :
+    (bazi.dayMaster === '壬' ? '壬水' : '癸水');
+  features.push({
+    score: 85,
+    text: dmPersonality[dmKey] || `${ctx.dm}是你的底色。${ctx.isStrong ? '身强让你能扛事、有底气' : '身不强让你更懂得借力和迂回'}——这是你的出厂设置，改不了，也不需要改。`,
+    tags: ['identity'],
+  });
+
+  // ── 17. 职业方向（必有，放最后）──
+  const careerLines: string[] = [];
+  const patName = pattern.displayName;
+
+  // 格局→方向
+  if (patternCat === '伤官格' || patternCat === '食神格') {
+    if (hasCaiTou) careerLines.push('伤官生财天然适合创意+商业的交叉领域——内容创作、品牌策划、产品设计，任何能把才华直接变成价值的方向');
+    else if (hasYinTou) careerLines.push('伤官佩印适合需要创造力+深度思考的领域——写作、研究、教育创新，需要把想法用智慧包装后输出');
+    else careerLines.push('才华是你的武器，但需要找到一个能承接你创造力的领域——设计、内容、策划类工作更能让你发挥');
+  } else if (patternCat === '杀格' || patName.includes('七杀')) {
+    if (outcome.outcome === '破格') careerLines.push('七杀+破格意味着不适合单打独斗，需要能替你化杀的印星——导师、制度、学习体系');
+    careerLines.push('适合有挑战但不过度的方向——中层管理、专业技术、风控分析，需要压力但不用承担全部');
+  } else if (patternCat === '印格' || patName.includes('印')) {
+    careerLines.push('偏印格适合需要独特视角的领域——文化研究、教育创新、深度内容，需要消化复杂信息的工作');
+  } else if (patName.includes('建禄') || patName.includes('阳刃')) {
+    careerLines.push('建禄/阳刃格适合自己主导——不管什么领域都需要掌控感。管理、创业、独立执业的满足感远高于被管理');
   }
+  if (patName.includes('正官')) careerLines.push('正官格天然适合体制内或规则明确的组织——不是束缚你，是你需要那个框架才能发挥');
+
+  // 缺什么→避开什么
+  if (zero.includes('金')) careerLines.push('缺金意味着不适合需要长期重复枯燥打磨的纯技术路线——你不是干不了，是干不长久');
+  if (zero.includes('水')) careerLines.push('缺水需要刻意建立「停顿」习惯——适合有固定节奏的工作，而非完全自由散漫的模式');
+  if (zero.includes('木')) careerLines.push('缺木需要刻意经营人脉和学习渠道——不适合完全单打独斗，需要一个能给你背书的环境');
+  if (zero.includes('火')) careerLines.push('缺火需要找能替你做展示的人——你不适合台前表演型工作，幕后深耕更适合你');
+
+  // 五行方向
+  if (lt.blockage && lt.tongGuan) {
+    const dirMap: Record<string, string> = {
+      '金': '技术、专业技能', '水': '学习、沟通', '木': '社交、人脉', '火': '展示、分享', '土': '稳固、储蓄',
+    };
+    careerLines.push(`从五行流通看，补${lt.tongGuan}是突破口——${dirMap[lt.tongGuan] || lt.tongGuan}方向值得投入`);
+  }
+
+  features.push({
+    score: 75,
+    text: `职业方向：${careerLines.join('。')}。`,
+    tags: ['career'],
+  });
 
   return features;
 }
@@ -514,13 +568,27 @@ export function generateNarrative(
 ): string {
   const ctx = buildCtx(bazi, pattern, outcome, strength, lt);
   const features = scanFeatures(ctx);
-  const top = features.sort((a, b) => b.score - a.score).slice(0, 4);
-  if (top.length === 0) {
+
+  // 分离固定位置的特征
+  const career = features.filter((f) => f.tags?.includes('career'));
+  const identity = features.filter((f) => f.tags?.includes('identity'));
+  // 其余特征按分数降序
+  const rest = features
+    .filter((f) => !f.tags?.includes('career') && !f.tags?.includes('identity'))
+    .sort((a, b) => b.score - a.score);
+
+  // 组合：identity(日主性格) + top3核心特征 + career(职业)
+  const picked: Feature[] = [];
+  // 1. 日主性格（必有）
+  if (identity.length > 0) picked.push(identity[0]);
+  // 2. 取分数最高的 3 个非固定特征
+  picked.push(...rest.slice(0, 3));
+  // 3. 职业方向（必有，放最后）
+  if (career.length > 0) picked.push(career[0]);
+
+  if (picked.length === 0) {
     return `${ctx.dm}日主，${pattern.displayName}，格局${outcome.outcome}。顺势而行，自有出路。`;
   }
-  const parts = [top[0].text];
-  if (top.length >= 2) parts.push(top[1].text);
-  if (top.length >= 3) parts.push(top[2].text);
-  if (top.length >= 4) parts.push(top[3].text);
-  return parts.join('\n\n');
+
+  return picked.map((f) => f.text).join('\n\n');
 }
