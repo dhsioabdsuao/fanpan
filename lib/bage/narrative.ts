@@ -218,18 +218,17 @@ function scanFeatures(ctx: Ctx): Feature[] {
       const isKey = monthTG === '七杀' || monthTG === '伤官' || monthTG === '正官';
       features.push({
         score: isKey ? 55 : 45,
-        tags: ['info'],
+        tags: isKey ? ['main'] : ['info'],
         text: `月干${monthStem}（${monthTG}）坐${monthBranch}同气——天干和地支同一五行，${monthTG}不是虚浮的，有根有底。${isKey ? `这本该是好事——有根就有力量。但同气也意味着${monthTG}的能量被坐支分走了一部分：你对外展现的${monthTG}特质，背后有一个和你抢资源的力量在并行。你并不孤独——但也不完全自由。` : `月干有根是一件好事——你的${monthTG}特质不是演出来的，是骨子里的。`}`,
       });
     }
     // 坐财被耗
     if (rel === '正财' || rel === '偏财') {
-      const isShangGuan = monthTG === '伤官';
-      const isQiSha = monthTG === '七杀';
+      const isKey = monthTG === '伤官' || monthTG === '七杀';
       features.push({
-        score: (isShangGuan || isQiSha) ? 60 : 45,
-        tags: ['info'],
-        text: `月干${monthStem}（${monthTG}）坐${monthBranch}财星——天干克制地支之财，${isShangGuan ? '伤官坐财，才华天然能变现。你的表达欲和创造力下面垫着对价值的判断——不是瞎说，是有商业嗅觉的表达。' : isQiSha ? '七杀坐财，你的冲劲和魄力下面垫着对资源的掌控欲。不是蛮干——每一次冲锋背后都有一笔账在算。' : `${monthTG}被坐支财星消耗——对外展现的样子是需要你用内在能量去喂养的。你看起来的状态，背后一直有一个持续的输出在支撑。`}`,
+        score: isKey ? 65 : 45,
+        tags: isKey ? ['main'] : ['info'],
+        text: `月干${monthStem}（${monthTG}）坐${monthBranch}财星——天干克制地支之财，${isKey && monthTG === '伤官' ? '伤官坐财，才华天然能变现。你的表达欲和创造力下面垫着对价值的判断——不是瞎说，是有商业嗅觉的表达。' : isKey && monthTG === '七杀' ? '七杀坐财，你的冲劲和魄力下面垫着对资源的掌控欲。不是蛮干——每一次冲锋背后都有一笔账在算。' : `${monthTG}被坐支财星消耗——对外展现的样子是需要你用内在能量去喂养的。你看起来的状态，背后一直有一个持续的输出在支撑。`}`,
       });
     }
   }
@@ -809,16 +808,16 @@ export function generateNarrative(
   const picked: Feature[] = [];
   // 1. 日主性格（必有）
   if (identity.length > 0) picked.push(identity[0]);
-  // 2. 主线故事（选1个最强的）
+  // 2. 主线故事（选2个最强的，主故事往往是复合的）
   if (main.length > 0) picked.push(main[0]);
+  if (main.length > 1) picked.push(main[1]);
   // 3. 深层性格（选1个最强的）
   if (deep.length > 0) picked.push(deep[0]);
   // 4. 结构性缺口（选1个最强的）
   if (gap.length > 0) picked.push(gap[0]);
-  // 5. 补充信息（如果角色不够5个，用 info 补位，最多补3个）
-  if (picked.length < 5 && info.length > 0) picked.push(info[0]);
-  if (picked.length < 5 && info.length > 1) picked.push(info[1]);
-  if (picked.length < 5 && info.length > 2) picked.push(info[2]);
+  // 5. 补充信息（如果角色不够7个，用 info 补位，最多补2个）
+  if (picked.length < 7 && info.length > 0) picked.push(info[0]);
+  if (picked.length < 7 && info.length > 1) picked.push(info[1]);
   // 6. 职业方向（必有，放最后）
   if (career.length > 0) picked.push(career[0]);
 
