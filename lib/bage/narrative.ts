@@ -269,13 +269,24 @@ function scanFeatures(ctx: Ctx): Feature[] {
         text: `${ctx.dm}坐羊刃——日主自坐刃地，内在有一股不服输的狠劲。你比看起来更刚烈，只是平常不显。`,
         tags: ['personality', 'deep'],
       });
+    } else {
+      // 兜底：劫财、比肩等不在优先级的日支关系
+      const branchQiEl = STEM_ELEMENT[dayMainQi] || '';
+      const dmEl = ctx.dayEl;
+      if (branchQiEl === dmEl) {
+        features.push({
+          score: 48,
+          text: `${ctx.dm}坐${dayBranch}——日支与日主同气，内在有一股自给自足的底气。你不需要太多外界的认可来确认自己的价值——自己知道自己几斤几两。`,
+          tags: ['personality', 'deep'],
+        });
+      }
     }
   }
 
   // ── 4. 五行缺失（单缺 vs 多缺）──
   if (zero.length > 0) {
     const missingTexts: Record<string, string> = {
-      '金': '金代表纪律和执行——你不是懒，是把能量转化成金的那种机制没建立起来。能熬大夜赶感兴趣的事，但很难每天固定时间做同一件事。给你结构感的人或系统，比给你deadline的人更有用',
+      '金': `金代表纪律和执行——你不是懒，是把能量转化成金的那种机制没建立起来。能熬大夜赶感兴趣的事，但很难每天固定时间做同一件事。${variant(variantSeed, '给你结构感的人或系统，比给你deadline的人更有用。', '不是更努力就能解决的——你需要的是一个能把想法变成行动的外部框架。', '执行力不是逼出来的，是被系统托起来的。找到一个能替你把想法落地的人或流程。')}`,
       '水': '水代表情绪调节和变通——你是那种「看起来没事，其实一直在内耗」的人。压力来了硬扛，不消化。你需要的不是更强大的抗压能力——你需要的是一个能让你卸下来的地方',
       '木': '木代表灵活性和成长——你可能在某些方面过于固执，缺少变通。这不是缺点，但会让你在一些路口多绕几圈',
       '火': '火代表表达和感染力——你可能做了很多事但不善于展示自己。不是没有才华，是才华没有被别人看见的渠道',
@@ -285,7 +296,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     if (zero.length >= 2) score = 80;
     const parts = zero.map((el) => `${el}（${EL_ABILITY[el]}）`);
     const desc = zero.map((el) => missingTexts[el] || '').filter(Boolean).join('。');
-    let text = `全局缺${parts.join('、')}。${desc}。`;
+    let text = `全局缺${parts.join('、')}。${desc}`;
     // 单缺 + 有其他五行旺 → 强化解释
     if (zero.length === 1) {
       const missingEl = zero[0];
