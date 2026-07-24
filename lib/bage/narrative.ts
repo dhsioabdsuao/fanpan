@@ -177,7 +177,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
 
-  // ── 2. 月干坐支关系（被泄/被克）──
+  // ── 2. 月干坐支关系（被泄/被克/来生/同气/坐财）──
   const monthStem = stems[1];
   const monthBranch = branches[1];
   const monthMainQi = p.month.hiddenStems[0];
@@ -211,6 +211,76 @@ function scanFeatures(ctx: Ctx): Feature[] {
         score: 50,
         tags: ['info'],
         text: `月干${monthStem}坐${monthBranch}——${monthBranch}支生扶${monthStem}。这种「坐支来生」让${monthStem}的力量更扎实，不是虚浮在天干上的。`,
+      });
+    }
+    // 坐比劫（同气）
+    if (rel === '比肩' || rel === '劫财') {
+      const isKey = monthTG === '七杀' || monthTG === '伤官' || monthTG === '正官';
+      features.push({
+        score: isKey ? 55 : 45,
+        tags: ['info'],
+        text: `月干${monthStem}（${monthTG}）坐${monthBranch}同气——天干和地支同一五行，${monthTG}不是虚浮的，有根有底。${isKey ? `这本该是好事——有根就有力量。但同气也意味着${monthTG}的能量被坐支分走了一部分：你对外展现的${monthTG}特质，背后有一个和你抢资源的力量在并行。你并不孤独——但也不完全自由。` : `月干有根是一件好事——你的${monthTG}特质不是演出来的，是骨子里的。`}`,
+      });
+    }
+    // 坐财被耗
+    if (rel === '正财' || rel === '偏财') {
+      const isShangGuan = monthTG === '伤官';
+      const isQiSha = monthTG === '七杀';
+      features.push({
+        score: (isShangGuan || isQiSha) ? 60 : 45,
+        tags: ['info'],
+        text: `月干${monthStem}（${monthTG}）坐${monthBranch}财星——天干克制地支之财，${isShangGuan ? '伤官坐财，才华天然能变现。你的表达欲和创造力下面垫着对价值的判断——不是瞎说，是有商业嗅觉的表达。' : isQiSha ? '七杀坐财，你的冲劲和魄力下面垫着对资源的掌控欲。不是蛮干——每一次冲锋背后都有一笔账在算。' : `${monthTG}被坐支财星消耗——对外展现的样子是需要你用内在能量去喂养的。你看起来的状态，背后一直有一个持续的输出在支撑。`}`,
+      });
+    }
+  }
+
+  // ── 2.5 年干/时干坐支（精简版，只抓最显著的坐支关系）──
+  const auxStems = [
+    { i: 0, label: '年', stem: stems[0], branch: branches[0], tg: ctx.tenGods[0], pillar: p.year },
+    { i: 3, label: '时', stem: stems[3], branch: branches[3], tg: ctx.tenGods[3], pillar: p.hour },
+  ];
+  for (const aux of auxStems) {
+    const auxQi = aux.pillar.hiddenStems[0];
+    if (!auxQi) continue;
+    const auxRel = getTenGod(aux.stem, auxQi);
+    // 被克（支克干）— 年干被克=出身压制，时干被克=晚年受限
+    if (auxRel === '正官' || auxRel === '七杀') {
+      features.push({
+        score: 45,
+        tags: ['info'],
+        text: aux.label === '年'
+          ? `${aux.label}干${aux.stem}（${aux.tg}）坐${aux.branch}被克——你最早展现的${aux.tg}特质，在根部就被环境压制了。不是你不想表达，是从小的环境不鼓励你这样。`
+          : `${aux.label}干${aux.stem}（${aux.tg}）坐${aux.branch}被克——你的行动力和产出在根部受到约束。不是能力不够，是释放的出口不够畅通。`,
+      });
+    }
+    // 来生（支生干）— 年干得生=家庭滋养，时干得生=晚年有靠
+    if (auxRel === '正印' || auxRel === '偏印') {
+      features.push({
+        score: 40,
+        tags: ['info'],
+        text: aux.label === '年'
+          ? `${aux.label}干${aux.stem}（${aux.tg}）坐${aux.branch}得生——你的${aux.tg}特质从根部就有滋养。早期环境给了你展现自己的底气。`
+          : `${aux.label}干${aux.stem}（${aux.tg}）坐${aux.branch}得生——你晚年的${aux.tg}特质被坐支托着，不是越走越弱，是越走越稳。`,
+      });
+    }
+    // 同气（干支同五行）
+    if (auxRel === '比肩' || auxRel === '劫财') {
+      features.push({
+        score: 40,
+        tags: ['info'],
+        text: aux.label === '年'
+          ? `${aux.label}干${aux.stem}坐${aux.branch}同气——你身上${aux.tg}的特质是带着根来的，不是后天学的，是从小的环境里长出来的。`
+          : `${aux.label}干${aux.stem}坐${aux.branch}同气——你的${aux.tg}特质一以贯之。早年什么样，晚年还是什么样——不容易被时间改变。`,
+      });
+    }
+    // 坐财（干克支）
+    if (auxRel === '正财' || auxRel === '偏财') {
+      features.push({
+        score: 40,
+        tags: ['info'],
+        text: aux.label === '年'
+          ? `${aux.label}干${aux.stem}坐着财星——你从小对价值和资源就敏感。这种直觉是天生的，不是后天培训出来的。`
+          : `${aux.label}干${aux.stem}坐着财星——你的行动天然带着目标感。做事不会只为了爽——每件事背后都有一个价值判断。`,
       });
     }
   }
