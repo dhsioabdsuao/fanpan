@@ -215,7 +215,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     }
   }
 
-  // ── 3. 日支深度画像（if-else 链，只取一个，优先级：杀>官>印>财>禄>刃）──
+  // ── 3. 日支深度画像（if-else 链，只取一个，优先级：杀>官>印>财>伤>食>禄>刃）──
   const dayMainQi = p.day.hiddenStems[0];
   const luMap: Record<string, string> = { '甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午','庚':'申','辛':'酉','壬':'亥','癸':'子' };
   const renMap: Record<string, string> = { '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子' };
@@ -249,6 +249,30 @@ function scanFeatures(ctx: Ctx): Feature[] {
       features.push({
         score: 55,
         text: `${ctx.dm}坐${dayBranch}财星——你对价值和回报有天生的敏感。财富对你来说不是身外之物，是安全感的一部分。你对价值的判断在骨子里，不是后天学会的。`,
+        tags: ['personality', 'deep'],
+      });
+    } else if (rel === '伤官') {
+      const isGengZi = dayStem === '庚' && dayBranch === '子';
+      const isXinHai = dayStem === '辛' && dayBranch === '亥';
+      const isShuiShang = ['庚','辛'].includes(dayStem) && ['子','亥'].includes(dayBranch);
+      features.push({
+        score: 52,
+        text: isGengZi
+          ? `庚子日柱——金生水，伤官吐秀。庚金刀剑坐子水伤官，刀入水中，锋芒不减但多了一层智慧的包浆。你不是没有脾气——是脑子比嘴快，想清楚了才出手。`
+          : isXinHai
+          ? `辛亥日柱——辛金珠宝坐亥水伤官，金水相生。表面冷、内心深，看事情比别人多两层。你不轻易开口，开口往往一针见血。`
+          : isShuiShang
+          ? `${ctx.dm}坐${dayBranch}伤官——金水伤官，聪明在骨子里。你的才华不是学来的，是天生的洞察力。但也因为想得太快、太深，容易跟周围人产生距离感。`
+          : `${ctx.dm}坐${dayBranch}伤官——骨子里有一股不服管教的才气。你最深的那个自己被伤官主宰——表面可以配合规则，内心在不停地说「凭什么」。${variant(variantSeed, '这种不服从不是叛逆，是你创造力的原始燃料。管好它，它会是你最大的武器。', '你不是不愿意被管——是需要一个让你服气的理由。说不服你，谁说都没用。', '才华在骨子里的人，注定不会走所有人都走的路。那不是问题——那是方向。')}`,
+        tags: ['personality', 'deep'],
+      });
+    } else if (rel === '食神') {
+      const isGuiMao = dayStem === '癸' && dayBranch === '卯';
+      features.push({
+        score: 50,
+        text: isGuiMao
+          ? `癸卯日柱——癸水坐卯木食神，水木清华。灵气内敛，温和而有深度。你不是那种大声说话的人——但你开口的时候，别人会听。这是一种不张扬的存在感。`
+          : `${ctx.dm}坐${dayBranch}食神——日支食神是你的内在平和区。你不是没有野心，而是不会被野心烧到自己。心里有一个很舒服的角落——不管外面多乱，那块地方一直很安静。${variant(variantSeed, '这种平和不是软弱——是在任何环境里都能找到自己的节奏。', '食神在日支的人，擅长把日子过出滋味。不是大起大落的精彩，是细水长流的质地。', '你比大多数人更懂得怎么对自己好——这不是自私，是你天生的自愈力。')}`,
         tags: ['personality', 'deep'],
       });
     } else if (luMap[dayStem] === dayBranch) {
@@ -287,10 +311,10 @@ function scanFeatures(ctx: Ctx): Feature[] {
   if (zero.length > 0) {
     const missingTexts: Record<string, string> = {
       '金': `金代表纪律和执行——你不是懒，是把能量转化成金的那种机制没建立起来。能熬大夜赶感兴趣的事，但很难每天固定时间做同一件事。${variant(variantSeed, '给你结构感的人或系统，比给你deadline的人更有用。', '不是更努力就能解决的——你需要的是一个能把想法变成行动的外部框架。', '执行力不是逼出来的，是被系统托起来的。找到一个能替你把想法落地的人或流程。')}`,
-      '水': '水代表情绪调节和变通——你是那种「看起来没事，其实一直在内耗」的人。压力来了硬扛，不消化。你需要的不是更强大的抗压能力——你需要的是一个能让你卸下来的地方',
-      '木': '木代表灵活性和成长——你可能在某些方面过于固执，缺少变通。这不是缺点，但会让你在一些路口多绕几圈',
-      '火': '火代表表达和感染力——你可能做了很多事但不善于展示自己。不是没有才华，是才华没有被别人看见的渠道',
-      '土': '土代表稳定和承载力——你或许缺一点脚踏实地的耐心。想法跑得比行动快，但不总能落地',
+      '水': `水代表情绪调节和变通——你是那种「看起来没事，其实一直在内耗」的人。压力来了硬扛，不消化。你需要的不是更强大的抗压能力——你需要的是一个能让你卸下来的地方。${variant(variantSeed, '学会给自己留白——不是每件事都需要你硬扛到底。情绪是水，堵住了会变味。找到一个能让你倒出来的人或出口。', '你的抗压能力已经很强了——强到忘了怎么放松。卸下来不是弱，是你对自己的一种诚实。累了就说累了，不用假装没事。', '缺水的你像一台没有冷却系统的引擎——跑得快，但容易过热。给自己定一个「停下来」的时间，比定一个「跑更快」的目标重要得多。')}`,
+      '木': `木代表灵活性和成长——你可能在某些方面过于固执，缺少变通。这不是缺点，但会让你在一些路口多绕几圈。${variant(variantSeed, '试着在坚持和变通之间找一个平衡。不是每个路口都需要你亲自撞一次——有些人走过的路，值得信一次。', '多绕的几圈不是白走的——每一步都算数。但走完一圈之后要记得抬头看看，是不是有更短的那条路了。', '固执和坚定是同一枚硬币的两面——区别在于你是主动选择方向，还是被动防守位置。问自己一个问题：你在坚持的是目标，还是习惯。')}`,
+      '火': `火代表表达和感染力——你可能做了很多事但不善于展示自己。不是没有才华，是才华没有被别人看见的渠道。${variant(variantSeed, '好的东西不需要大声喊——但至少得让别人知道你在哪里。学会展示不是炫耀，是让你的才华被对的人看到，而不是等别人来发现。', '你做事的深度够了，差的是一束光。找到一个能把你的成果照亮的人或平台——不是锦上添花，是物归其位。', '不擅长表达不是问题——问题是因此错过了本该属于你的机会。不需要变成社交达人，只需要在关键时刻站出来说一声「这个是我做的」。')}`,
+      '土': `土代表稳定和承载力——你或许缺一点脚踏实地的耐心。想法跑得比行动快，但不总能落地。${variant(variantSeed, '找到一个能把你的想法接住的人或系统——不是不想落地，是缺了最后那一步的推力。热情来了跑得很快，但跑到一半就拐弯了。学会把一件事做透，比开十个头更有用。', '你缺的不是能力——是把能量聚焦到一个地方的纪律。选对一件事，先把它做穿。后面的路，做穿第一件之后再走。', '想法多是天赋，但落地是能力。给自己一个「先做完再判断」的习惯——有时候最好的想法在第六步，但你没有走完前五步。')}`,
     };
     let score = 60;
     if (zero.length >= 2) score = 80;
@@ -316,6 +340,15 @@ function scanFeatures(ctx: Ctx): Feature[] {
         tags: ['info'],
         text: `${el}气在命局中占了${ec[el]}席——根基深厚，但也意味着你过于依赖${el}所代表的${EL_ABILITY[el].split('、')[0]}。凡事靠自己，不习惯开口求助。`,
       });
+    } else if (ec[el] >= 4 && el !== ctx.dayEl) {
+      const elAb = EL_ABILITY[el]?.split('、')[0] || el;
+      const controllingEl = Object.entries(GENERATING).find(([, child]) => child === el)?.[0] || '';
+      const drainEl = GENERATING[el] || '';
+      features.push({
+        score: 55,
+        tags: ['info'],
+        text: `${el}气在命局中占了${ec[el]}席，但日主并非${el}——这股${el}的能量是你命局中的「外来势力」。${elAb}是你的环境里挥之不去的主旋律，但你不一定是它的主人。${controllingEl && drainEl ? `你本能地想用${drainEl}去泄它、或用${controllingEl}去克它——找到那个平衡点，${el}就从负担变成了资源。` : `学会和这股${el}气相处——它不是你的核心，但处理好了就是你的加分项。`}`,
+      });
     }
   }
 
@@ -324,34 +357,64 @@ function scanFeatures(ctx: Ctx): Feature[] {
     const elAct = EL_ABILITY[lt.tongGuan]?.split('、')[0] || lt.tongGuan;
     features.push({
       score: 70,
+      tags: ['info'],
       text: `五行流通在${lt.blockage}→${lt.tongGuan}出现断崖，落差${lt.drop}。你的${lt.blockage}能量积累极多，但转化不成${lt.tongGuan}所代表的产出——${elAct}是你命局最缺的一环。问题不是不够努力，是方向被卡住了。${variant(variantSeed, '找到能把你的想法执行出来的人或系统，比一个人死磕更有效。', '你的问题是出口不够，不是源头不够。把能量引导到对的渠道，比继续增加输入重要得多。', '一个人扛着所有事的结果，不是更强——是更累。找到那个能帮你把想法变成现实的人。')}`,
     });
   }
 
-  // ── 7. 火炎土燥/金寒水冷 ──
+  // ── 7. 火炎土燥/金寒水冷/水多木漂/木多火塞/土多金埋 ──
   if (ec['火'] >= 2 && ec['土'] >= 3 && ec['水'] === 0) {
     features.push({
       score: 65,
+      tags: ['info'],
       text: `火炎土燥——你心里常年像烧着一锅快干的水，越搅越焦。${ctx.isStrong ? '身强让你扛得住，但扛得住不等于消化得了。' : ''}你没有情绪冷却机制，压力堆积如山，表面还跟没事人一样。`,
     });
   }
   if (ec['金'] >= 2 && ec['水'] >= 3 && ec['火'] === 0) {
     features.push({
       score: 65,
+      tags: ['info'],
       text: `金寒水冷——你的理性远远强于感性，想法冷静、判断精准，但也容易陷入过度分析的漩涡。缺火意味着缺少热情和行动力——你知道该做什么，但迟迟不动。`,
     });
   }
+  if (ec['水'] >= 3 && ec['木'] >= 2 && (ec['土'] ?? 0) <= 1) {
+    features.push({
+      score: 60,
+      tags: ['info'],
+      text: `水多木漂——想法和灵感像水一样多，但木没有土来扎根。你不是没有方向，是方向太多——一个想法还没落地，下一个已经来了。缺的不是才华，是把才华固定下来的那个「锚」。你需要一个能帮你把想法钉到地上的人或结构。`,
+    });
+  }
+  if (ec['木'] >= 3 && ec['火'] >= 2) {
+    features.push({
+      score: 60,
+      tags: ['info'],
+      text: `木多火塞——木是燃料，火是火焰。但燃料太多反而把火闷住了——你不是没有热情，是热情被过多的念头裹住了。想做的事太多，反而哪一件都烧不旺。你需要的是减法——少想一个，多做一步。`,
+    });
+  }
+  if (ec['土'] >= 3 && ec['金'] >= 2) {
+    features.push({
+      score: 60,
+      tags: ['info'],
+      text: `土多金埋——土本该生金，但土太重反而把金埋住了。你的稳重和谨慎本来是优点，但过了头就变成了迟疑和保守。金被埋在土里——锋利是有的，就是没亮出来。你需要的是一个能把你从「再想想」里推出来的人或环境。`,
+    });
+  }
 
-  // ── 8. 伤官佩印 / 伤官生财 / 官杀生印 ──
+  // ── 8. 伤官佩印 / 伤官生财 / 食神生财 / 食神制杀 / 印绶化杀 / 官杀生印 ──
   const patternCat = pattern.category;
   const monthQi = p.month.hiddenStems[0];
   const monthQiTG = monthQi ? getTenGod(bazi.dayMaster, monthQi) : '';
   const hasYinTou = ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印' || ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印';
   const hasCaiTou = ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财' || ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财' || ctx.tenGods[3] === '正财' || ctx.tenGods[3] === '偏财';
-  const isShangShi = patternCat === '伤官格' || patternCat === '食神格' || monthQiTG === '伤官' || monthQiTG === '食神';
+  const hasShiShenTou = ctx.tenGods[0] === '食神' || ctx.tenGods[1] === '食神' || ctx.tenGods[3] === '食神';
+  const hasShangGuanTou = ctx.tenGods[0] === '伤官' || ctx.tenGods[1] === '伤官' || ctx.tenGods[3] === '伤官';
+  const hasShaTou = ctx.tenGods[0] === '七杀' || ctx.tenGods[1] === '七杀' || ctx.tenGods[3] === '七杀';
+  const hasGuanTou = ctx.tenGods[0] === '正官' || ctx.tenGods[1] === '正官' || ctx.tenGods[3] === '正官';
+  const isShaGe = patternCat === '杀格' || pattern.displayName.includes('七杀');
+  const isShangGe = patternCat === '伤官格' || monthQiTG === '伤官';
+  const isShiGe = patternCat === '食神格' || monthQiTG === '食神';
 
   // 伤官佩印
-  if ((patternCat === '伤官格' || monthQiTG === '伤官') && hasYinTou) {
+  if (isShangGe && hasYinTou) {
     const yinPos: string[] = [];
     if (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印') yinPos.push('年');
     if (ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印') yinPos.push('时');
@@ -361,8 +424,8 @@ function scanFeatures(ctx: Ctx): Feature[] {
       text: `伤官佩印——月令伤官是你的才华和表达欲，${yinPos.length > 0 ? yinPos.join('、') + '的印星帮你刹车' : '印星帮你刹车'}。你知道什么时候该说，什么时候该停。这点比大多数伤官格的人都强——不是被规则管住，是被智慧管住。`,
     });
   }
-  // 伤官生财
-  if (isShangShi && hasCaiTou) {
+  // 伤官生财（仅伤官格）
+  if (isShangGe && hasCaiTou) {
     const caiPos: string[] = [];
     if (ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财') caiPos.push('年');
     if (ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财') caiPos.push('月');
@@ -373,9 +436,43 @@ function scanFeatures(ctx: Ctx): Feature[] {
       text: `伤官生财——月令伤官是你的创造力，${caiPos.length > 0 ? caiPos.join('、') + '干' : '天干'}透出的财星是出口。你的才华天然能变现。伤官生财的人有一个特点：不会只为了兴趣做事——创造力自带商业嗅觉，做什么都会不自觉想「这个东西有没有价值」。`,
     });
   }
+  // 食神生财
+  if (isShiGe && hasCaiTou) {
+    const caiPos: string[] = [];
+    if (ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财') caiPos.push('年');
+    if (ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财') caiPos.push('月');
+    if (ctx.tenGods[3] === '正财' || ctx.tenGods[3] === '偏财') caiPos.push('时');
+    features.push({
+      score: 75,
+      tags: ['main'],
+      text: `食神生财——月令食神是你的内在创造力，${caiPos.length > 0 ? caiPos.join('、') + '干' : '天干'}透出的财星是出口。和伤官生财不一样——你的才华变现是温和的、持续的，不靠锋芒毕露。食神生财的人有一种「把日子过成生意」的天赋——不用太用力，钱会自己来找你。`,
+    });
+  }
+  // 食神制杀
+  if (isShaGe && hasShiShenTou) {
+    const shiPos: string[] = [];
+    if (ctx.tenGods[0] === '食神') shiPos.push('年');
+    if (ctx.tenGods[1] === '食神') shiPos.push('月');
+    if (ctx.tenGods[3] === '食神') shiPos.push('时');
+    features.push({
+      score: 85,
+      tags: ['main'],
+      text: `食神制杀——七杀是你的压力源，${shiPos.length > 0 ? shiPos.join('、') + '干' : '天干'}透出的食神是解药。你不是被压力追着跑——你有工具反过来驾驭它。食神制杀是八字里最漂亮的组合之一：温和但有力量，不动声色地化解危机。别人看到的你是从容的——他们不知道你已经在脑子里把七杀打趴下了。`,
+    });
+  }
+  // 印绶化杀
+  if (isShaGe && hasYinTou) {
+    const yinPos: string[] = [];
+    if (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印') yinPos.push('年');
+    if (ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印') yinPos.push('时');
+    features.push({
+      score: 80,
+      tags: ['main'],
+      text: `印绶化杀——七杀是压在你命局里的重担，${yinPos.length > 0 ? yinPos.join('、') + '的印星' : '印星'}把它转化成了智慧和深度。食神制杀是「制服」，印绶化杀是「转化」——你把压力吸收、消化，变成了别人拿不走的见识。你是那种越被打压越有厚度的人。`,
+    });
+  }
   // 官杀生印
-  if ((patternCat === '印格' || pattern.displayName.includes('印')) &&
-      (ctx.tenGods[0] === '正官' || ctx.tenGods[0] === '七杀' || ctx.tenGods[1] === '正官' || ctx.tenGods[1] === '七杀' || ctx.tenGods[3] === '正官' || ctx.tenGods[3] === '七杀')) {
+  if ((patternCat === '印格' || pattern.displayName.includes('印')) && (hasShaTou || hasGuanTou)) {
     features.push({
       score: 65,
       tags: ['main'],
@@ -401,6 +498,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     const el = heEls[0];
     features.push({
       score: 70,
+      tags: ['info'],
       text: `地支三合${el}局——${el}气在暗中成形。三合不像三会那样直接碾压，而是一种暗中凝聚的力量。你知道自己身上有某种倾向，但不一定说得清楚——它在地下，但一直在。`,
     });
   }
@@ -441,6 +539,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     '正财': '对财富的敏感度翻倍——你赚钱的方式不是一条，而是两条并行。',
     '食神': '创造力是天生的——你比一般人有双倍的表达欲和审美力。',
     '伤官': '才华横溢但锋芒也双倍——你的才华是礼物，但控制不好也会伤到自己。',
+    '比肩': '你身上有双倍的自我意识和独立精神——这让你不依赖别人，但也让你不太容易让别人进来。靠自己已经成了肌肉记忆。',
   };
   for (const [tg, count] of Object.entries(tgCount)) {
     if (count >= 2) {
@@ -482,6 +581,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
   } else {
     features.push({
       score: 35,
+      tags: ['info'],
       text: `格局「成格」——命局的顶层设计完整，${pattern.displayName}的底子扎实。`,
     });
   }
@@ -497,6 +597,13 @@ function scanFeatures(ctx: Ctx): Feature[] {
         '卯': '卯木双现，柔韧加倍。你擅长在夹缝中找到出路，但也容易过度迁就环境。',
         '酉': '酉金双现，锋利加倍。你的决断力和边界感比一般人强得多。',
         '辰': '辰土双现，内在厚重感翻倍。你藏得比别人深——能看到的只是冰山一角。',
+        '寅': '寅木双现，生机和开拓欲翻倍。你不是安于现状的人——骨子里有一团不停往前拱的劲，但也容易同时追好几个方向。',
+        '巳': '巳火双现，变化和适应力同时放大。你很擅长在不同环境中切换状态，但偶尔也会找不到「哪个才是真的自己」。',
+        '申': '申金双现，好动和思变翻倍。你不是坐得住的人——身体或脑子总有一个在路上。不停留是你的天赋，也是你的代价。',
+        '亥': '亥水双现，直觉和想象力加倍。你的第六感比一般人敏锐得多——有时候不需要理由就知道该往哪走。但也容易想得太多、做得太少。',
+        '丑': '丑土双现，固执和耐力同步放大。你是那种走得很慢但从不回头的人。稳是最大的优点——但偶尔也要抬头看，这条路还是不是你要的。',
+        '未': '未土双现，包容力和收纳欲翻倍。你喜欢收集——不管是信息、关系还是资源。但也容易什么都想要、什么都不舍得扔。',
+        '戌': '戌土双现，守护和边界感加倍。你对自己认定的人或事有极强的忠诚度。外面的世界可以乱，你的核心圈必须稳。',
       };
       features.push({
         score: 45,
@@ -515,16 +622,18 @@ function scanFeatures(ctx: Ctx): Feature[] {
       '像一棵树，有自己生长的方向和节奏';
     features.push({
       score: 30,
+      tags: ['info'],
       text: `${ctx.dm}身强，${ctx.strength.deLing ? '得令' : ''}${ctx.strength.deDi ? '得地' : ''}${ctx.strength.deShi === '得势' ? '得势' : ''}——${elMetaphor}。`,
     });
   } else {
     features.push({
       score: 30,
+      tags: ['info'],
       text: `${ctx.dm}${ctx.strength.level === '中和' ? '中和平衡' : '身弱'}——${ctx.strength.level === '身弱' ? '你不是硬扛型的人。但你比身强的人更懂借力——知道自己的局限在哪里，反而能用巧劲化解很多问题。' : '不多不少，刚好够用。你有自己的节奏，不疾不徐。'}`,
     });
   }
 
-  // ── 16. 日主性格画像（必有，身强/身弱两版）──
+  // ── 15. 日主性格画像（必有，身强/身弱两版）──
   const dmPersonalityStrong: Record<string, string> = {
     '甲木': '甲木是参天大树——你不是那种可以低调的人，天生向上，目标感强、不习惯低头。走到哪里都有自己的节奏，别人很难左右你。',
     '乙木': '乙木是藤萝——柔韧善变，擅长在夹缝中找到出路。表面随和好相处，骨子里有一股不认输的韧劲。不是最强的那一个，但往往是最久的那一个。',
@@ -563,7 +672,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     tags: ['identity'],
   });
 
-  // ── 17. 职业方向（必有，放最后）──
+  // ── 16. 职业方向（必有，放最后）──
   const patName = pattern.displayName;
   const careerParts: string[] = [];
 
@@ -636,9 +745,10 @@ export function generateNarrative(
   if (deep.length > 0) picked.push(deep[0]);
   // 4. 结构性缺口（选1个最强的）
   if (gap.length > 0) picked.push(gap[0]);
-  // 5. 补充信息（如果某个角色缺失，用 info 补位，最多补2个）
-  if (picked.length < 4 && info.length > 0) picked.push(info[0]);
-  if (picked.length < 4 && info.length > 1) picked.push(info[1]);
+  // 5. 补充信息（如果角色不够5个，用 info 补位，最多补3个）
+  if (picked.length < 5 && info.length > 0) picked.push(info[0]);
+  if (picked.length < 5 && info.length > 1) picked.push(info[1]);
+  if (picked.length < 5 && info.length > 2) picked.push(info[2]);
   // 6. 职业方向（必有，放最后）
   if (career.length > 0) picked.push(career[0]);
 
