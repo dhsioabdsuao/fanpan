@@ -130,6 +130,11 @@ function deduplicateCombines(hits: CombineHit[]): CombineHit[] {
   return kept;
 }
 
+// ── 判断句变体选择 ──
+function variant(n: number, ...options: string[]): string {
+  return options[n % options.length];
+}
+
 // ── 特征扫描 ──
 
 function scanFeatures(ctx: Ctx): Feature[] {
@@ -137,6 +142,11 @@ function scanFeatures(ctx: Ctx): Feature[] {
   const { bazi, stems, branches, lt, pattern, outcome, zero } = ctx;
   const p = bazi.pillars;
   const ec = bazi.elementCount;
+
+  // 判断句变体种子：基于日支+日干组合
+  const dayBranch = branches[2];
+  const dayStem = stems[2];
+  const variantSeed = (dayStem.charCodeAt(0) + dayBranch.charCodeAt(0)) % 3;
 
   // ── 1. 天干合（去重+日主加权）──
   const posLabels = ['年', '月', '日', '时'];
@@ -156,7 +166,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     const isYongShen = !!guanShaTG;
     const dayBonus = h.involvesDay ? 25 : 0;
     const yongShenText = guanShaTG === '七杀'
-      ? `七杀本是你的鞭子，催你前进，但它被${otherTG}合住了。野心刚冒出来，就被一股更舒服的力量按回去。你不是没有冲劲——是那股冲劲不够疼。那个野心没有消失——它一直在压着。你最需要的不是更努力，是让那根鞭子重新疼起来。`
+      ? `七杀本是你的鞭子，催你前进，但它被${otherTG}合住了。野心刚冒出来，就被一股更舒服的力量按回去。你不是没有冲劲——是那股冲劲不够疼。${variant(variantSeed, '那个野心没有消失——它一直在压着。你最需要的不是更努力，是让那根鞭子重新疼起来。', '野心压在角落里，等一个不能回头的机会。你不是没有动力，是动力还没疼到让你动。', '你不是缺冲劲——是缺一个让你没有退路的局面。找到它，你会比谁都猛。')}`
       : guanShaTG === '正官'
       ? `正官代表规矩和方向，但它被${otherTG}牵走了。你被要求走一条很正的路，但你内在的${otherTG}力量让你不愿意乖乖就范。`
       : `${h.tgI}和${h.tgJ}绑在一起——这两个特质在你身上不是分开的，而是互相拉扯的。`;
@@ -206,9 +216,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
   }
 
   // ── 3. 日支深度画像（if-else 链，只取一个，优先级：杀>官>印>财>禄>刃）──
-  const dayBranch = branches[2];
   const dayMainQi = p.day.hiddenStems[0];
-  const dayStem = stems[2];
   const luMap: Record<string, string> = { '甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午','庚':'申','辛':'酉','壬':'亥','癸':'子' };
   const renMap: Record<string, string> = { '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子' };
   if (dayMainQi) {
@@ -222,7 +230,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
         score: 72,
         text: isYou
           ? `乙酉日柱——乙木坐在刀刃上。日支酉金七杀直接贴着日主，你的内在审判者不是「对自己要求高」那种温和的程度。你对自己说过最狠的话，别人一辈子都不会对你说。`
-          : `${ctx.dm}坐${dayBranch}七杀——你有两副面孔。${dmChar}但日支七杀贴身——内心深处有一个很严的自我标准，别人觉得你够好了，你不觉得。这种内外反差是你最累的地方——对外你在迁就，对内你在审判。你花在跟自己较劲上的力气，够做好几件事了。`,
+          : `${ctx.dm}坐${dayBranch}七杀——你有两副面孔。${dmChar}但日支七杀贴身——内心深处有一个很严的自我标准，别人觉得你够好了，你不觉得。这种内外反差是你最累的地方——对外你在迁就，对内你在审判。${variant(variantSeed, '你花在跟自己较劲上的力气，够做好几件事了。', '学会对自己松一寸，比对外赢一仗更重要。你最大的对手不是别人——是你心里的那个审判者。', '那个内在的审判者不会消失——但你可以学会和它谈判。标准可以高，但不需要高到把自己压垮。')}`,
         tags: ['personality', 'deep'],
       });
     } else if (rel === '正官') {
@@ -305,7 +313,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     const elAct = EL_ABILITY[lt.tongGuan]?.split('、')[0] || lt.tongGuan;
     features.push({
       score: 70,
-      text: `五行流通在${lt.blockage}→${lt.tongGuan}出现断崖，落差${lt.drop}。你的${lt.blockage}能量积累极多，但转化不成${lt.tongGuan}所代表的产出——${elAct}是你命局最缺的一环。问题不是不够努力，是方向被卡住了。找到能把你的想法执行出来的人或系统，比一个人死磕更有效。`,
+      text: `五行流通在${lt.blockage}→${lt.tongGuan}出现断崖，落差${lt.drop}。你的${lt.blockage}能量积累极多，但转化不成${lt.tongGuan}所代表的产出——${elAct}是你命局最缺的一环。问题不是不够努力，是方向被卡住了。${variant(variantSeed, '找到能把你的想法执行出来的人或系统，比一个人死磕更有效。', '你的问题是出口不够，不是源头不够。把能量引导到对的渠道，比继续增加输入重要得多。', '一个人扛着所有事的结果，不是更强——是更累。找到那个能帮你把想法变成现实的人。')}`,
     });
   }
 
@@ -505,66 +513,85 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
 
-  // ── 16. 日主性格画像（必有）──
-  const dmPersonality: Record<string, string> = {
-    '甲木': '甲木是参天大树——你不是那种可以低调的人。天生就有一种向上的力量，目标感强、不习惯低头。甲木的人走到哪里都有自己的节奏和方向，别人很难左右你。',
-    '乙木': '乙木是藤萝——你不是硬碰硬的类型。柔韧、善变、擅长在夹缝中找到出路。表面看起来随和好相处，骨子里有一股不认输的韧劲。乙木从来不是最强的那一个，但往往是最久的那一个。',
-    '丙火': '丙火是太阳——你的热情和感染力是天生的。走到哪里都能照亮一片，别人会自然而然被你吸引。但太阳也有落山的时候——你的能量是外放型的，独处太久会枯萎。',
-    '丁火': '丁火是灯烛之火——不是熊熊烈火，是持续燃烧的那一盏。你不靠爆发力取胜，靠的是长久的恒温。丁火的人不显眼，但熄不掉——这才是你最可怕的地方。',
-    '戊土': '戊土是城墙之土——厚重、可靠、能扛。你不是那种轻飘飘的人，任何事到了你这里都会变得扎实。戊土的问题是太稳了——稳到有时候缺少「动起来」的紧迫感。',
-    '己土': '己土是田园之土——你不是靠体量取胜，靠的是涵养和吸收力。己土的人天生懂得如何滋养别人，也善于从环境里汲取养分。比起戊土的厚重，你更灵活、更善于变通。',
-    '庚金': '庚金是刀剑——干脆利落，不拖泥带水。你有天然的行动力和决断力，不喜欢拐弯抹角。庚金的问题是太硬了——有时候砍得太快，没给人留余地，也没给自己留余地。',
-    '辛金': '辛金是珠宝之金——精致、敏感、有天然的审美和分寸感。你不像庚金那样大刀阔斧，但你更懂细节和品质。辛金的人对自己和身边的人都有不低的标准。',
-    '壬水': '壬水是江河——水性流动、善变、适应力极强。你不是那种待在原地等答案的人，你会自己去找。壬水的人走到哪里都能融入，但也容易流得太快、停不下来。',
-    '癸水': '癸水是雨露——细腻、渗透力强、润物无声。你不像壬水那样奔腾，但你更能深入到细节里去。癸水的人敏感、直觉好，是那种「不需要说太多就懂了」的类型。',
+  // ── 16. 日主性格画像（必有，身强/身弱两版）──
+  const dmPersonalityStrong: Record<string, string> = {
+    '甲木': '甲木是参天大树——你不是那种可以低调的人，天生向上，目标感强、不习惯低头。走到哪里都有自己的节奏，别人很难左右你。',
+    '乙木': '乙木是藤萝——柔韧善变，擅长在夹缝中找到出路。表面随和好相处，骨子里有一股不认输的韧劲。不是最强的那一个，但往往是最久的那一个。',
+    '丙火': '丙火是太阳——热情和感染力是天生的，走到哪里都能照亮一片。但太阳也有落山的时候——能量是外放型的，独处太久会枯萎。',
+    '丁火': '丁火是灯烛之火——不靠爆发力，靠长久的恒温。不显眼，但熄不掉——这才是最可怕的地方。',
+    '戊土': '戊土是城墙之土——厚重、能扛，任何事到了你这里都会变得扎实。问题是太稳了——稳到有时候缺少「动起来」的紧迫感。',
+    '己土': '己土是田园之土——不靠体量取胜，靠涵养和吸收力。天生懂得滋养别人，也善于从环境里汲取养分。比戊土更灵活、更善于变通。',
+    '庚金': '庚金是刀剑——干脆利落，不拖泥带水。有天然的行动力和决断力。问题是太硬了——砍得太快，没给人留余地，也没给自己留余地。',
+    '辛金': '辛金是珠宝之金——精致、敏感，有天然的审美和分寸感。不像庚金大刀阔斧，但更懂细节和品质。对自己和身边的人都有不低的标准。',
+    '壬水': '壬水是江河——水性流动、适应力极强。不是待在原地等答案的人，会自己去找。走到哪里都能融入，但也容易流得太快、停不下来。',
+    '癸水': '癸水是雨露——细腻、渗透力强、润物无声。不像壬水奔腾，但更能深入到细节里。敏感、直觉好，是那种「不用说太多就懂了」的类型。',
+  };
+  const dmPersonalityWeak: Record<string, string> = {
+    '甲木': '甲木本该参天，但你的根基不如表面看起来扎实。有向上的心气，但力量需要更精准地使用——不是每一阵风都值得迎上去。',
+    '乙木': '乙木的柔韧是你最大的武器——身不强让你更懂得迂回和借力。你不会硬碰硬，但你知道怎么绕过去。',
+    '丙火': '丙火的光芒还在，但燃料需要省着用。你不是不能照亮别人，是先要照亮自己。独处不是枯萎，是充电。',
+    '丁火': '丁火的恒温在身弱时更珍贵——不耀眼但稳定。你不靠能量压制别人，靠的是持续输出。一盏灯在风里能亮，才是真的亮。',
+    '戊土': '戊土本该厚重稳当，但根基比你想的薄——表面稳，内里在撑。扛得太多的时候，学会放下不是软弱。',
+    '己土': '己土的涵养在身弱时更内敛。你不急于表现，但吸收力很强。别人看不见的时候恰是你长得最快的时候。',
+    '庚金': '庚金的锋利需要精准发力——身不强意味着不能乱砍。每一刀都省着用，反而比乱挥更有威慑力。',
+    '辛金': '辛金的精致在身弱时更知道分寸。不追求大刀阔斧的痛快，但每一处细节都经得起推敲。',
+    '壬水': '壬水流动不止，但身不强时水流容易被截断。你需要找到对的河道——不是所有的方向都值得去。',
+    '癸水': '癸水本就细腻，身不强时更懂得渗透而非冲击。水滴石穿不需要力气大，需要的是持续和精准。',
   };
   const dmKey = (['甲','乙'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '甲' ? '甲木' : '乙木') :
     (['丙','丁'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '丙' ? '丙火' : '丁火') :
     (['戊','己'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '戊' ? '戊土' : '己土') :
     (['庚','辛'].includes(bazi.dayMaster)) ? (bazi.dayMaster === '庚' ? '庚金' : '辛金') :
     (bazi.dayMaster === '壬' ? '壬水' : '癸水');
+  const dmText = ctx.isStrong
+    ? (dmPersonalityStrong[dmKey] || `${ctx.dm}身强，能量在线，能扛事、有底气。`)
+    : (dmPersonalityWeak[dmKey] || `${ctx.dm}身不强，让你更懂得借力和迂回——知道自己的局限在哪里，反而能用巧劲化解很多问题。`);
   features.push({
     score: 85,
-    text: dmPersonality[dmKey] || `${ctx.dm}是你的底色。${ctx.isStrong ? '身强让你能扛事、有底气' : '身不强让你更懂得借力和迂回'}——这是你的出厂设置，改不了，也不需要改。`,
+    text: dmText,
     tags: ['identity'],
   });
 
   // ── 17. 职业方向（必有，放最后）──
-  const careerLines: string[] = [];
   const patName = pattern.displayName;
+  const careerParts: string[] = [];
 
-  // 格局→方向
-  if (patternCat === '伤官格' || patternCat === '食神格') {
-    if (hasCaiTou) careerLines.push('伤官生财天然适合创意+商业的交叉领域——内容创作、品牌策划、产品设计，任何能把才华直接变成价值的方向');
-    else if (hasYinTou) careerLines.push('伤官佩印适合需要创造力+深度思考的领域——写作、研究、教育创新，需要把想法用智慧包装后输出');
-    else careerLines.push('才华是你的武器，但需要找到一个能承接你创造力的领域——设计、内容、策划类工作更能让你发挥');
-  } else if (patternCat === '杀格' || patName.includes('七杀')) {
-    if (outcome.outcome === '破格') careerLines.push('七杀+破格意味着不适合单打独斗，需要能替你化杀的印星——导师、制度、学习体系');
-    careerLines.push('适合有挑战但不过度的方向——中层管理、专业技术、风控分析，需要压力但不用承担全部');
-  } else if (patternCat === '印格' || patName.includes('印')) {
-    careerLines.push('偏印格适合需要独特视角的领域——文化研究、教育创新、深度内容，需要消化复杂信息的工作');
-  } else if (patName.includes('建禄') || patName.includes('阳刃')) {
-    careerLines.push('建禄/阳刃格适合自己主导——不管什么领域都需要掌控感。管理、创业、独立执业的满足感远高于被管理');
-  }
-  if (patName.includes('正官')) careerLines.push('正官格天然适合体制内或规则明确的组织——不是束缚你，是你需要那个框架才能发挥');
+  // 第一段：格局决定适合的赛道
+  const patternInsights: Record<string, string> = {
+    '伤官格': '伤官格的人天生适合把才华变成价值——内容创作、品牌策划、产品设计，任何需要「输出」的工作都是你的主场',
+    '食神格': '食神格天生适合把创造力变成日常产出——设计、教育、手工艺，需要持续输出品质感的方向',
+    '七杀格': '七杀格天然适合有挑战的环境——中层管理、专业技术、风控分析，需要压力但不用独自扛全部',
+    '正官格': '正官格天然适合规则明确的组织——体制内、大公司、标准化流程，框架不是束缚而是你的保护层',
+    '偏印格': '偏印格适合需要独特视角的领域——文化研究、教育创新、深度内容，消化复杂信息是你的天赋',
+    '正印格': '正印格适合需要学习和沉淀的方向——教育、研究、知识服务，你的吸收力天然比别人强',
+    '正财格': '正财格适合稳定增值的赛道——财务管理、投资分析、实业经营，稳扎稳打比快进快出更适合你',
+    '偏财格': '偏财格适合机会驱动的领域——商务拓展、投资、创业，嗅觉敏锐是你的核心武器',
+    '建禄月劫格': '建禄格适合自己主导——管理、创业、独立执业，掌控感比稳定感更重要',
+    '阳刃格': '阳刃格适合需要决断力的方向——危机处理、竞标谈判、快节奏行业，你的果决是稀缺资源',
+  };
+  const insight = patternInsights[patName]
+    || patternInsights[patternCat]
+    || `${patName}决定了你的核心方向——顺势而为比逆流而上更有效`;
+  careerParts.push(insight);
 
-  // 缺什么→避开什么
-  if (zero.includes('金')) careerLines.push('缺金意味着不适合需要长期重复枯燥打磨的纯技术路线——你不是干不了，是干不长久');
-  if (zero.includes('水')) careerLines.push('缺水需要刻意建立「停顿」习惯——适合有固定节奏的工作，而非完全自由散漫的模式');
-  if (zero.includes('木')) careerLines.push('缺木需要刻意经营人脉和学习渠道——不适合完全单打独斗，需要一个能给你背书的环境');
-  if (zero.includes('火')) careerLines.push('缺火需要找能替你做展示的人——你不适合台前表演型工作，幕后深耕更适合你');
-
-  // 五行方向
+  // 第二段：五行缺口决定需要什么搭档或补丁
+  const gapAdvice: string[] = [];
+  if (zero.includes('金')) gapAdvice.push('缺金意味着你需要一个有执行力的搭档或系统来帮你落地——而不是自己硬逼自己变勤奋');
+  if (zero.includes('水')) gapAdvice.push('缺水意味着你需要刻意给自己留缓冲——不是更拼，是更会停');
+  if (zero.includes('木')) gapAdvice.push('缺木意味着你需要经营人脉和学习渠道——找能给你背书的人，比自己开路快得多');
+  if (zero.includes('火')) gapAdvice.push('缺火意味着不适合台前表演型工作——幕后深耕，让作品替你说话');
+  if (zero.includes('土')) gapAdvice.push('缺土意味着需要一个稳定的外部结构——固定流程、长期项目、可靠的团队');
   if (lt.blockage && lt.tongGuan) {
-    const dirMap: Record<string, string> = {
-      '金': '技术、专业技能', '水': '学习、沟通', '木': '社交、人脉', '火': '展示、分享', '土': '稳固、储蓄',
-    };
-    careerLines.push(`从五行流通看，补${lt.tongGuan}是突破口——${dirMap[lt.tongGuan] || lt.tongGuan}方向值得投入`);
+    const dirMap: Record<string, string> = { '金': '技术', '水': '学习', '木': '人脉', '火': '展示', '土': '稳固' };
+    gapAdvice.push(`五行流通堵在${lt.blockage}→${lt.tongGuan}，补${lt.tongGuan}（${dirMap[lt.tongGuan] || lt.tongGuan}方向）能帮你把能量释放出来`);
+  }
+  if (gapAdvice.length > 0) {
+    careerParts.push(gapAdvice.join('。'));
   }
 
   features.push({
     score: 75,
-    text: `职业方向：${careerLines.join('。')}。`,
+    text: careerParts.join('\n\n'),
     tags: ['career'],
   });
 
@@ -598,8 +625,9 @@ export function generateNarrative(
   if (deep.length > 0) picked.push(deep[0]);
   // 4. 结构性缺口（选1个最强的）
   if (gap.length > 0) picked.push(gap[0]);
-  // 5. 补充信息（如果某个角色缺失，用 info 补位，最多补1个）
+  // 5. 补充信息（如果某个角色缺失，用 info 补位，最多补2个）
   if (picked.length < 4 && info.length > 0) picked.push(info[0]);
+  if (picked.length < 4 && info.length > 1) picked.push(info[1]);
   // 6. 职业方向（必有，放最后）
   if (career.length > 0) picked.push(career[0]);
 
