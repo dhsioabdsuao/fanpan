@@ -27,7 +27,7 @@ import { saveRecord } from '../services/storage';
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
 export default function ResultScreen({ navigation, route }: Props) {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>('narrative');
 
   const { result, error } = useMemo(() => {
     const input = buildBaziInput(route.params);
@@ -99,6 +99,20 @@ export default function ResultScreen({ navigation, route }: Props) {
   }
 
   const Sections = [
+    {
+      id: 'narrative',
+      title: '命局叙事',
+      render: () => {
+        if (!narrative) return <Text style={styles.placeholder}>叙事生成中…</Text>;
+        return (
+          <View>
+            {narrative.split('\n\n').map((para, i) => (
+              <Text key={i} style={styles.narrativeBody}>{para}</Text>
+            ))}
+          </View>
+        );
+      },
+    },
     { id: 'basic', title: '日主信息', component: BasicInfo },
     { id: 'dayun', title: '大运流年', component: DaYunTable },
     { id: 'pattern', title: '格局', component: PatternBlock },
@@ -158,14 +172,6 @@ export default function ResultScreen({ navigation, route }: Props) {
 
         {/* Pillar Table */}
         <PillarTable result={result} />
-
-        {/* Narrative */}
-        {narrative ? (
-          <View style={styles.narrativeCard}>
-            <Text style={styles.narrativeTitle}>命局叙事</Text>
-            <Text style={styles.narrativeBody}>{narrative}</Text>
-          </View>
-        ) : null}
 
         {/* Collapsible Sections */}
         <View style={styles.sections}>
@@ -264,29 +270,15 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     padding: Spacing.xs,
   },
-  narrativeCard: {
-    marginTop: Spacing.lg,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    borderRadius: 12,
-    padding: Spacing.lg,
-  },
-  narrativeTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
-    color: Colors.goldText,
-    fontFamily: FONT_SERIF,
-    marginBottom: Spacing.md,
-  },
   narrativeBody: {
     fontSize: FontSize.base,
-    lineHeight: 26,
+    lineHeight: 28,
     color: Colors.textSecondary,
+    marginBottom: Spacing.md,
   },
   sections: {
     marginTop: Spacing.lg,
-    gap: Spacing.sm,
+    gap: 12,
   },
   placeholder: {
     fontSize: FontSize.base,
