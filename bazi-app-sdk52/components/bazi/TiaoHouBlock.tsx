@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
 import type { BaziResult } from '@/types/bazi';
-import { getTiaoHouYongShen, getTiaoHouType } from '@/lib/bage/tiaoHou';
+import { getTiaoHouYongShen, getTiaoHouType, getTiaoHouNarrative } from '@/lib/bage/tiaoHou';
 import { getStemElement } from '@/lib/bazi-utils';
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 
@@ -40,6 +40,7 @@ interface Props {
 export default function TiaoHouBlock({ result }: Props) {
   const type = getTiaoHouType(result);
   const gods = getTiaoHouYongShen(result.dayMaster, result.pillars.month.branch);
+  const narrative = getTiaoHouNarrative(result);
   const style = TYPE_STYLES[type];
 
   return (
@@ -74,6 +75,12 @@ export default function TiaoHouBlock({ result }: Props) {
 
       {gods.length === 0 && (
         <Text style={styles.noData}>《穷通宝鉴》未收录此组合的调候用神</Text>
+      )}
+
+      {narrative && (
+        <View style={styles.narrativeWrap}>
+          <Text style={styles.narrativeText}>{narrative}</Text>
+        </View>
       )}
 
       {/* Explanation */}
@@ -145,6 +152,19 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.textMuted,
     textAlign: 'center',
+  },
+  narrativeWrap: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  narrativeText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 20,
   },
   explanation: {
     gap: Spacing.xs,
