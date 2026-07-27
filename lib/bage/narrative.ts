@@ -161,19 +161,59 @@ function scanFeatures(ctx: Ctx): Feature[] {
   }
   const keptCombines = deduplicateCombines(combineHits);
   for (const h of keptCombines) {
-    const guanShaTG = h.tgI === '七杀' || h.tgI === '正官' ? h.tgI : (h.tgJ === '七杀' || h.tgJ === '正官' ? h.tgJ : '');
-    const otherTG = h.tgI === guanShaTG ? h.tgJ : h.tgI;
-    const isYongShen = !!guanShaTG;
     const dayBonus = h.involvesDay ? 25 : 0;
-    const yongShenText = guanShaTG === '七杀'
-      ? `七杀本是你的鞭子，催你前进，但它被${otherTG}合住了。野心刚冒出来，就被一股更舒服的力量按回去。你不是没有冲劲——是那股冲劲不够疼。${variant(variantSeed, '那个野心没有消失——它一直在压着。你最需要的不是更努力，是让那根鞭子重新疼起来。', '野心压在角落里，等一个不能回头的机会。你不是没有动力，是动力还没疼到让你动。', '你不是缺冲劲——是缺一个让你没有退路的局面。找到它，你会比谁都猛。')}`
-      : guanShaTG === '正官'
-      ? `正官代表规矩和方向，但它被${otherTG}牵走了。你被要求走一条很正的路，但你内在的${otherTG}力量让你不愿意乖乖就范。`
-      : `${h.tgI}和${h.tgJ}绑在一起——这两个特质在你身上不是分开的，而是互相拉扯的。`;
+    const posText = `${h.la}干${stems[h.i]}（${h.tgI}）与${h.lb}干${stems[h.j]}（${h.tgJ}）相合。`;
+
+    // 确定被合的「主角」十神，优先级：杀 > 官 > 财 > 食伤 > 印
+    const pickLead = (...types: string[]): string | null => {
+      for (const t of types) {
+        if (h.tgI === t) return h.tgI;
+        if (h.tgJ === t) return h.tgJ;
+      }
+      return null;
+    };
+    const leadTG = pickLead('七杀', '正官')
+      || pickLead('正财', '偏财')
+      || pickLead('食神', '伤官')
+      || pickLead('正印', '偏印')
+      || h.tgI;
+    const otherTG = h.tgI === leadTG ? h.tgJ : h.tgI;
+    const dayInvolve = h.involvesDay ? '而且这组合在你自己的日柱上——你不是在经历冲突，你是长在冲突里。' : '';
+
+    let text: string;
+    let score = 55;
+    let tags: string[] = ['info'];
+
+    if (leadTG === '七杀') {
+      score = 90;
+      tags = ['main'];
+      text = `七杀本是你的鞭子，催你前进，但它被${otherTG}合住了。野心刚冒出来，就被一股更舒服的力量按回去。你不是没有冲劲——是那股冲劲不够疼。${variant(variantSeed, '那个野心没有消失——它一直在压着。你最需要的不是更努力，是让那根鞭子重新疼起来。', '野心压在角落里，等一个不能回头的机会。你不是没有动力，是动力还没疼到让你动。', '你不是缺冲劲——是缺一个让你没有退路的局面。找到它，你会比谁都猛。')}`;
+    } else if (leadTG === '正官') {
+      score = 90;
+      tags = ['main'];
+      text = `正官代表规矩和方向，但它被${otherTG}牵走了。${variant(variantSeed, `你被要求走一条很正的路，但你内在的${otherTG}力量让你不愿意乖乖就范。规矩在你身上立住了——但立得不太稳。`, `正官被${otherTG}合住——规矩和自由在你身上一直在谈判。该守规矩的时候，${otherTG}冒出来说「破一次」；该放肆的时候，正官又让你过意不去。你不是左右为难——你是两样都要。`, `正官代表你对秩序的渴望，${otherTG}代表你不想被管的那部分。它们合在一起——结果是你在规矩里找漏洞，在放纵里找框架。这不是虚伪，是你在试图两全。`)}`;
+    } else if (leadTG === '正财' || leadTG === '偏财') {
+      score = 70;
+      tags = ['main'];
+      text = `${leadTG}被${otherTG}合住了——你对机会和资源的嗅觉被打了个结。${variant(variantSeed, `不是没有赚钱的能力，是那股追逐的动力被${otherTG}抵消了。钱不是不来——是你在追的半路上被别的东西吸引了。`, `${leadTG}本该是你的引擎，但${otherTG}把它合住了——引擎在空转。你对价值的直觉还在，但落到行动上总差一步。不是你不够想——是想的方向被拽偏了一下。`, `合财在命理里叫「财被合走」——不一定是坏事。${leadTG}被${otherTG}牵制，意味着你对钱的执念不会失控。但反过来，该你赚的时候也容易被心情、人情或别的事岔开。`)}`;
+    } else if (leadTG === '食神' || leadTG === '伤官') {
+      score = 65;
+      tags = ['deep'];
+      text = `${leadTG}是你的才华和表达欲，但它被${otherTG}合住了。${variant(variantSeed, `你不是没有才，是输出的时候总有个东西在拽你。想法在脑子里跑完了全程，说出来却只有一半。`, `${leadTG}被${otherTG}牵着——你的创造力不是消失了，是被转译成了另一种形式。你可能不擅长直接表达，但你做的事里有你的才华——只是换了条路出来。`, `合食伤的人有一个特点：肚子里有货，但倒出来的方式和别人不一样。${leadTG}被${otherTG}合住，你的才华不走直路——拐个弯，反而更有深度。`)}`;
+    } else if (leadTG === '正印' || leadTG === '偏印') {
+      score = 60;
+      tags = ['info'];
+      text = `${leadTG}是你的学习和沉淀能力，但被${otherTG}合住了。${variant(variantSeed, `想静下来的时候总有别的事找你，想思考的时候总被打断。不是你不想沉淀——是沉淀的节奏一直被${otherTG}打乱。`, `印星被合的人有一种「知道很多但说不清从哪来」的气质。你的知识不是系统性的——是散装的、实战的、不按章节来的。这不是低效，是你的天赋选择了另一条路。`, `${leadTG}被${otherTG}牵制——你的学习方式不是坐在那里啃书。你是在碰撞中学、在关系中学。这条吸收知识的路径虽然绕，但学到的东西别人拿不走。`)}`;
+    } else {
+      score = 55;
+      tags = ['info'];
+      text = `${h.tgI}和${h.tgJ}绑在一起——这两个特质在你身上不是分开的，是互相拉扯的。${variant(variantSeed, '你自己可能都分不清哪个才是真的自己——但其实两个都是，只是不同时候主导权不一样。', '两股力量在你命局里共生——不是有你没我，而是在商量。有时候一方主导，有时候另一方。你就是在这种动态平衡里长大的。', '结果是你在两个方向上都走不到极端。不会太' + h.tgI + '，也不会太' + h.tgJ + '——这是一种被动的平衡感，但平衡本身也是你的武器。')}`;
+    }
+
     features.push({
-      score: (isYongShen ? 90 : 55) + dayBonus,
-        tags: (isYongShen && (guanShaTG === '七杀' || guanShaTG === '正官')) ? ['main'] : ['info'],
-      text: `${h.la}干${stems[h.i]}（${h.tgI}）与${h.lb}干${stems[h.j]}（${h.tgJ}）相合。${yongShenText}`,
+      score: score + dayBonus,
+      tags,
+      text: `${posText}${text}${dayInvolve}`,
     });
   }
 
