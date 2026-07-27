@@ -330,7 +330,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
   if (tiaoHouText) {
     features.push({
       score: 55,
-      tags: ['info'],
+      tags: ['tiaohou'],
       text: tiaoHouText,
     });
   }
@@ -869,9 +869,12 @@ export function generateNarrative(
   if (deep.length > 0) picked.push(deep[0]);
   // 4. 结构性缺口（选1个最强的）
   if (gap.length > 0) picked.push(gap[0]);
-  // 5. 补充信息（如果角色不够7个，用 info 补位，最多补2个）
-  if (picked.length < 7 && info.length > 0) picked.push(info[0]);
-  if (picked.length < 7 && info.length > 1) picked.push(info[1]);
+  // 4.5 调候智慧（如有，独立于 info 赛道）
+  const tiaohou = features.filter((f) => f.tags?.includes('tiaohou'));
+  if (tiaohou.length > 0) picked.push(tiaohou[0]);
+  // 5. 补充信息（如果角色不够8个，用 info 补位，最多补2个）
+  if (picked.length < 8 && info.length > 0) picked.push(info[0]);
+  if (picked.length < 8 && info.length > 1) picked.push(info[1]);
   // 6. 职业方向（必有，放最后）
   if (career.length > 0) picked.push(career[0]);
 
