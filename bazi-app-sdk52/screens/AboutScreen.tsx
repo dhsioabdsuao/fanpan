@@ -1,9 +1,13 @@
-import { StyleSheet, ScrollView, View, Text } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/types';
 import Svg, { Circle, Path, ClipPath, Defs, Rect } from 'react-native-svg';
 import { Colors, FontSize, FONT_SERIF, Spacing } from '../theme';
 
 export default function AboutScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -31,6 +35,13 @@ export default function AboutScreen() {
           知命而不认命，愿您在了解命理的同时，更能把握当下、创造未来。
         </Text>
         <Text style={styles.footer}>— 四柱八字排盘</Text>
+
+        <Pressable
+          style={styles.privacyLink}
+          onPress={() => navigation.navigate('Privacy')}
+        >
+          <Text style={styles.privacyLinkText}>隐私政策 →</Text>
+        </Pressable>
 
         {/* Static small taiji */}
         <View style={styles.taijiWrapper}>
@@ -110,5 +121,15 @@ const styles = StyleSheet.create({
   taiji: {
     width: 80,
     height: 80,
+  },
+  privacyLink: {
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    padding: Spacing.sm,
+  },
+  privacyLinkText: {
+    fontSize: FontSize.sm,
+    color: Colors.goldText,
+    fontWeight: '500',
   },
 });

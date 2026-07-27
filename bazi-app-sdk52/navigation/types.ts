@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Home: undefined;
   Result: MobileBaziInputParams;
   About: undefined;
+  Privacy: undefined;
 };

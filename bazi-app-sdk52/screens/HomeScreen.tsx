@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Text, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -68,6 +68,13 @@ export default function HomeScreen() {
             onPress={handleRecordPress}
             onDelete={handleRecordDelete}
           />
+
+          <Pressable
+            style={styles.privacyLink}
+            onPress={() => navigation.navigate('Privacy')}
+          >
+            <Text style={styles.privacyLinkText}>隐私政策</Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -142,5 +149,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
+  },
+  privacyLink: {
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    padding: Spacing.sm,
+  },
+  privacyLinkText: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
   },
 });
