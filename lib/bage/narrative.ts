@@ -4,6 +4,7 @@ import type { AssessResult } from './assessOutcome';
 import type { StrengthResult } from '@/lib/strength/determineStrength';
 import type { LiuTongResult } from './liuTong';
 import { getTenGod } from '@/lib/bazi-utils';
+import { getTiaoHouNarrative } from './tiaoHou';
 
 const EL_ABILITY: Record<string, string> = {
   '金': '纪律、执行力、技术深耕',
@@ -322,6 +323,16 @@ function scanFeatures(ctx: Ctx): Feature[] {
           : `${aux.label}干${aux.stem}坐着财星——你的行动天然带着目标感。做事不会只为了爽——每件事背后都有一个价值判断。`,
       });
     }
+  }
+
+  // ── 2.6 调候叙事 ──
+  const tiaoHouText = getTiaoHouNarrative(bazi);
+  if (tiaoHouText) {
+    features.push({
+      score: 55,
+      tags: ['info'],
+      text: tiaoHouText,
+    });
   }
 
   // ── 3. 日支深度画像（if-else 链，只取一个，优先级：杀>官>印>财>伤>食>禄>刃）──
