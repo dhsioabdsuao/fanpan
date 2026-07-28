@@ -19,6 +19,7 @@ import { PatternBlock } from '@/components/bazi/PatternBlock'
 import { StrengthBlock } from '@/components/bazi/StrengthBlock'
 import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
 import { TiaoHouBlock } from '@/components/bazi/TiaoHouBlock'
+import { CareerGuidanceBlock } from '@/components/bazi/CareerGuidanceBlock'
 
 function SkeletonResult() {
   return (
@@ -171,6 +172,11 @@ function ResultContent() {
       id: 'tiaoHou',
       title: '调候用神',
       render: () => <TiaoHouBlock result={result} />,
+    },
+    {
+      id: 'career',
+      title: '事业指引',
+      render: () => <CareerGuidanceBlock result={result} />,
     },
   ]
 
