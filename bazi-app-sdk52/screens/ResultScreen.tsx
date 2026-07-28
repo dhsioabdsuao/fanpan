@@ -21,6 +21,7 @@ import StrengthBlock from '../components/bazi/StrengthBlock';
 import AnalysisBlock from '../components/bazi/AnalysisBlock';
 import TiaoHouBlock from '../components/bazi/TiaoHouBlock';
 import CareerGuidanceBlock from '../components/bazi/CareerGuidanceBlock';
+import HealthGuidanceBlock from '../components/bazi/HealthGuidanceBlock';
 import CollapsibleSection from '../components/ui/CollapsibleSection';
 import Card from '../components/ui/Card';
 import { saveRecord } from '../services/storage';
@@ -158,6 +159,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     },
     { id: 'tiaoHou', title: '调候用神', component: TiaoHouBlock },
     { id: 'career', title: '事业指引', component: CareerGuidanceBlock },
+    { id: 'health', title: '体质倾向', component: HealthGuidanceBlock },
   ];
 
   return (

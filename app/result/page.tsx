@@ -20,6 +20,7 @@ import { StrengthBlock } from '@/components/bazi/StrengthBlock'
 import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
 import { TiaoHouBlock } from '@/components/bazi/TiaoHouBlock'
 import { CareerGuidanceBlock } from '@/components/bazi/CareerGuidanceBlock'
+import { HealthGuidanceBlock } from '@/components/bazi/HealthGuidanceBlock'
 
 function SkeletonResult() {
   return (
@@ -177,6 +178,11 @@ function ResultContent() {
       id: 'career',
       title: '事业指引',
       render: () => <CareerGuidanceBlock result={result} />,
+    },
+    {
+      id: 'health',
+      title: '体质倾向',
+      render: () => <HealthGuidanceBlock result={result} />,
     },
   ]
 
