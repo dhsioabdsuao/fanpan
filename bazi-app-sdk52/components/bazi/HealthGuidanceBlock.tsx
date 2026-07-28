@@ -39,13 +39,13 @@ export default function HealthGuidanceBlock({ result }: Props) {
     <View style={styles.container}>
       {/* ── 体质综述 ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚖️ 体质综述</Text>
+        <Text style={styles.sectionTitle}>体质综述</Text>
         <Text style={styles.bodyText}>{guidance.summary}</Text>
       </View>
 
       {/* ── 重点关注的方面 ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔍 重点关注的方面</Text>
+        <Text style={styles.sectionTitle}>重点关注的方面</Text>
         {sortedOrgans.map((o) => (
           <View key={o.element} style={styles.organItem}>
             <View style={[styles.dot, { backgroundColor: STATUS_COLORS[o.status] }]} />
@@ -61,22 +61,22 @@ export default function HealthGuidanceBlock({ result }: Props) {
 
       {/* ── 养生建议 ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💪 养生建议</Text>
+        <Text style={styles.sectionTitle}>养生建议</Text>
         <View style={styles.adviceGrid}>
           <View style={styles.adviceCard}>
-            <Text style={styles.adviceLabel}>🏃 运动</Text>
+            <Text style={styles.adviceLabel}>运动</Text>
             <Text style={styles.adviceText}>{guidance.wellness.exercise}</Text>
           </View>
           <View style={styles.adviceCard}>
-            <Text style={styles.adviceLabel}>😴 作息</Text>
+            <Text style={styles.adviceLabel}>作息</Text>
             <Text style={styles.adviceText}>{guidance.wellness.rest}</Text>
           </View>
           <View style={styles.adviceCard}>
-            <Text style={styles.adviceLabel}>🥗 饮食</Text>
+            <Text style={styles.adviceLabel}>饮食</Text>
             <Text style={styles.adviceText}>{guidance.wellness.diet}</Text>
           </View>
           <View style={styles.adviceCard}>
-            <Text style={styles.adviceLabel}>🍂 季节</Text>
+            <Text style={styles.adviceLabel}>季节</Text>
             <Text style={styles.adviceText}>{guidance.wellness.seasonal}</Text>
           </View>
         </View>

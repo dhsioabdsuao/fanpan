@@ -46,7 +46,7 @@ export function HealthGuidanceBlock({ result }: { result: BaziResult }) {
     <div className="space-y-5">
       {/* ── 体质综述 ── */}
       <div>
-        <h3 className="text-sm font-semibold text-stone-700 mb-2">⚖️ 体质综述</h3>
+        <h3 className="text-sm font-semibold text-stone-700 mb-2">体质综述</h3>
         <p className="text-sm leading-relaxed text-stone-600">
           {guidance.summary}
         </p>
@@ -54,7 +54,7 @@ export function HealthGuidanceBlock({ result }: { result: BaziResult }) {
 
       {/* ── 重点关注的方面 ── */}
       <div>
-        <h3 className="text-sm font-semibold text-stone-700 mb-3">🔍 重点关注的方面</h3>
+        <h3 className="text-sm font-semibold text-stone-700 mb-3">重点关注的方面</h3>
         <ul className="space-y-2.5">
           {sortedOrgans.map((o) => (
             <li key={o.element} className="flex items-start gap-2 text-sm">
@@ -74,22 +74,22 @@ export function HealthGuidanceBlock({ result }: { result: BaziResult }) {
 
       {/* ── 养生建议 ── */}
       <div>
-        <h3 className="text-sm font-semibold text-stone-700 mb-3">💪 养生建议</h3>
+        <h3 className="text-sm font-semibold text-stone-700 mb-3">养生建议</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-lg bg-stone-50 border border-stone-100 px-3.5 py-3">
-            <span className="text-xs font-medium text-stone-500">🏃 运动</span>
+            <span className="text-xs font-medium text-stone-500">运动</span>
             <p className="mt-1 text-sm text-stone-600 leading-relaxed">{guidance.wellness.exercise}</p>
           </div>
           <div className="rounded-lg bg-stone-50 border border-stone-100 px-3.5 py-3">
-            <span className="text-xs font-medium text-stone-500">😴 作息</span>
+            <span className="text-xs font-medium text-stone-500">作息</span>
             <p className="mt-1 text-sm text-stone-600 leading-relaxed">{guidance.wellness.rest}</p>
           </div>
           <div className="rounded-lg bg-stone-50 border border-stone-100 px-3.5 py-3">
-            <span className="text-xs font-medium text-stone-500">🥗 饮食</span>
+            <span className="text-xs font-medium text-stone-500">饮食</span>
             <p className="mt-1 text-sm text-stone-600 leading-relaxed">{guidance.wellness.diet}</p>
           </div>
           <div className="rounded-lg bg-stone-50 border border-stone-100 px-3.5 py-3">
-            <span className="text-xs font-medium text-stone-500">🍂 季节</span>
+            <span className="text-xs font-medium text-stone-500">季节</span>
             <p className="mt-1 text-sm text-stone-600 leading-relaxed">{guidance.wellness.seasonal}</p>
           </div>
         </div>
