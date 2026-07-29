@@ -40,6 +40,6 @@ yarn-error.*
 /ios
 /android
 
-# symlinked shared directories (lives in parent repo)
-/lib
-/types
+# symlinked shared directories — MUST be tracked for EAS cloud builds
+# /lib -> ../lib (shared bazi calculation engine)
+# /types -> ../types (shared type definitions)
