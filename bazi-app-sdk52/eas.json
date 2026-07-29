@@ -23,14 +23,5 @@
         "resourceClass": "m-medium"
       }
     }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "ybr0897654@163.com",
-        "ascAppId": "",
-        "appleTeamId": ""
-      }
-    }
   }
 }

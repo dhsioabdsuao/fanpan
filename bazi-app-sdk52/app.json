@@ -1,5 +1,10 @@
 {
   "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "bazi-app-sdk52"
+      }
+    },
     "name": "四柱八字",
     "slug": "bazi-app-sdk52",
     "version": "1.0.0",
