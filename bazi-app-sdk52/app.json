@@ -17,7 +17,16 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bazi.app"
+      "bundleIdentifier": "com.bazi.app",
+      "privacyManifests": {
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyTracking": false,
+        "NSPrivacyAccessedAPITypes": []
+      },
+      "infoPlist": {
+        "NSPrivacyPolicyURL": "https://dhsioabdsuao.github.io/fanpan/privacy.html"
+      }
     },
     "android": {
       "adaptiveIcon": {
