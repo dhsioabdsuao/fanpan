@@ -2,7 +2,7 @@
   "expo": {
     "extra": {
       "eas": {
-        "projectId": "bazi-app-sdk52"
+        "projectId": "a26eba7a-9d3f-4271-bb5f-18c527ab509b"
       }
     },
     "name": "四柱八字",
@@ -25,7 +25,8 @@
         "NSPrivacyAccessedAPITypes": []
       },
       "infoPlist": {
-        "NSPrivacyPolicyURL": "https://dhsioabdsuao.github.io/fanpan/privacy.html"
+        "NSPrivacyPolicyURL": "https://dhsioabdsuao.github.io/fanpan/privacy.html",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -39,6 +40,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "owner": "tonyybr"
   }
 }
