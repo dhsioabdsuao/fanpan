@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 export const FONT_SERIF = Platform.select({
-  ios: 'Noto Serif SC',
+  ios: 'Georgia',
   android: 'serif',
   default: 'serif',
 });

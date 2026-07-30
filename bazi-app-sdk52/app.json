@@ -26,7 +26,8 @@
       },
       "infoPlist": {
         "NSPrivacyPolicyURL": "https://dhsioabdsuao.github.io/fanpan/privacy.html",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIApplicationSupportsMacDesignedForiPad": false
       }
     },
     "android": {
