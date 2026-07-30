@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Animated, Easing } from 'react-native';
-import Svg, { Rect, Circle, Path, ClipPath, Defs, G, Text as SvgText } from 'react-native-svg';
-
-const AnimatedG = Animated.createAnimatedComponent(G);
+import Svg, { Rect, Circle, Path, ClipPath, Defs, Text as SvgText } from 'react-native-svg';
 
 interface Props {
   opacity?: number;
