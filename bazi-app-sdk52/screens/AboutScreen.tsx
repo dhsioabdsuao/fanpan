@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
+import Svg, { Circle, Path, ClipPath, Defs, Rect } from 'react-native-svg';
 import { Colors, FontSize, FONT_SERIF, Spacing } from '../theme';
 
 export default function AboutScreen() {
@@ -41,6 +42,22 @@ export default function AboutScreen() {
         >
           <Text style={styles.privacyLinkText}>隐私政策 →</Text>
         </Pressable>
+
+        {/* Static small taiji */}
+        <View style={styles.taijiWrapper}>
+          <Svg viewBox="0 0 200 200" style={styles.taiji}>
+            <Defs>
+              <ClipPath id="about-tai">
+                <Path d="M 100,12 A 88,88 0 0,1 100,188 A 44,44 0 0,0 100,100 A 44,44 0 0,1 100,12 Z" />
+              </ClipPath>
+            </Defs>
+            <Circle cx="100" cy="100" r="88" fill="#f5f0e8" />
+            <Circle cx="100" cy="100" r="88" fill="#1f1d1a" clipPath="url(#about-tai)" />
+            <Circle cx="84" cy="156" r="8" fill="#f5f0e8" />
+            <Circle cx="116" cy="44" r="8" fill="#1f1d1a" />
+            <Circle cx="100" cy="100" r="88" fill="none" stroke="#a09888" strokeWidth="0.5" opacity="0.3" />
+          </Svg>
+        </View>
 
       </ScrollView>
     </SafeAreaView>
@@ -96,6 +113,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.xl,
     fontFamily: FONT_SERIF,
+  },
+  taijiWrapper: {
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    opacity: 0.3,
+  },
+  taiji: {
+    width: 80,
+    height: 80,
   },
   privacyLink: {
     alignItems: 'center',

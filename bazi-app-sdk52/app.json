@@ -18,7 +18,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tonyybr.bazi",
-      "jsEngine": "jsc",
       "privacyManifests": {
         "NSPrivacyCollectedDataTypes": [],
         "NSPrivacyTrackingDomains": [],
