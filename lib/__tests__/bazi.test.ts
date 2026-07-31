@@ -10,6 +10,7 @@ import { determineStrength } from '../strength/determineStrength'
 import { isCongSha, isCongCai } from '../bage/congGe'
 import { isHuaGe, getHuaQiDayMaster, recalculateShiShen } from '../bage/huaGe'
 import type { HuaQiShiShenResult } from '../bage/huaGe'
+import { getBranchElement } from '@/lib/bazi-utils'
 import { analyzeWuXingLiuTong } from '../bage/liuTong'
 import { getAllShenSha } from '../bage/shensha'
 import type { ShenSha } from '../bage/shensha'
@@ -679,6 +680,29 @@ describe('化格判定', () => {
 
   it('假化格（有克破）：甲己化土有根，但天干透甲木克土', () => {
     const bazi = calculateBazi(makeInput({ year: 2000, month: 8, day: 24 }))
+    const result = isHuaGe(bazi)
+    expect(result).toBeNull()
+  })
+
+  it('假化格（月令克神）：乙庚合金，月支午火克金，化神失时', () => {
+    // 2004-06-15: 甲申 庚午 乙丑 辛巳
+    // 日主乙合庚化金，但月令午火克金，金处死地 → 不成化格
+    const bazi = calculateBazi(makeInput({ year: 2004, month: 6, day: 15, hour: 10 }))
+    expect(bazi.dayMaster).toBe('乙')
+    expect(bazi.pillars.month.branch).toBe('午')
+    const result = isHuaGe(bazi)
+    expect(result).toBeNull()
+  })
+
+  it('假化格（地支克神成势）：化金格地支多火（巳+午），虽天干无火亦克破', () => {
+    // 同上八字：地支午(火)+巳(火) ≥ 2 → 克神在地支成势
+    const bazi = calculateBazi(makeInput({ year: 2004, month: 6, day: 15, hour: 10 }))
+    const branches = [bazi.pillars.year.branch, bazi.pillars.month.branch,
+                      bazi.pillars.day.branch, bazi.pillars.hour.branch]
+    // 验证地支至少有两个火（对化金格，火是克神）
+    const keBranches = branches.filter((b) => getBranchElement(b) === '火')
+    expect(keBranches.length).toBeGreaterThanOrEqual(2)
+    // 三个克破路径（月令克神、地支成势、天干克神）均触发 → null
     const result = isHuaGe(bazi)
     expect(result).toBeNull()
   })

@@ -4,7 +4,7 @@
 // 日主参与天干五合，化神透干有强根，全局无克破化神，方为真化。
 
 import type { BaziResult, ElementType } from '@/types/bazi'
-import { getStemElement, getTenGod } from '@/lib/bazi-utils'
+import { getStemElement, getBranchElement, getTenGod } from '@/lib/bazi-utils'
 import { detectAllHe, getHiddenStemsSpec } from './helpers'
 
 // ── 五合化气映射 ──
@@ -47,6 +47,16 @@ const HUA_ROOT_BRANCHES: Record<ElementType, string[]> = {
   '火': ['巳', '午'],
 }
 
+// 化神月令支持：月支必须是化神的旺相之地（旺月或生扶之月）
+// 《滴天髓》任铁樵注：“化神要昌，须得月令之气”
+const HUA_MONTH_SUPPORT: Record<ElementType, string[]> = {
+  '金': ['申', '酉', '辰', '戌', '丑', '未'],  // 金旺月 + 土月生金
+  '木': ['寅', '卯', '亥', '子'],              // 木旺月 + 水月生木
+  '水': ['亥', '子', '申', '酉'],              // 水旺月 + 金月生水
+  '火': ['巳', '午', '寅', '卯'],              // 火旺月 + 木月生火
+  '土': ['辰', '戌', '丑', '未', '巳', '午'],  // 土旺月 + 火月生土
+}
+
 // ── getHuaQiDayMaster ──
 
 /**
@@ -82,7 +92,13 @@ export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType 
   const touElements = touStems.map((s) => getStemElement(s))
   if (!touElements.includes(huaElement)) return null
 
-  // 3. 化神在地支有强根
+  // 3. 月令支持化神：月支必须是化神的旺相之地
+  //    《滴天髓》任铁樵注：“化神要昌，须得月令之气”
+  const monthBranch = pillars.month.branch
+  const supportedMonths = HUA_MONTH_SUPPORT[huaElement]
+  if (!supportedMonths.includes(monthBranch)) return null
+
+  // 4. 化神在地支有强根
   const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
   const allHe = detectAllHe(branches)
   const hasHeJu = allHe.some((h) => h.element === huaElement && (h.type === '三合' || h.type === '三会'))
@@ -92,8 +108,8 @@ export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType 
 
   if (!hasHeJu && !hasLuWang) return null
 
-  // 4. 全局无克破化神：无克制化神的五行成势
-  //    克神透干 + 克神在地支有根（禄旺/合局） → 成势克破
+  // 5. 全局无克破化神：无克制化神的五行成势
+  //    5a. 克神透干 + 克神在地支有根（禄旺/合局） → 成势克破
   const keElement = KE_MAP[huaElement]
   const keStems = touStems.filter((s) => getStemElement(s) === keElement)
   if (keStems.length > 0) {
@@ -102,6 +118,14 @@ export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType 
     const keHasHeJu = allHe.some((h) => h.element === keElement && (h.type === '三合' || h.type === '三会'))
     if (keHasBranch || keHasHeJu) return null
   }
+
+  //    5b. 月令为克神 → 提纲克破，化神失时
+  const monthBranchElement = getBranchElement(monthBranch)
+  if (monthBranchElement === keElement) return null
+
+  //    5c. 两个或以上地支本气为克神 → 克神在地支成势
+  const keBranches = branches.filter((b) => getBranchElement(b) === keElement)
+  if (keBranches.length >= 2) return null
 
   return {
     name: HUA_NAME_MAP[huaElement],
