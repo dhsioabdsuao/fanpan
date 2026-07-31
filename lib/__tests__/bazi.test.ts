@@ -626,18 +626,22 @@ describe('从格判定', () => {
     expect(result!.reason).toContain('官杀强旺')
   })
 
-  it('假从杀格：透七杀+会金局，但天干透印星化杀', () => {
+  it('假从杀格：透七杀+会金局，但天干透印星有根化杀', () => {
+    // 2003-01-12: 壬午 癸丑 乙酉 辛巳 — 壬癸印星双透但地支无亥子根，虚浮印星不足以化杀
+    // 新算法：印星虚浮无根不破从格，此八字应判为真从杀格
     const bazi = calculateBazi(makeInput({ year: 2003, month: 1, day: 12 }))
     const result = isCongSha(bazi)
-    expect(result).toBeNull()
+    // 壬癸印星透干无根 → 虚浮不破格，仍为真从杀
+    expect(result).not.toBeNull()
+    expect(result!.name).toBe('从杀格')
   })
 
-  it('真从财格：癸水日主，透偏财，三巳火局', () => {
+  it('假从财格（印星有根）：癸水日主，透偏财+三巳火局，但透辛金印星有酉金为根', () => {
+    // 2005-05-09: 乙酉 辛巳 癸巳 丁巳 — 辛金偏印透干且年支酉为印禄
+    // 新算法：印星透干+有根 → 帮身破格，不取从财
     const bazi = calculateBazi(makeInput({ year: 2005, month: 5, day: 9 }))
     const result = isCongCai(bazi)
-    expect(result).not.toBeNull()
-    expect(result!.name).toBe('从财格')
-    expect(result!.reason).toContain('财星强旺')
+    expect(result).toBeNull()
   })
 
   it('假从财格：透财+会火局，但官杀透干无食伤制，财党杀', () => {

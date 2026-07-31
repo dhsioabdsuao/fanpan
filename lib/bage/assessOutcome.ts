@@ -242,10 +242,19 @@ function hasYinHuaSha(ctx: ChartContext): boolean {
   const hasYin = hasTenGodInStems(ctx, '正印') || hasTenGodInStems(ctx, '偏印') ||
                  hesFormTenGodCategory(ctx, '印')
   if (!hasYin) return false
-  // 二次检查：印是否被财破
+  // 二次检查A：印是否被财破
   const hasCai = hasTenGodInStems(ctx, '正财') || hasTenGodInStems(ctx, '偏财') ||
                  hesFormTenGodCategory(ctx, '财')
   if (hasCai) return false
+  // 二次检查B：印自身是否被五合合去（印被合 → 不能化杀）
+  const yinStems: string[] = []
+  if (ctx.stemTenGods[0] === '正印' || ctx.stemTenGods[0] === '偏印') yinStems.push(ctx.stems[0])
+  if (ctx.stemTenGods[1] === '正印' || ctx.stemTenGods[1] === '偏印') yinStems.push(ctx.stems[1])
+  if (ctx.stemTenGods[2] === '正印' || ctx.stemTenGods[2] === '偏印') yinStems.push(ctx.stems[3])
+  for (const ys of yinStems) {
+    const p = getFiveComboPartner(ys)
+    if (p && ctx.stems.includes(p)) return false // 印被合去，化杀失效
+  }
   return true
 }
 
@@ -609,7 +618,8 @@ function assessShangGuan(
   // 伤官有表达：透干 或 当令有根（isShangGuanStrong 放宽后含当令条件）【本系统决策·定性简化版】
   const sgExpressed = hasShangGuanTou || shangGuanStrong
   if (hasYin) {
-    const yinBroken = hasCaiActive && !hasTenGodActive(ctx, '比肩') && !hasTenGodActive(ctx, '劫财')
+    const hasGuanSha = hasTenGodActive(ctx, '正官') || hasTenGodActive(ctx, '七杀')
+    const yinBroken = hasCaiActive && !hasTenGodActive(ctx, '比肩') && !hasTenGodActive(ctx, '劫财') && !hasGuanSha
     if (!yinBroken) {
       // 【本系统决策·定性简化版】伤官佩印需伤官有表达、伤官旺、印有根，否则降为不成格
       if (sgExpressed && !shangGuanStrong) {
