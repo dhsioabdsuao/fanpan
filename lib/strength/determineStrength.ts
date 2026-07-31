@@ -1,6 +1,6 @@
 import type { BaziResult } from '@/types/bazi'
 import { getTenGod, getStemElement } from '@/lib/bazi-utils'
-import { getHiddenStemsSpec } from '@/lib/bage/helpers'
+import { getHiddenStemsSpec, detectAllHe } from '@/lib/bage/helpers'
 
 const BANG_ZHU = new Set(['比肩', '劫财', '正印', '偏印'])
 
@@ -12,101 +12,255 @@ export interface StrengthResult {
   reason: string
 }
 
+// ── 季节划分 ──
+type Season = '春' | '夏' | '秋' | '冬'
+
+function getSeason(monthBranch: string): Season {
+  if (['寅', '卯', '辰'].includes(monthBranch)) return '春'
+  if (['巳', '午', '未'].includes(monthBranch)) return '夏'
+  if (['申', '酉', '戌'].includes(monthBranch)) return '秋'
+  return '冬' // 亥子丑
+}
+
+// ── 旺相休囚死（季节五行强度）──
+// 春季(木旺): 木旺 火相 土死 金囚 水休
+// 夏季(火旺): 火旺 土相 金死 水囚 木休
+// 秋季(金旺): 金旺 水相 木死 火囚 土休
+// 冬季(水旺): 水旺 木相 火死 土囚 金休
+const SEASON_STRENGTH: Record<Season, Record<string, number>> = {
+  '春': { '木': 3, '火': 2, '水': 1, '金': 0.5, '土': 0 },
+  '夏': { '火': 3, '土': 2, '木': 1, '水': 0.5, '金': 0 },
+  '秋': { '金': 3, '水': 2, '土': 1, '火': 0.5, '木': 0 },
+  '冬': { '水': 3, '木': 2, '金': 1, '土': 0.5, '火': 0 },
+}
+
+// ── 强根位置（禄/旺/长生）──
+const LU_POSITIONS: Record<string, string> = {
+  '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午', '戊': '巳',
+  '己': '午', '庚': '申', '辛': '酉', '壬': '亥', '癸': '子',
+}
+
+const WANG_POSITIONS: Record<string, string> = {
+  '甲': '卯', '乙': '寅', '丙': '午', '丁': '巳', '戊': '午',
+  '己': '巳', '庚': '酉', '辛': '申', '壬': '子', '癸': '亥',
+}
+
+const CHANG_SHENG: Record<string, string> = {
+  '甲': '亥', '乙': '午', '丙': '寅', '丁': '酉', '戊': '寅',
+  '己': '酉', '庚': '巳', '辛': '子', '壬': '申', '癸': '卯',
+}
+
+/** 天干在地支是否有强根（禄/帝旺/长生）vs 普通根（余气/中气） */
+function classifyRoots(
+  dayMasterElement: string,
+  branches: string[],
+): { strongCount: number; weakCount: number } {
+  let strong = 0
+  let weak = 0
+  for (const branch of branches) {
+    const hidden = getHiddenStemsSpec(branch)
+    for (let i = 0; i < hidden.length; i++) {
+      const stem = hidden[i]
+      if (getStemElement(stem) !== dayMasterElement) continue
+      // 检查是否为同五行天干的禄/旺/长生位
+      const isStrong = Object.entries(LU_POSITIONS).some(
+        ([gan, pos]) => getStemElement(gan) === dayMasterElement && pos === branch,
+      ) || Object.entries(WANG_POSITIONS).some(
+        ([gan, pos]) => getStemElement(gan) === dayMasterElement && pos === branch,
+      ) || Object.entries(CHANG_SHENG).some(
+        ([gan, pos]) => getStemElement(gan) === dayMasterElement && pos === branch,
+      )
+      if (isStrong) {
+        strong++
+      } else if (i === 0) {
+        // 本气非同五行禄旺 → 算弱根
+        weak++
+      } else {
+        // 中气/余气 → 微根（不算）
+      }
+    }
+  }
+  return { strongCount: strong, weakCount: weak }
+}
+
+// ── 合会局对五行平衡的调整 ──
+interface HeAdjustment {
+  element: string
+  bonus: number // 额外计为该元素的份数
+}
+
+function getHeAdjustments(branches: string[]): HeAdjustment[] {
+  const allHe = detectAllHe(branches)
+  const adjustments: HeAdjustment[] = []
+  for (const he of allHe) {
+    if (he.type === '三会') {
+      // 三会局极强，大幅加权重
+      adjustments.push({ element: he.element, bonus: 3 })
+    } else if (he.type === '三合') {
+      // 三合局强
+      adjustments.push({ element: he.element, bonus: 2 })
+    }
+    // 六合不加权（力量较小，已在地支六合中体现）
+  }
+  return adjustments
+}
+
 export function determineStrength(bazi: BaziResult): StrengthResult {
   const { pillars, dayMaster, dayMasterElement } = bazi
   const monthBranch = pillars.month.branch
+  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
+  const season = getSeason(monthBranch)
+
+  // ── 1.1 得令：季节旺相休囚死 ──
+  const seasonalScore = SEASON_STRENGTH[season][dayMasterElement] ?? 0
+  // 月支本气十神是否为帮扶（印/比）→ 额外加分
   const hidden = getHiddenStemsSpec(monthBranch)
   const benQi = hidden[0]
-
-  // ── 1.1 得令：月支本气十神是否为帮扶 ──
   const benQiTenGod = getTenGod(dayMaster, benQi)
-  const deLing = BANG_ZHU.has(benQiTenGod)
+  const hasBenQiHelp = BANG_ZHU.has(benQiTenGod)
+  // 得令 = 季节分 ≥ 2（旺/相）或本气帮扶
+  const deLing = seasonalScore >= 2 || hasBenQiHelp
 
-  // ── 1.2 得地：四地支藏干有无日主同五行 ──
-  const allBranches = [
-    pillars.year.branch,
-    pillars.month.branch,
-    pillars.day.branch,
-    pillars.hour.branch,
-  ]
-  let deDi = false
-  const allHiddenStems: string[] = []
-  for (const branch of allBranches) {
-    const hs = getHiddenStemsSpec(branch)
-    allHiddenStems.push(...hs)
-    if (!deDi) {
-      deDi = hs.some((s) => getStemElement(s) === dayMasterElement)
-    }
-  }
+  // ── 1.2 得地：区分强根/弱根 ──
+  const { strongCount, weakCount } = classifyRoots(dayMasterElement, branches)
+  // 有强根 → 得地；有 ≥2 弱根 → 也算得地
+  const deDi = strongCount >= 1 || weakCount >= 2
 
-  // ── 1.3 得势：全局帮扶 vs 克泄耗计数 ──
-  const counted: { char: string; source: string; tenGod: string }[] = []
+  // ── 1.3 得势：加权计数帮扶 vs 克泄耗 ──
+  const counted: { char: string; source: string; tenGod: string; weight: number }[] = []
 
-  // 天干：年、月、时（日干=日主自身，不参与计数）
+  // 天干（年/月/时）— 权重较高
   const stemSources = [
-    { char: pillars.year.stem, label: '年干' },
-    { char: pillars.month.stem, label: '月干' },
-    { char: pillars.hour.stem, label: '时干' },
+    { char: pillars.year.stem, label: '年干', weight: 1.0 },
+    { char: pillars.month.stem, label: '月干', weight: 1.5 },
+    { char: pillars.hour.stem, label: '时干', weight: 1.0 },
   ]
-  for (const { char, label } of stemSources) {
-    counted.push({ char, source: label, tenGod: getTenGod(dayMaster, char) })
+  for (const { char, label, weight } of stemSources) {
+    counted.push({ char, source: label, tenGod: getTenGod(dayMaster, char), weight })
   }
 
-  // 地支藏干：全部
+  // 地支藏干 — 权重：本气 > 中气 > 余气；日支 > 月支 > 时支 > 年支
   const branchLabels = ['年支', '月支', '日支', '时支']
-  for (let i = 0; i < allBranches.length; i++) {
-    const hs = getHiddenStemsSpec(allBranches[i])
-    for (const s of hs) {
-      counted.push({ char: s, source: `${branchLabels[i]}藏干`, tenGod: getTenGod(dayMaster, s) })
+  const branchPositionWeight = [0.5, 0.8, 1.0, 0.6] // 日支最重要，月支其次
+  const qiWeights = [1.0, 0.6, 0.3] // 本气 > 中气 > 余气
+
+  for (let i = 0; i < branches.length; i++) {
+    const hs = getHiddenStemsSpec(branches[i])
+    for (let j = 0; j < hs.length; j++) {
+      const weight = branchPositionWeight[i] * qiWeights[Math.min(j, qiWeights.length - 1)]
+      counted.push({
+        char: hs[j],
+        source: `${branchLabels[i]}藏干`,
+        tenGod: getTenGod(dayMaster, hs[j]),
+        weight,
+      })
     }
   }
 
-  let bangCount = 0
-  let keCount = 0
+  // ── 合会局调整 ──
+  const heAdjustments = getHeAdjustments(branches)
+  for (const adj of heAdjustments) {
+    // 合会局形成的五行对日主的十神
+    const tenGod = getTenGod(dayMaster, adj.element)
+    // 将该五行作为额外虚拟字加入计数
+    const isBang = BANG_ZHU.has(tenGod)
+    counted.push({
+      char: `[${adj.element}局]`,
+      source: '合会局',
+      tenGod,
+      weight: adj.bonus * (isBang ? 1.5 : 1.0),
+    })
+  }
+
+  // 汇总帮扶 vs 克泄耗（加权）
+  let bangWeight = 0
+  let keWeight = 0
   const bangList: string[] = []
   const keList: string[] = []
 
-  for (const { char, source, tenGod } of counted) {
+  for (const { char, source, tenGod, weight } of counted) {
+    const label = `${source}${char}(${tenGod})`
     if (BANG_ZHU.has(tenGod)) {
-      bangCount++
-      bangList.push(`${source}${char}(${tenGod})`)
+      bangWeight += weight
+      bangList.push(label)
     } else {
-      keCount++
-      keList.push(`${source}${char}(${tenGod})`)
+      keWeight += weight
+      keList.push(label)
     }
   }
 
+  // 得势判断：加权帮扶 vs 克泄耗
   let deShi: '得势' | '失势' | '均衡'
-  if (bangCount > keCount) {
+  // 帮扶显著多于克泄耗（>20%）才算得势
+  if (bangWeight > keWeight * 1.2) {
     deShi = '得势'
-  } else if (bangCount < keCount) {
+  } else if (keWeight > bangWeight * 1.2) {
     deShi = '失势'
   } else {
     deShi = '均衡'
   }
 
-  // ── 第二章 合成三档 ──
+  // ── 第二章 合成三档（扩展分类）──
+  // 用加权比例辅助判断
+  const ratio = keWeight > 0 ? bangWeight / keWeight : (bangWeight > 0 ? 999 : 1)
+
   let level: '身强' | '中和' | '身弱'
+
+  // 三要素权重：令 > 地 > 势
+  // 得令=季节+月令最根本；得地=根基；得势=数量优势
   if (deLing && deDi && deShi === '得势') {
+    // 三者全帮 → 身强
     level = '身强'
   } else if (!deLing && !deDi && deShi === '失势') {
+    // 三者全不帮 → 身弱
     level = '身弱'
+  } else if (deLing && deDi) {
+    // 得令+得地 → 根基扎实，即使得势不占优也偏强
+    // 但若加权比例过低（克泄耗远大于帮扶），则降为中和
+    level = ratio >= 0.6 ? '身强' : '中和'
+  } else if (!deLing && !deDi) {
+    // 失令+失地 → 根基全无，即使得势占优也偏弱
+    level = ratio <= 1.5 ? '身弱' : '中和'
+  } else if (deLing && deShi === '得势') {
+    // 得令+得势（失地但有根在别处）
+    level = '身强'
+  } else if (deDi && deShi === '得势') {
+    // 得地+得势（失令但根基和数量占优）
+    level = ratio >= 1.3 ? '身强' : '中和'
   } else {
-    level = '中和'
+    // 其余组合用加权比例
+    if (ratio >= 1.5) {
+      level = '身强'
+    } else if (ratio <= 0.6) {
+      level = '身弱'
+    } else {
+      level = '中和'
+    }
   }
 
   // ── 理由 ──
   const lingLabel = deLing ? '得令' : '失令'
-  const diLabel = deDi ? '得地(有根)' : '失地(无根)'
+  const seasonNames: Record<Season, string> = { '春': '春', '夏': '夏', '秋': '秋', '冬': '冬' }
+  const seasonName = seasonNames[season]
+  const seasonalDesc = seasonalScore >= 2
+    ? `${seasonName}季${dayMasterElement}${seasonalScore >= 3 ? '旺' : '相'}`
+    : seasonalScore >= 1
+      ? `${seasonName}季${dayMasterElement}休`
+      : `${seasonName}季${dayMasterElement}${seasonalScore > 0 ? '囚' : '死'}`
   const lingDetail = deLing
-    ? `月支${monthBranch}本气${benQi}(${benQiTenGod})为帮扶`
-    : `月支${monthBranch}本气${benQi}(${benQiTenGod})为克泄耗`
+    ? `${seasonalDesc},月支${monthBranch}本气${benQi}(${benQiTenGod})${hasBenQiHelp ? '为帮扶' : ''}`
+    : `${seasonalDesc},月支${monthBranch}本气${benQi}(${benQiTenGod})为克泄耗`
 
+  const diLabel = deDi ? '得地(有根)' : '失地(无根)'
   const diDetail = deDi
-    ? '地支藏干有日主同五行之根'
-    : '地支藏干无日主同五行之字'
+    ? `强根${strongCount}处${weakCount > 0 ? `,弱根${weakCount}处` : ''}`
+    : '地支无日主同五行之强根'
 
-  const shiDetail = `帮扶[${bangList.join(',')}] vs 克泄耗[${keList.join(',')}]`
+  const shiDetail = `帮扶加权${bangWeight.toFixed(1)}[${bangList.join(',')}] vs 克泄耗加权${keWeight.toFixed(1)}[${keList.join(',')}]`
+  if (heAdjustments.length > 0) {
+    const heDesc = heAdjustments.map(h => `${h.element}局`).join('、')
+    // shiDetail already has合会局 via counted; just note it
+  }
 
   const parts: string[] = []
   parts.push(`${lingLabel}: ${lingDetail}`)
@@ -114,11 +268,11 @@ export function determineStrength(bazi: BaziResult): StrengthResult {
   parts.push(`${deShi}: ${shiDetail}`)
 
   if (level === '身强') {
-    parts.push('→ 身强: 得令且得地且得势，三者全帮')
+    parts.push('→ 身强')
   } else if (level === '身弱') {
-    parts.push('→ 身弱: 失令且无根且失势，三者全不帮')
+    parts.push('→ 身弱')
   } else {
-    parts.push('→ 中和: 三要素不全一致')
+    parts.push('→ 中和')
   }
 
   const reason = parts.join('; ')
