@@ -1,19 +1,13 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
-import { extractPattern, assessOutcome } from '@/lib/bage';
-import { generateAnalysis } from '@/lib/bage/generateAnalysis';
-import { determineStrength } from '@/lib/strength/determineStrength';
+import type { FullAnalysis } from '@/lib/bage/analyze';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function AnalysisBlock({ result }: Props) {
-  const pattern = extractPattern(result);
-  const outcome = assessOutcome(result, pattern);
-  const strength = determineStrength(result);
-  const { summary, analysis } = generateAnalysis({ bazi: result, pattern, outcome, strength });
+export default function AnalysisBlock({ full }: Props) {
+  const { summary, analysis } = full.texts;
 
   // Parse the analysis text into sections
   const sections = analysis.split('\n\n').map((section) => {

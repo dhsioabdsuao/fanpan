@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
-import { generateCareerGuidance } from '@/lib/bage/careerGuidance';
+import type { FullAnalysis } from '@/lib/bage/analyze';
+
 import type { CareerGuidance } from '@/lib/bage/careerGuidance';
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 
@@ -19,13 +19,13 @@ const TIER_STYLES: Record<string, { label: string; bg: string; color: string; bo
 };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function CareerGuidanceBlock({ result }: Props) {
+export default function CareerGuidanceBlock({ full }: Props) {
   let guidance: CareerGuidance;
   try {
-    guidance = generateCareerGuidance(result);
+    guidance = full.texts.career;
   } catch {
     return (
       <Text style={styles.errorText}>暂无法生成事业指引，请确认排盘信息完整</Text>
@@ -97,6 +97,15 @@ export default function CareerGuidanceBlock({ result }: Props) {
           </View>
         ))}
       </View>
+
+      {/* ── 喜忌冲突说明(喜忌规格书 2.5 统一裁决) ── */}
+      {guidance.conflictNotes.length > 0 && (
+        <View style={styles.conflictWrap}>
+          {guidance.conflictNotes.map((note, i) => (
+            <Text key={i} style={styles.conflictText}>注意：{note}</Text>
+          ))}
+        </View>
+      )}
 
       {/* ── 免责 ── */}
       <View style={styles.disclaimer}>
@@ -210,6 +219,20 @@ const styles = StyleSheet.create({
   disclaimerText: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
+    lineHeight: 18,
+  },
+  conflictWrap: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  conflictText: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
     lineHeight: 18,
   },
   errorText: {

@@ -1,4 +1,4 @@
-import type { BaziResult } from '@/types/bazi'
+import type { FullAnalysis } from '@/lib/bage/analyze'
 import type { ElementType } from '@/types/bazi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -12,7 +12,8 @@ const ELEMENT_BG: Record<string, string> = {
   土: 'bg-amber-700',
 }
 
-export function ElementChart({ result }: { result: BaziResult }) {
+export function ElementChart({ full }: { full: FullAnalysis }) {
+  const result = full.bazi
   const { elementCount } = result
 
   return (

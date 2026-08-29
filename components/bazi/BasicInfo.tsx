@@ -1,4 +1,4 @@
-import type { BaziResult } from '@/types/bazi'
+import type { FullAnalysis } from '@/lib/bage/analyze'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   formatMinutesOffset,
@@ -8,7 +8,8 @@ import {
 
 const GENDER_LABEL: Record<string, string> = { male: '男', female: '女' }
 
-export function BasicInfo({ result }: { result: BaziResult }) {
+export function BasicInfo({ full }: { full: FullAnalysis }) {
+  const result = full.bazi
   const adj = result.solarTimeAdjustment
 
   const solarDateMain = adj

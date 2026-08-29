@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseSearchParams } from '@/lib/bazi-input-adapter'
 import { calculateBazi } from '@/lib/bazi'
+import { analyze } from '@/lib/bage/analyze'
 import { PillarTable } from '@/components/bazi/PillarTable'
 import { DaYunTable } from '@/components/bazi/DaYunTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
@@ -21,6 +22,9 @@ import { AnalysisBlock } from '@/components/bazi/AnalysisBlock'
 import { TiaoHouBlock } from '@/components/bazi/TiaoHouBlock'
 import { CareerGuidanceBlock } from '@/components/bazi/CareerGuidanceBlock'
 import { HealthGuidanceBlock } from '@/components/bazi/HealthGuidanceBlock'
+import { XiYongBlock } from '@/components/bazi/XiYongBlock'
+import { LiuTongBlock } from '@/components/bazi/LiuTongBlock'
+import { ShenShaBlock } from '@/components/bazi/ShenShaBlock'
 
 function SkeletonResult() {
   return (
@@ -111,17 +115,73 @@ function ResultContent() {
     return <ErrorMessage message={`排盘失败：${msg}`} />
   }
 
+  // 【诊断流程】全页只算一次统一管线,所有卡片消费同一结果
+  const full = useMemo(() => analyze(result), [result])
+
   const noHour = searchParams.get('noHour')
 
   const [openId, setOpenId] = useState<string | null>(null)
 
+  // 新排版(诊断流程.md 第二节):①命盘总览→⑬生肖
   const sections = [
-    { id: 'basic', title: '日主信息', render: () => <BasicInfo result={result} /> },
-    { id: 'dayun', title: '大运流年', render: () => <DaYunTable result={result} /> },
-    { id: 'pattern', title: '格局', render: () => <PatternBlock result={result} /> },
-    { id: 'strength', title: '日主强弱', render: () => <StrengthBlock result={result} /> },
-    { id: 'analysis', title: '格局解析', render: () => <AnalysisBlock result={result} /> },
-    { id: 'element', title: '五行分布', render: () => <ElementChart result={result} /> },
+    {
+      id: 'zonglan',
+      title: '命盘总览',
+      render: () => (
+        <div className="space-y-4">
+          <BasicInfo full={full} />
+          <ElementChart full={full} />
+        </div>
+      ),
+    },
+    { id: 'pattern', title: '格局定位', render: () => <PatternBlock full={full} /> },
+    { id: 'strength', title: '日主强弱', render: () => <StrengthBlock full={full} /> },
+    {
+      id: 'outcome',
+      title: '格局成败',
+      render: () => {
+        const conditions = full.outcome.conditions
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-stone-400">结论</span>
+              <span className="font-medium text-stone-800">{full.outcome.outcome}</span>
+              {full.outcome.xiangShen && (
+                <span className="text-xs text-stone-500">
+                  相神：{full.outcome.xiangShen.god}（{full.outcome.xiangShen.role}）
+                </span>
+              )}
+              {full.outcome.tiaoHouSpecial && (
+                <span className="text-xs rounded bg-amber-100 text-amber-800 px-1.5 py-0.5">
+                  {full.outcome.tiaoHouSpecial}
+                </span>
+              )}
+            </div>
+            <ul className="space-y-1.5">
+              {conditions.map((c) => (
+                <li key={c.label + c.desc} className="flex gap-2 text-sm text-stone-600">
+                  <span className={c.met ? 'text-emerald-600' : 'text-red-500'}>
+                    {c.met ? '✓' : '✗'}
+                  </span>
+                  <span>
+                    <span className="font-medium">{c.label}</span>
+                    <span className="text-stone-400"> — {c.desc}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      },
+    },
+    { id: 'tiaoHou', title: '调候', render: () => <TiaoHouBlock full={full} /> },
+    { id: 'liuTong', title: '五行流通', render: () => <LiuTongBlock full={full} /> },
+    { id: 'xiyong', title: '喜忌总览', render: () => <XiYongBlock full={full} /> },
+    { id: 'analysis', title: '综合解析', render: () => <AnalysisBlock full={full} /> },
+    { id: 'dayun', title: '大运流年', render: () => <DaYunTable full={full} /> },
+    { id: 'career', title: '事业指引', render: () => <CareerGuidanceBlock full={full} /> },
+    { id: 'health', title: '体质倾向', render: () => <HealthGuidanceBlock full={full} /> },
+    { id: 'shensha', title: '神煞(标注)', render: () => <ShenShaBlock full={full} /> },
     {
       id: 'daymaster',
       title: '日主解析',
@@ -169,21 +229,6 @@ function ResultContent() {
         </>
       ),
     },
-    {
-      id: 'tiaoHou',
-      title: '调候用神',
-      render: () => <TiaoHouBlock result={result} />,
-    },
-    {
-      id: 'career',
-      title: '事业指引',
-      render: () => <CareerGuidanceBlock result={result} />,
-    },
-    {
-      id: 'health',
-      title: '体质倾向',
-      render: () => <HealthGuidanceBlock result={result} />,
-    },
   ]
 
   return (
@@ -201,7 +246,7 @@ function ResultContent() {
           <div className="w-[92px]" />
         </div>
 
-        <PillarTable result={result} hideHour={noHour === '1'} />
+        <PillarTable full={full} hideHour={noHour === '1'} />
 
         {/* ── 折叠面板区 ── */}
         <div className="space-y-4">
@@ -234,6 +279,7 @@ function ResultContent() {
           })}
         </div>
 
+        <Methodology />
 
         {/* Disclaimer */}
         <Card className="bg-stone-100 border-stone-200">

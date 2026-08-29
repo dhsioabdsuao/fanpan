@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
-import { extractPattern, assessOutcome } from '@/lib/bage';
+import type { FullAnalysis } from '@/lib/bage/analyze';
+
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 
 const OUTCOME_LABEL: Record<string, string> = {
@@ -10,12 +10,12 @@ const OUTCOME_LABEL: Record<string, string> = {
 };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function PatternBlock({ result }: Props) {
-  const pattern = extractPattern(result);
-  const ao = assessOutcome(result, pattern);
+export default function PatternBlock({ full }: Props) {
+  const pattern = full.pattern;
+  const ao = full.outcome;
 
   const reasons = ao.reason
     .split(';')

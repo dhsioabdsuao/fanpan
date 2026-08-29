@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
+import type { FullAnalysis } from '@/lib/bage/analyze';
 import { getAllShenSha } from '@/lib/bage/shensha';
 import type { ShenSha } from '@/lib/bage/shensha';
 import Card from '../ui/Card';
@@ -24,11 +24,12 @@ const PILLAR_LABELS: Record<string, '年柱' | '月柱' | '日柱' | '时柱'> =
 };
 
 interface Props {
-  result: BaziResult;
-  hideHour?: boolean;
+  full: FullAnalysis; hideHour?: boolean;
+
 }
 
-export default function PillarTable({ result, hideHour }: Props) {
+export default function PillarTable({ full, hideHour }: Props) {
+  const result = full.bazi;
   const { pillars, tenGods, naYin } = result;
   const shensha = getAllShenSha(result);
   const pillarKeys = ['year', 'month', 'day', 'hour'] as const;

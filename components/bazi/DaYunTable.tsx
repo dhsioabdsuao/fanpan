@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { BaziResult, DaYunData, LiuNianAnnotation } from '@/types/bazi'
+import type { DaYunData, LiuNianAnnotation } from '@/types/bazi'
+import type { FullAnalysis } from '@/lib/bage/analyze'
 import { Card, CardContent } from '@/components/ui/card'
 import { getTenGod, getStemElement, getBranchElement } from '@/lib/bazi-utils'
 
@@ -129,7 +130,8 @@ function DaYunRow({
   )
 }
 
-export function DaYunTable({ result }: { result: BaziResult }) {
+export function DaYunTable({ full }: { full: FullAnalysis }) {
+  const result = full.bazi
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
   if (!result.daYun) return null

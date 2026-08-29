@@ -1,6 +1,7 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
-import { getTiaoHouYongShen, getTiaoHouType, getTiaoHouNarrative } from '@/lib/bage/tiaoHou';
+
+import type { FullAnalysis } from '@/lib/bage/analyze';
+
 import { getStemElement } from '@/lib/bazi-utils';
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 
@@ -14,19 +15,19 @@ const ELEMENT_ADVICE: Record<string, string> = {
 
 const TYPE_STYLES: Record<string, { text: string; bg: string; color: string; border: string }> = {
   '火炎土燥': {
-    text: '命局偏燥，需水调候',
+    text: '命局偏燥(火炎土燥)',
     bg: Colors.dryHot,
     color: '#991b1b',
     border: '#fecaca',
   },
   '金寒水冷': {
-    text: '命局偏寒，需火调候',
+    text: '命局偏寒(金寒水冷)',
     bg: Colors.cold,
     color: '#1e3a5f',
     border: '#bfdbfe',
   },
   '寒暖适中': {
-    text: '命局寒暖适中，无需特殊调候',
+    text: '命局寒暖适中',
     bg: Colors.balanced,
     color: '#064e3b',
     border: '#a7f3d0',
@@ -34,18 +35,25 @@ const TYPE_STYLES: Record<string, { text: string; bg: string; color: string; bor
 };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function TiaoHouBlock({ result }: Props) {
-  const type = getTiaoHouType(result);
-  const gods = getTiaoHouYongShen(result.dayMaster, result.pillars.month.branch);
-  const narrative = getTiaoHouNarrative(result);
-  const style = TYPE_STYLES[type];
+export default function TiaoHouBlock({ full }: Props) {
+  // 【诊断流程 L7】调候与喜忌冲突结论唯一来自喜忌引擎
+  const { tiaoHou, xiYong, pattern } = full;
+  const gods = tiaoHou.gods;
+  const style = TYPE_STYLES[tiaoHou.type];
+
+  const isHuaCong = pattern.category.startsWith('化') || pattern.category.startsWith('从');
+
+  const conflictOf = (stem: string) => {
+    const el = getStemElement(stem);
+    return xiYong.conflicts.find((c) => c.element === el) ?? null;
+  };
 
   return (
     <View style={styles.container}>
-      {/* Type badge */}
+      {/* 气候类型徽章(只标气候,救治方向见喜忌总览) */}
       <View style={styles.badgeWrap}>
         <View style={[styles.badge, { backgroundColor: style?.bg, borderColor: style?.border }]}>
           <Text style={[styles.badgeText, { color: style?.color }]}>{style?.text}</Text>
@@ -55,32 +63,51 @@ export default function TiaoHouBlock({ result }: Props) {
       {gods.length > 0 && (
         <>
           <Text style={styles.desc}>
-            根据《穷通宝鉴》，{result.dayMaster}日主生于{result.pillars.month.branch}月，调候用神为：
+            根据《穷通宝鉴》，{full.bazi.dayMaster}日主生于{full.bazi.pillars.month.branch}月，调候用神为：
           </Text>
 
           <View style={styles.godsWrap}>
             {gods.map((stem) => {
               const el = getStemElement(stem);
+              const conflict = conflictOf(stem);
+              const isFav = xiYong.favorable.includes(el);
               return (
                 <View key={stem} style={styles.godCard}>
                   <Text style={styles.godStem}>{stem}</Text>
                   <Text style={styles.godElement}>{el}</Text>
                   <Text style={styles.godAdvice}>· {ELEMENT_ADVICE[el] || el}</Text>
+                  {conflict ? (
+                    <Text style={[styles.tag, conflict.resolution === '气候已足不需补' || conflict.resolution === '格局优先剔除' ? styles.tagAmber : styles.tagGreen]}>
+                      {conflict.resolution === '气候已足不需补' ? '已足·不补'
+                        : conflict.resolution === '格局优先剔除' ? '格局优先·不补'
+                        : '保留'}
+                    </Text>
+                  ) : isFav ? (
+                    <Text style={[styles.tag, styles.tagGreen]}>在喜用中</Text>
+                  ) : null}
                 </View>
               );
             })}
           </View>
+
+          {isHuaCong && (
+            <Text style={styles.huaCongNote}>
+              {pattern.displayName}只论{pattern.category.startsWith('化') ? '化' : '从'},调候仅作参考标注,不参与喜忌排序。
+            </Text>
+          )}
+
+          {xiYong.conflicts.length > 0 && (
+            <View style={styles.conflictWrap}>
+              {xiYong.conflicts.map((c) => (
+                <Text key={c.element + c.role} style={styles.conflictText}>{c.note}</Text>
+              ))}
+            </View>
+          )}
         </>
       )}
 
       {gods.length === 0 && (
         <Text style={styles.noData}>《穷通宝鉴》未收录此组合的调候用神</Text>
-      )}
-
-      {narrative && (
-        <View style={styles.narrativeWrap}>
-          <Text style={styles.narrativeText}>{narrative}</Text>
-        </View>
       )}
 
       {/* Explanation */}
@@ -148,23 +175,44 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textMuted,
   },
+  tag: {
+    fontSize: FontSize.xs,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  tagAmber: {
+    backgroundColor: '#fef3c7',
+    color: '#92400e',
+  },
+  tagGreen: {
+    backgroundColor: '#d1fae5',
+    color: '#065f46',
+  },
   noData: {
     fontSize: FontSize.sm,
     color: Colors.textMuted,
     textAlign: 'center',
   },
-  narrativeWrap: {
-    backgroundColor: Colors.surface,
+  huaCongNote: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  conflictWrap: {
+    backgroundColor: '#fffbeb',
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: '#fde68a',
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
+    gap: Spacing.xs,
   },
-  narrativeText: {
-    fontSize: FontSize.sm,
+  conflictText: {
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   explanation: {
     gap: Spacing.xs,

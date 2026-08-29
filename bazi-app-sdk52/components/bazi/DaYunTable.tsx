@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, LayoutAnimation, FlatList } from 'react-native';
-import type { BaziResult, DaYunData } from '@/types/bazi';
+import type { FullAnalysis } from '@/lib/bage/analyze';
+import type { DaYunData } from '@/types/bazi';
 import { getTenGod, getStemElement, getBranchElement } from '@/lib/bazi-utils';
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 
@@ -29,10 +30,11 @@ function currentDaYunIndex(decades: DaYunData[]): number {
 }
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function DaYunTable({ result }: Props) {
+export default function DaYunTable({ full }: Props) {
+  const result = full.bazi;
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   if (!result.daYun) return null;

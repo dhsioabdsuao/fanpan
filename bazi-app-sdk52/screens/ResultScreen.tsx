@@ -6,12 +6,13 @@ import type { RootStackParamList } from '../navigation/types';
 import { buildBaziInput } from '../adapters/bazi-input-adapter';
 import { calculateBazi } from '@/lib/bazi';
 import { extractPattern, assessOutcome } from '@/lib/bage';
-import { generateNarrative } from '@/lib/bage/narrative';
-import { analyzeWuXingLiuTong } from '@/lib/bage/liuTong';
-import { determineStrength } from '@/lib/strength/determineStrength';
+import { analyze } from '@/lib/bage/analyze';
+import XiYongBlock from '../components/bazi/XiYongBlock';
+import LiuTongBlock from '../components/bazi/LiuTongBlock';
+import ShenShaBlock from '../components/bazi/ShenShaBlock';
 import { DAY_MASTER_INTERPRETATIONS } from '@/lib/interpretations/dayMaster';
 import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac';
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing } from '../theme';
+import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import PillarTable from '../components/bazi/PillarTable';
 import BasicInfo from '../components/bazi/BasicInfo';
 import DaYunTable from '../components/bazi/DaYunTable';
@@ -70,18 +71,25 @@ export default function ResultScreen({ navigation, route }: Props) {
     }
   }, [result]);
 
-  const narrative = useMemo(() => {
-    if (!result) return '';
+  // 【诊断流程】全页只算一次统一管线,所有卡片消费同一结果
+  const full = useMemo(() => {
+    if (!result) return null;
     try {
-      const pattern = extractPattern(result);
-      const outcome = assessOutcome(result, pattern);
-      const strength = determineStrength(result);
-      const liuTong = analyzeWuXingLiuTong(result);
-      return generateNarrative(result, pattern, outcome, strength, liuTong);
+      return analyze(result);
     } catch {
-      return '';
+      return null;
     }
   }, [result]);
+
+  if (!full) {
+    return (
+      <View style={styles.safe}>
+        <Text style={styles.placeholder}>分析生成中…</Text>
+      </View>
+    );
+  }
+
+  const narrative = full.texts.narrative;
 
   const toggleSection = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -102,25 +110,67 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   const Sections = [
     {
-      id: 'narrative',
-      title: '命局叙事',
+      id: 'zonglan',
+      title: '命盘总览',
+      render: () => (
+        <View>
+          <BasicInfo full={full} />
+          <ElementChart full={full} />
+        </View>
+      ),
+    },
+    { id: 'pattern', title: '格局定位', component: PatternBlock },
+    { id: 'strength', title: '日主强弱', component: StrengthBlock },
+    {
+      id: 'outcome',
+      title: '格局成败',
       render: () => {
-        if (!narrative) return <Text style={styles.placeholder}>叙事生成中…</Text>;
+        if (!full) return null;
         return (
           <View>
-            {narrative.split('\n\n').map((para, i) => (
-              <Text key={i} style={styles.narrativeBody}>{para}</Text>
+            <View style={styles.outcomeHead}>
+              <Text style={styles.outcomeLabel}>结论</Text>
+              <Text style={styles.outcomeValue}>{full.outcome.outcome}</Text>
+              {full.outcome.tiaoHouSpecial ? (
+                <Text style={styles.tiaoHouTag}>{full.outcome.tiaoHouSpecial}</Text>
+              ) : null}
+            </View>
+            {full.outcome.conditions.map((c) => (
+              <View key={c.label + c.desc} style={styles.condRow}>
+                <Text style={c.met ? styles.condOk : styles.condFail}>{c.met ? '✓' : '✗'}</Text>
+                <Text style={styles.condText}>
+                  <Text style={styles.condLabel}>{c.label}</Text>
+                  <Text style={styles.condDesc}> — {c.desc}</Text>
+                </Text>
+              </View>
             ))}
           </View>
         );
       },
     },
-    { id: 'basic', title: '日主信息', component: BasicInfo },
+    { id: 'tiaoHou', title: '调候', component: TiaoHouBlock },
+    { id: 'liuTong', title: '五行流通', component: LiuTongBlock },
+    { id: 'xiyong', title: '喜忌总览', component: XiYongBlock },
+    {
+      id: 'analysis',
+      title: '综合解析',
+      render: () => (
+        <View>
+          {narrative ? (
+            <View style={styles.narrativeWrap}>
+              {narrative.split('\n\n').map((para, i) => (
+                <Text key={i} style={styles.narrativeBody}>{para}</Text>
+              ))}
+            </View>
+          ) : null}
+          <AnalysisBlock full={full} />
+        </View>
+      ),
+    },
     { id: 'dayun', title: '大运流年', component: DaYunTable },
-    { id: 'pattern', title: '格局', component: PatternBlock },
-    { id: 'strength', title: '日主强弱', component: StrengthBlock },
-    { id: 'analysis', title: '格局解析', component: AnalysisBlock },
-    { id: 'element', title: '五行分布', component: ElementChart },
+    { id: 'career', title: '事业指引', component: CareerGuidanceBlock },
+    { id: 'health', title: '体质倾向', component: HealthGuidanceBlock },
+    { id: 'shensha', title: '神煞(标注)', component: ShenShaBlock },
     {
       id: 'daymaster',
       title: '日主解析',
@@ -157,9 +207,6 @@ export default function ResultScreen({ navigation, route }: Props) {
         </View>
       ),
     },
-    { id: 'tiaoHou', title: '调候用神', component: TiaoHouBlock },
-    { id: 'career', title: '事业指引', component: CareerGuidanceBlock },
-    { id: 'health', title: '体质倾向', component: HealthGuidanceBlock },
   ];
 
   return (
@@ -175,7 +222,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         </View>
 
         {/* Pillar Table */}
-        <PillarTable result={result} />
+        <PillarTable full={full} />
 
         {/* Collapsible Sections */}
         <View style={styles.sections}>
@@ -190,7 +237,7 @@ export default function ResultScreen({ navigation, route }: Props) {
               >
                 {section.render
                   ? section.render()
-                  : section.component && <section.component result={result} />}
+                  : section.component && <section.component full={full} />}
               </CollapsibleSection>
             );
           })}
@@ -273,6 +320,67 @@ const styles = StyleSheet.create({
     color: Colors.goldText,
     fontWeight: FontWeight.medium,
     padding: Spacing.xs,
+  },
+  narrativeWrap: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  outcomeHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  outcomeLabel: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+  },
+  outcomeValue: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+  },
+  tiaoHouTag: {
+    fontSize: FontSize.xs,
+    backgroundColor: '#fef3c7',
+    color: '#92400e',
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  condRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: 6,
+  },
+  condOk: {
+    color: '#059669',
+    fontWeight: FontWeight.bold,
+  },
+  condFail: {
+    color: '#dc2626',
+    fontWeight: FontWeight.bold,
+  },
+  condText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    flex: 1,
+    lineHeight: 20,
+  },
+  condLabel: {
+    fontWeight: FontWeight.medium,
+    color: Colors.textPrimary,
+  },
+  condDesc: {
+    color: Colors.textMuted,
   },
   narrativeBody: {
     fontSize: FontSize.base,

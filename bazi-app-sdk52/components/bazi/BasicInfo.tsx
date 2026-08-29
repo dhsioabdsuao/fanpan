@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
+import type { FullAnalysis } from '@/lib/bage/analyze';
 import {
   formatMinutesOffset,
   formatChineseSolarDatetime,
@@ -11,10 +11,11 @@ import { Colors, FontSize, FontWeight, Spacing, FONT_SERIF } from '../../theme';
 const GENDER_LABEL: Record<string, string> = { male: '男', female: '女' };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function BasicInfo({ result }: Props) {
+export default function BasicInfo({ full }: Props) {
+  const result = full.bazi;
   const adj = result.solarTimeAdjustment;
 
   const solarDateMain = adj

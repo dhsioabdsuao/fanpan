@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
-import { generateHealthGuidance } from '@/lib/bage/healthGuidance';
+import type { FullAnalysis } from '@/lib/bage/analyze';
+
 import type { HealthGuidance } from '@/lib/bage/healthGuidance';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
 
@@ -11,13 +11,13 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function HealthGuidanceBlock({ result }: Props) {
+export default function HealthGuidanceBlock({ full }: Props) {
   let guidance: HealthGuidance;
   try {
-    guidance = generateHealthGuidance(result);
+    guidance = full.texts.health;
   } catch {
     return (
       <Text style={styles.errorText}>暂无法生成体质倾向，请确认排盘信息完整</Text>

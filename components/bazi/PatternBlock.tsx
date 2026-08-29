@@ -1,6 +1,5 @@
-import type { BaziResult } from '@/types/bazi'
+import type { FullAnalysis } from '@/lib/bage/analyze'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { extractPattern, assessOutcome } from '@/lib/bage'
 
 const OUTCOME_LABEL: Record<string, string> = {
   '成格': '成格',
@@ -8,9 +7,9 @@ const OUTCOME_LABEL: Record<string, string> = {
   '破格': '破格',
 }
 
-export function PatternBlock({ result }: { result: BaziResult }) {
-  const pattern = extractPattern(result)
-  const ao = assessOutcome(result, pattern)
+export function PatternBlock({ full }: { full: FullAnalysis }) {
+  const pattern = full.pattern
+  const ao = full.outcome
 
   const reasons = ao.reason
     .split(';')
@@ -67,6 +66,17 @@ export function PatternBlock({ result }: { result: BaziResult }) {
             ))}
           </ul>
         </div>
+        {/* 判定依据(规则轨迹) */}
+        <details className="text-xs text-stone-400 mt-3">
+          <summary className="cursor-pointer select-none hover:text-stone-500">
+            判定依据(取格轨迹,可对照《格局规格书》核验)
+          </summary>
+          <ol className="mt-2 space-y-1 list-decimal list-inside leading-relaxed">
+            {pattern.judgementTrace.map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ol>
+        </details>
       </CardContent>
     </Card>
   )

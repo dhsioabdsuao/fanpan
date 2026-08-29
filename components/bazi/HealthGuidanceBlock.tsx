@@ -1,7 +1,7 @@
 'use client'
 
-import type { BaziResult } from '@/types/bazi'
-import { generateHealthGuidance } from '@/lib/bage/healthGuidance'
+import type { FullAnalysis } from '@/lib/bage/analyze'
+
 import type { HealthGuidance } from '@/lib/bage/healthGuidance'
 
 const STATUS_STYLE: Record<string, string> = {
@@ -24,10 +24,10 @@ function HealthGuidanceError() {
   )
 }
 
-export function HealthGuidanceBlock({ result }: { result: BaziResult }) {
+export function HealthGuidanceBlock({ full }: { full: FullAnalysis }) {
   let guidance: HealthGuidance
   try {
-    guidance = generateHealthGuidance(result)
+    guidance = full.texts.health
   } catch {
     return <HealthGuidanceError />
   }

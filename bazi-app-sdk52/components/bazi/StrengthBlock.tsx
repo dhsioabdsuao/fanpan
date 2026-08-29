@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult } from '@/types/bazi';
-import { determineStrength } from '@/lib/strength/determineStrength';
+import type { FullAnalysis } from '@/lib/bage/analyze';
+
 import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -10,11 +10,11 @@ const LEVEL_LABEL: Record<string, string> = {
 };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function StrengthBlock({ result }: Props) {
-  const s = determineStrength(result);
+export default function StrengthBlock({ full }: Props) {
+  const s = full.strength;
 
   const reasons = s.reason
     .split(';')

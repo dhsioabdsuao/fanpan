@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
-import type { BaziResult, ElementType } from '@/types/bazi';
+import type { FullAnalysis } from '@/lib/bage/analyze';
+import type { ElementType } from '@/types/bazi';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
 
 const ELEMENT_ORDER: ElementType[] = ['金', '木', '水', '火', '土'];
@@ -13,10 +14,11 @@ const ELEMENT_BG: Record<string, string> = {
 };
 
 interface Props {
-  result: BaziResult;
+  full: FullAnalysis;
 }
 
-export default function ElementChart({ result }: Props) {
+export default function ElementChart({ full }: Props) {
+  const result = full.bazi;
   const { elementCount } = result;
 
   return (

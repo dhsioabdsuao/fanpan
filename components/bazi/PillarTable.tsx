@@ -1,4 +1,4 @@
-import type { BaziResult } from '@/types/bazi'
+import type { FullAnalysis } from '@/lib/bage/analyze'
 import { Card, CardContent } from '@/components/ui/card'
 import { getAllShenSha } from '@/lib/bage/shensha'
 import type { ShenSha } from '@/lib/bage/shensha'
@@ -44,7 +44,8 @@ function StemBranch({
   )
 }
 
-export function PillarTable({ result, hideHour }: { result: BaziResult; hideHour?: boolean }) {
+export function PillarTable({ full, hideHour }: { full: FullAnalysis; hideHour?: boolean }) {
+  const result = full.bazi
   const { pillars, tenGods, naYin } = result
   const shensha = getAllShenSha(result)
   const pillarKeys = ['year', 'month', 'day', 'hour'] as const

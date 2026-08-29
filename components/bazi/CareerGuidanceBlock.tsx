@@ -1,7 +1,7 @@
 'use client'
 
-import type { BaziResult } from '@/types/bazi'
-import { generateCareerGuidance } from '@/lib/bage/careerGuidance'
+import type { FullAnalysis } from '@/lib/bage/analyze'
+
 import type { CareerGuidance } from '@/lib/bage/careerGuidance'
 
 const ELEMENT_COLORS: Record<string, string> = {
@@ -54,10 +54,10 @@ function CareerGuidanceError() {
   )
 }
 
-export function CareerGuidanceBlock({ result }: { result: BaziResult }) {
+export function CareerGuidanceBlock({ full }: { full: FullAnalysis }) {
   let guidance: CareerGuidance
   try {
-    guidance = generateCareerGuidance(result)
+    guidance = full.texts.career
   } catch {
     return <CareerGuidanceError />
   }
@@ -138,6 +138,17 @@ export function CareerGuidanceBlock({ result }: { result: BaziResult }) {
           ))}
         </ol>
       </div>
+
+      {/* ── 喜忌冲突说明(喜忌规格书 2.5 统一裁决) ── */}
+      {guidance.conflictNotes.length > 0 && (
+        <div className="rounded-lg bg-amber-50 border border-amber-100 p-3 space-y-1">
+          {guidance.conflictNotes.map((note, i) => (
+            <p key={i} className="text-xs text-stone-500 leading-relaxed">
+              注意：{note}
+            </p>
+          ))}
+        </div>
+      )}
 
       {/* ── 免责 ── */}
       <p className="text-xs text-stone-400 leading-relaxed pt-1 border-t border-stone-100">

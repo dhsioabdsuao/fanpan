@@ -1,6 +1,5 @@
-import type { BaziResult } from '@/types/bazi'
+import type { FullAnalysis } from '@/lib/bage/analyze'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { determineStrength } from '@/lib/strength/determineStrength'
 
 const LEVEL_LABEL: Record<string, string> = {
   '身强': '身强',
@@ -8,8 +7,8 @@ const LEVEL_LABEL: Record<string, string> = {
   '身弱': '身弱',
 }
 
-export function StrengthBlock({ result }: { result: BaziResult }) {
-  const s = determineStrength(result)
+export function StrengthBlock({ full }: { full: FullAnalysis }) {
+  const s = full.strength
 
   const reasons = s.reason
     .split(';')
