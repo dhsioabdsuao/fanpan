@@ -41,12 +41,12 @@ export const Colors = {
   destructive: '#c44d34',
   destructiveForeground: '#fef5f2',
 
-  // Element colors (五行) — more vibrant
+  // Element colors (五行) — lib/theme-tokens.ts 双面验证值
   gold_elem: '#b8860b',     // 金
   wood: '#2d7d46',          // 木
   water: '#2563eb',         // 水
-  fire: '#dc2626',          // 火
-  earth: '#b45309',         // 土
+  fire: '#e02b1f',          // 火
+  earth: '#bf8414',         // 土
 
   // Day master highlight
   dayMasterBg: '#fef9e7',
