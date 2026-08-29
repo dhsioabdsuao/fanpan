@@ -1,8 +1,7 @@
-import type { BaziResult, ElementType } from '@/types/bazi';
-import type { ExtractResult } from './extractPattern';
-import type { AssessResult } from './assessOutcome';
-import type { StrengthResult } from '@/lib/strength/determineStrength';
-import type { LiuTongResult } from './liuTong';
+// CONSUMES-FULL-ANALYSIS-ONLY:叙事只消费 analyze() 的统一结果,
+// 不自行重判气候/格局机制(诊断流程 L10)。
+import type { ElementType } from '@/types/bazi';
+import type { FullAnalysis } from './analyze';
 import { getTenGod } from '@/lib/bazi-utils';
 
 const EL_ABILITY: Record<string, string> = {
@@ -55,11 +54,13 @@ function detectSanHui(branches: string[]): string[] {
 // ── 类型 ──
 
 interface Ctx {
-  bazi: BaziResult;
-  pattern: ExtractResult;
-  outcome: AssessResult;
-  strength: StrengthResult;
-  lt: LiuTongResult;
+  full: Omit<FullAnalysis, 'texts'>;
+  bazi: FullAnalysis['bazi'];
+  pattern: FullAnalysis['pattern'];
+  outcome: FullAnalysis['outcome'];
+  strength: FullAnalysis['strength'];
+  lt: FullAnalysis['liuTong'];
+  tiaoHouType: FullAnalysis['tiaoHou']['type'];
   dayEl: ElementType;
   dm: string;
   isStrong: boolean;
@@ -71,13 +72,12 @@ interface Ctx {
 
 interface Feature { score: number; text: string; tags?: string[]; }
 
-function buildCtx(
-  bazi: BaziResult, pattern: ExtractResult, outcome: AssessResult,
-  strength: StrengthResult, lt: LiuTongResult,
-): Ctx {
+function buildCtx(full: Omit<FullAnalysis, 'texts'>): Ctx {
+  const { bazi, pattern, outcome, strength, liuTong, tiaoHou } = full;
   const p = bazi.pillars;
   return {
-    bazi, pattern, outcome, strength, lt,
+    full, bazi, pattern, outcome, strength, lt: liuTong,
+    tiaoHouType: tiaoHou.type,
     dayEl: bazi.dayMasterElement,
     dm: `${bazi.dayMaster}${bazi.dayMasterElement}`,
     isStrong: strength.level === '身强',
@@ -474,15 +474,15 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
 
-  // ── 7. 火炎土燥/金寒水冷/水多木漂/木多火塞/土多金埋 ──
-  if (ec['火'] >= 2 && ec['土'] >= 3 && ec['水'] === 0) {
+  // ── 7. 气候论断(只消费调候层结论,不再自判阈值)──
+  if (ctx.tiaoHouType === '火炎土燥') {
     features.push({
       score: 65,
       tags: ['info'],
       text: `火炎土燥——你心里常年像烧着一锅快干的水，越搅越焦。${ctx.isStrong ? '身强让你扛得住，但扛得住不等于消化得了。' : ''}你没有情绪冷却机制，压力堆积如山，表面还跟没事人一样。`,
     });
   }
-  if (ec['金'] >= 2 && ec['水'] >= 3 && ec['火'] === 0) {
+  if (ctx.tiaoHouType === '金寒水冷') {
     features.push({
       score: 65,
       tags: ['info'],
@@ -511,25 +511,22 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
 
-  // ── 8. 伤官佩印 / 伤官生财 / 食神生财 / 食神制杀 / 印绶化杀 / 官杀生印 ──
-  const patternCat = pattern.category;
-  const monthQi = p.month.hiddenStems[0];
-  const monthQiTG = monthQi ? getTenGod(bazi.dayMaster, monthQi) : '';
-  const hasYinTou = ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印' || ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印';
-  const hasCaiTou = ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财' || ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财' || ctx.tenGods[3] === '正财' || ctx.tenGods[3] === '偏财';
-  const hasShiShenTou = ctx.tenGods[0] === '食神' || ctx.tenGods[1] === '食神' || ctx.tenGods[3] === '食神';
-  const hasShangGuanTou = ctx.tenGods[0] === '伤官' || ctx.tenGods[1] === '伤官' || ctx.tenGods[3] === '伤官';
-  const hasShaTou = ctx.tenGods[0] === '七杀' || ctx.tenGods[1] === '七杀' || ctx.tenGods[3] === '七杀';
-  const hasGuanTou = ctx.tenGods[0] === '正官' || ctx.tenGods[1] === '正官' || ctx.tenGods[3] === '正官';
-  const isShaGe = patternCat === '杀格' || pattern.displayName.includes('七杀');
-  const isShangGe = patternCat === '伤官格' || monthQiTG === '伤官';
-  const isShiGe = patternCat === '食神格' || monthQiTG === '食神';
+  // ── 8. 机制组合论断(只消费成败层结构化 conditions,不再自判)──
+  const cond = (label: string) => ctx.outcome.conditions.some((c) => c.label === label && c.met);
+  const yinPos: string[] = [];
+  if (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印') yinPos.push('年');
+  if (ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印') yinPos.push('时');
+  const caiPos: string[] = [];
+  if (ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财') caiPos.push('年');
+  if (ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财') caiPos.push('月');
+  if (ctx.tenGods[3] === '正财' || ctx.tenGods[3] === '偏财') caiPos.push('时');
+  const shiPos: string[] = [];
+  if (ctx.tenGods[0] === '食神') shiPos.push('年');
+  if (ctx.tenGods[1] === '食神') shiPos.push('月');
+  if (ctx.tenGods[3] === '食神') shiPos.push('时');
 
   // 伤官佩印
-  if (isShangGe && hasYinTou) {
-    const yinPos: string[] = [];
-    if (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印') yinPos.push('年');
-    if (ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印') yinPos.push('时');
+  if (cond('伤官佩印')) {
     features.push({
       score: 80,
       tags: ['main'],
@@ -537,11 +534,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
   // 伤官生财（仅伤官格）
-  if (isShangGe && hasCaiTou) {
-    const caiPos: string[] = [];
-    if (ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财') caiPos.push('年');
-    if (ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财') caiPos.push('月');
-    if (ctx.tenGods[3] === '正财' || ctx.tenGods[3] === '偏财') caiPos.push('时');
+  if (cond('伤官生财')) {
     features.push({
       score: 80,
       tags: ['main'],
@@ -549,11 +542,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
   // 食神生财
-  if (isShiGe && hasCaiTou) {
-    const caiPos: string[] = [];
-    if (ctx.tenGods[0] === '正财' || ctx.tenGods[0] === '偏财') caiPos.push('年');
-    if (ctx.tenGods[1] === '正财' || ctx.tenGods[1] === '偏财') caiPos.push('月');
-    if (ctx.tenGods[3] === '正财' || ctx.tenGods[3] === '偏财') caiPos.push('时');
+  if (cond('食神生财')) {
     features.push({
       score: 75,
       tags: ['main'],
@@ -561,11 +550,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
   // 食神制杀
-  if (isShaGe && hasShiShenTou) {
-    const shiPos: string[] = [];
-    if (ctx.tenGods[0] === '食神') shiPos.push('年');
-    if (ctx.tenGods[1] === '食神') shiPos.push('月');
-    if (ctx.tenGods[3] === '食神') shiPos.push('时');
+  if (cond('食神制杀')) {
     features.push({
       score: 85,
       tags: ['main'],
@@ -573,10 +558,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
   // 印绶化杀
-  if (isShaGe && hasYinTou) {
-    const yinPos: string[] = [];
-    if (ctx.tenGods[0] === '偏印' || ctx.tenGods[0] === '正印') yinPos.push('年');
-    if (ctx.tenGods[3] === '偏印' || ctx.tenGods[3] === '正印') yinPos.push('时');
+  if (cond('印星化杀')) {
     features.push({
       score: 80,
       tags: ['main'],
@@ -584,7 +566,7 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
   // 官杀生印
-  if ((patternCat === '印格' || pattern.displayName.includes('印')) && (hasShaTou || hasGuanTou)) {
+  if (cond('官杀生印')) {
     features.push({
       score: 65,
       tags: ['main'],
@@ -592,17 +574,18 @@ function scanFeatures(ctx: Ctx): Feature[] {
     });
   }
 
-  // ── 9. 三合/三会局 ──
+  // ── 9. 三合/三会局(有无制化由成败层结论决定,不再自判"失控")──
   const heEls = detectSanHe(branches);
   const huiEls = detectSanHui(branches);
   if (huiEls.length > 0) {
     const el = huiEls[0];
-    const isGuanSha = el === '金' && patternCat === '杀格';
+    // 三会金局+杀格:仅当成败层判定"无官杀成局无制"(未通过)时才说失控
+    const isGuanShaHui = el === '金' && ctx.outcome.conditions.some((c) => c.label === '无官杀成局无制' && !c.met);
     features.push({
-      score: isGuanSha ? 90 : 75,
-      tags: isGuanSha ? ['main'] : ['info'],
-      text: isGuanSha
-        ? `地支${branches.filter((b, i, a) => a.indexOf(b) !== i || ['申','酉','戌'].includes(b)).join('')}三会金局——七杀不是一颗星，是一片天。申酉戌三会成形，杀势极旺。没有食神制它、没有印星化它，七杀在你的命局里是失控的。你不是被压力追赶——你是活在压力里面。`
+      score: isGuanShaHui ? 90 : 75,
+      tags: isGuanShaHui ? ['main'] : ['info'],
+      text: isGuanShaHui
+        ? `地支三会金局——七杀不是一颗星，是一片天。申酉戌三会成形，杀势极旺。没有食神制它、没有印星化它，七杀在你的命局里是失控的。你不是被压力追赶——你是活在压力里面。`
         : `地支三会${el}局——${el}气在你的命局中被放大到了极致。这是一种极端的力量——不是加分就是减分，没有中间地带。`,
     });
   }
@@ -669,26 +652,22 @@ function scanFeatures(ctx: Ctx): Feature[] {
     }
   }
 
-  // ── 12. 格局成/破/不成 ──
-  const reasonShort = outcome.reason.split(';')[0].trim() || '';
+  // ── 12. 格局成/破/不成(由成败层结构化条件驱动,不再硬编码制化论断)──
+  const patternCat = pattern.category;
+  const firstFailed = ctx.outcome.conditions.find((c) => c.kind === '破格' && !c.met) ?? null;
   if (outcome.outcome === '破格') {
-    // 七杀格破格 → 强调制化失败
-    const isShaPo = patternCat === '杀格' || pattern.displayName.includes('七杀');
+    const failText = firstFailed ? `原因是「${firstFailed.label}」未通过——${firstFailed.desc}。` : '';
     features.push({
-      score: isShaPo ? 85 : 75,
-      tags: isShaPo ? ['main'] : ['main'],
-      text: isShaPo
-        ? `七杀格破格。${reasonShort ? `原因是${reasonShort}。` : ''}你的命局里有很强的压力源——但你没有制它的工具（食神），也没有化它的渠道（印星）。七杀在你的命局里是失控的。破碎不是终点——破格的人经历了更多摔打，摔打本身就是锻造。`
-        : `格局「破格」——${reasonShort ? `原因是${reasonShort}。` : ''}破碎不是终点。破格的人经历了更多摔打，而摔打本身就是锻造。破而后立，重建的往往比原来的更坚固。`,
+      score: 75,
+      tags: ['main'],
+      text: `格局「破格」——${failText}破碎不是终点。破格的人经历了更多摔打，而摔打本身就是锻造。破而后立，重建的往往比原来的更坚固。`,
     });
   } else if (outcome.outcome === '不成格') {
-    const isSha = patternCat === '杀格' || pattern.displayName.includes('七杀');
+    const unmetText = firstFailed ? `目前还差「${firstFailed.label}」——${firstFailed.desc}。` : '';
     features.push({
-      score: isSha ? 75 : 65,
-      tags: isSha ? ['main'] : ['info'],
-      text: isSha
-        ? `七杀格不成格。${reasonShort ? `原因是${reasonShort}。` : ''}你有压力，但没有处理好压力的手段——七杀在你命局里是需要被驯服的力量，目前还没完全驯服。大运流转会补齐缺失的条件。你不是不行，是时候未到。`
-        : `格局「不成格」——${pattern.displayName}的底子是有的，火候还差一点。大运流转，属于你的时机还在后头。你不是不行，是时候未到。`,
+      score: 65,
+      tags: ['info'],
+      text: `格局「不成格」——${pattern.displayName}的底子是有的，火候还差一点。${unmetText}大运流转，属于你的时机还在后头。你不是不行，是时候未到。`,
     });
   } else {
     features.push({
@@ -832,11 +811,8 @@ function scanFeatures(ctx: Ctx): Feature[] {
 
 // ── 主入口 ──
 
-export function generateNarrative(
-  bazi: BaziResult, pattern: ExtractResult, outcome: AssessResult,
-  strength: StrengthResult, lt: LiuTongResult,
-): string {
-  const ctx = buildCtx(bazi, pattern, outcome, strength, lt);
+export function generateNarrative(full: Omit<FullAnalysis, 'texts'>): string {
+  const ctx = buildCtx(full);
   const features = scanFeatures(ctx);
 
   // 故事弧排序：identity → main(1) → deep(1) → gap(1) → career
@@ -865,7 +841,7 @@ export function generateNarrative(
   if (career.length > 0) picked.push(career[0]);
 
   if (picked.length === 0) {
-    return `${ctx.dm}日主，${pattern.displayName}，格局${outcome.outcome}。顺势而行，自有出路。`;
+    return `${ctx.dm}日主，${ctx.pattern.displayName}，格局${ctx.outcome.outcome}。顺势而行，自有出路。`;
   }
 
   return picked.map((f) => f.text).join('\n\n');

@@ -73,40 +73,73 @@ export function getHuaQiDayMaster(dayMaster: string, comboStem: string): string 
   return info.newDayMaster
 }
 
-// ── isHuaGe ──
+// ── isHuaGe(判定轨迹版)──
+// 【格局规格书 §0.3】每个检查步骤记录 {label, met, note},
+// 未命中时 note 说明原因,供取格层生成 judgementTrace。
 
-export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType } | null {
+export interface HuaGeCheckStep {
+  label: string
+  met: boolean
+  note: string
+}
+
+export interface HuaGeResult {
+  name: string
+  huaShen: ElementType
+  steps: HuaGeCheckStep[]
+}
+
+export function isHuaGeDetailed(bazi: BaziResult): { result: HuaGeResult | null; steps: HuaGeCheckStep[] } {
   const { dayMaster, pillars } = bazi
+  const steps: HuaGeCheckStep[] = []
+  const touStems = [pillars.year.stem, pillars.month.stem, pillars.hour.stem]
+  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
+  const monthBranch = pillars.month.branch
+
   const info = HUA_QI_MAP[dayMaster]
-  if (!info) return null
+  if (!info) {
+    steps.push({ label: '日主参与五合', met: false, note: `日主${dayMaster}不在五合化气映射中` })
+    return { result: null, steps }
+  }
 
   // 1. 日主与另一天干形成五合
-  const touStems = [pillars.year.stem, pillars.month.stem, pillars.hour.stem]
   const comboStem = touStems.find((s) => s === info.partner)
-  if (!comboStem) return null
+  if (comboStem) {
+    steps.push({ label: '日主参与五合', met: true, note: `日主${dayMaster}与${comboStem}合化${info.element}` })
+  } else {
+    steps.push({ label: '日主参与五合', met: false, note: `天干无合神${info.partner},${dayMaster}${info.partner}不合` })
+    return { result: null, steps }
+  }
 
   const huaElement = info.element
 
   // 2. 化神透干：天干中有化神五行的天干（合神本身已透）
   //    合神（partner）的五行 = 化神五行，所以合神透干即化神透干
   const touElements = touStems.map((s) => getStemElement(s))
-  if (!touElements.includes(huaElement)) return null
+  const huaTou = touElements.includes(huaElement)
+  steps.push({ label: '化神透干', met: huaTou, note: huaTou ? `合神${comboStem}即化神${huaElement}之干` : `天干无${huaElement}五行` })
+  if (!huaTou) return { result: null, steps }
 
   // 3. 月令支持化神：月支必须是化神的旺相之地
   //    《滴天髓》任铁樵注：“化神要昌，须得月令之气”
-  const monthBranch = pillars.month.branch
   const supportedMonths = HUA_MONTH_SUPPORT[huaElement]
-  if (!supportedMonths.includes(monthBranch)) return null
+  const monthSupported = supportedMonths.includes(monthBranch)
+  steps.push({ label: '月令支持化神', met: monthSupported, note: monthSupported ? `月支${monthBranch}属[${supportedMonths.join(',')}]` : `月支${monthBranch}不在${huaElement}之旺相月[${supportedMonths.join(',')}]` })
+  if (!monthSupported) return { result: null, steps }
 
   // 4. 化神在地支有强根
-  const branches = [pillars.year.branch, pillars.month.branch, pillars.day.branch, pillars.hour.branch]
   const allHe = detectAllHe(branches)
   const hasHeJu = allHe.some((h) => h.element === huaElement && (h.type === '三合' || h.type === '三会'))
 
   const rootBranches = HUA_ROOT_BRANCHES[huaElement]
   const hasLuWang = branches.some((b) => rootBranches.includes(b))
 
-  if (!hasHeJu && !hasLuWang) return null
+  if (hasHeJu || hasLuWang) {
+    steps.push({ label: '化神有强根', met: true, note: hasHeJu ? '地支成化神三合/三会局' : `地支有化神强根[${rootBranches.join(',')}]` })
+  } else {
+    steps.push({ label: '化神有强根', met: false, note: `地支无${huaElement}强根且无化神合会局` })
+    return { result: null, steps }
+  }
 
   // 5. 全局无克破化神：无克制化神的五行成势
   //    5a. 克神透干 + 克神在地支有根（禄旺/合局） → 成势克破
@@ -116,21 +149,42 @@ export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType 
     const keRoots = HUA_ROOT_BRANCHES[keElement]
     const keHasBranch = branches.some((b) => keRoots.includes(b))
     const keHasHeJu = allHe.some((h) => h.element === keElement && (h.type === '三合' || h.type === '三会'))
-    if (keHasBranch || keHasHeJu) return null
+    if (keHasBranch || keHasHeJu) {
+      steps.push({ label: '无克破化神', met: false, note: `克神${keElement}透干[${keStems.join(',')}]且有根/成局→ 克破` })
+      return { result: null, steps }
+    }
   }
 
   //    5b. 月令为克神 → 提纲克破，化神失时
   const monthBranchElement = getBranchElement(monthBranch)
-  if (monthBranchElement === keElement) return null
+  if (monthBranchElement === keElement) {
+    steps.push({ label: '无克破化神', met: false, note: `月支${monthBranch}本气为克神${keElement}→ 提纲克破` })
+    return { result: null, steps }
+  }
 
   //    5c. 两个或以上地支本气为克神 → 克神在地支成势
   const keBranches = branches.filter((b) => getBranchElement(b) === keElement)
-  if (keBranches.length >= 2) return null
+  if (keBranches.length >= 2) {
+    steps.push({ label: '无克破化神', met: false, note: `地支本气为克神${keElement}达${keBranches.length}个→ 克神成势` })
+    return { result: null, steps }
+  }
+
+  steps.push({ label: '无克破化神', met: true, note: keStems.length > 0 ? `克神透干[${keStems.join(',')}]但无根不成势` : `天干地支无克神${keElement}成势` })
 
   return {
-    name: HUA_NAME_MAP[huaElement],
-    huaShen: huaElement,
+    result: {
+      name: HUA_NAME_MAP[huaElement],
+      huaShen: huaElement,
+      steps,
+    },
+    steps,
   }
+}
+
+/** 兼容旧签名:只返回命中结果(取格层请用 isHuaGeDetailed 获取轨迹) */
+export function isHuaGe(bazi: BaziResult): { name: string; huaShen: ElementType } | null {
+  const r = isHuaGeDetailed(bazi).result
+  return r ? { name: r.name, huaShen: r.huaShen } : null
 }
 
 // ── 化气后十神重排 ──

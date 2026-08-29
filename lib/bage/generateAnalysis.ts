@@ -7,6 +7,8 @@ import { getTenGod } from '@/lib/bazi-utils'
 import { getTiaoHouYongShen, getTiaoHouType } from './tiaoHou'
 import { analyzeWuXingLiuTong } from './liuTong'
 import { generateNarrative } from './narrative'
+import { analyze } from './analyze'
+import type { FullAnalysis } from './analyze'
 
 // ── 类型 ──
 
@@ -96,12 +98,12 @@ function getTenGodName(tenGod: string): string {
 // ═══════════════════════════════════════════
 
 function getSummaryLine(
-  bazi: BaziResult,
+  full: Omit<FullAnalysis, 'texts'>,
   pattern: ExtractResult,
   outcome: AssessResult,
   strength: StrengthResult,
 ): string {
-  const tiaoHouIssue = getTiaoHouType(bazi)
+  const tiaoHouIssue = full.tiaoHou.type
 
   // 破格优先 —— 结构被破坏，用断裂/失衡比喻
   if (outcome.outcome === '破格') {
@@ -382,130 +384,36 @@ function getStructureSection(
 // ── 模块2：层次评估 ──
 
 // 各格局成格条件模板
-interface ConditionTemplate {
-  label: string
-  desc: string
-  /** 在 outcome.reason 中匹配该条件已满足的关键词 */
-  match: string[]
-}
-
-const PATTERN_CONDITIONS: Record<string, ConditionTemplate[]> = {
-  '正官格': [
-    { label: '财生官', desc: '财星透干或成局，以财生官', match: ['财生官', '有财生官'] },
-    { label: '印护官', desc: '印星透干或成局，以印护官', match: ['印护官', '有印护官', '印制伤护官'] },
-  ],
-  '七杀格': [
-    { label: '食制杀', desc: '食神透干制伏七杀', match: ['食神制杀', '食神制伏'] },
-    { label: '印化杀', desc: '印星透干或成局化泄七杀', match: ['印星化杀', '印化'] },
-    { label: '合绊制杀', desc: '劫财或伤官合绊七杀', match: ['合绊', '被合绊制约'] },
-  ],
-  '正财格': [
-    { label: '官护财', desc: '官星透干或成局守护财星', match: ['财生官', '官护财'] },
-    { label: '食伤生财', desc: '食伤透干或成局为财之源', match: ['食伤生财', '财有源'] },
-  ],
-  '偏财格': [
-    { label: '官护财', desc: '官星透干或成局守护财星', match: ['财生官', '官护财'] },
-    { label: '食伤生财', desc: '食伤透干或成局为财之源', match: ['食伤生财', '财有源'] },
-  ],
-  '正印格': [
-    { label: '官杀生印', desc: '官杀透干或成局生扶印星', match: ['官杀生印'] },
-    { label: '食伤泄秀', desc: '食伤透干或成局泄印之秀', match: ['食伤泄秀', '印旺用食伤泄秀'] },
-  ],
-  '偏印格': [
-    { label: '官杀生印', desc: '官杀透干或成局生扶印星', match: ['官杀生印'] },
-    { label: '食伤泄秀', desc: '食伤透干或成局泄印之秀', match: ['食伤泄秀', '印旺用食伤泄秀'] },
-  ],
-  '食神格': [
-    { label: '食神生财', desc: '财星透干或成局，食神吐秀生财', match: ['食神生财', '吐秀生财'] },
-    { label: '弃食就煞', desc: '七杀透干、印星透干、无财（杀印相生）', match: ['弃食就煞', '杀印相生'] },
-  ],
-  '伤官格': [
-    { label: '伤官生财', desc: '财星透干或成局，伤官生财', match: ['伤官生财'] },
-    { label: '伤官佩印', desc: '印星透干有根，印制伤护官', match: ['伤官佩印'] },
-    { label: '伤官带杀', desc: '七杀透干无财无食制，伤官带杀', match: ['伤官带杀'] },
-    { label: '金水调候', desc: '金水伤官喜见官，调候为急', match: ['金水伤官喜见官'] },
-  ],
-  '建禄月劫格': [
-    { label: '天干有取用', desc: '天干透出财、官、杀、食之一可取为用神', match: ['用神'] },
-  ],
-  '阳刃格': [
-    { label: '官煞制刃', desc: '官杀透干或成局制伏阳刃', match: ['透官煞制刃', '官煞制刃'] },
-  ],
-  '化土格': [
-    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
-    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
-    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
-    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
-  ],
-  '化金格': [
-    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
-    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
-    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
-    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
-  ],
-  '化水格': [
-    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
-    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
-    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
-    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
-  ],
-  '化木格': [
-    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
-    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
-    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
-    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
-  ],
-  '化火格': [
-    { label: '日主合化', desc: '日主与它干形成五合', match: ['化气'] },
-    { label: '化神透干', desc: '化神五行在天干透出', match: ['化气'] },
-    { label: '化神有根', desc: '地支有三合/三会局或禄旺之位支撑化神', match: ['化气'] },
-    { label: '无克破', desc: '全局无克制化神的五行成势', match: ['化气'] },
-  ],
-  '从杀格': [
-    { label: '日主无根', desc: '日主在地支和藏干中无比劫根气', match: ['无根', '真从杀格'] },
-    { label: '官杀强旺', desc: '全局官杀透干且地支会官杀局', match: ['无根', '真从杀格', '官杀'] },
-  ],
-  '从财格': [
-    { label: '日主无根', desc: '日主在地支和藏干中无比劫根气', match: ['无根', '真从财格'] },
-    { label: '财星强旺', desc: '全局财星透干且地支会财局', match: ['无根', '真从财格', '财星'] },
-  ],
-}
-
 function buildConditionBreakdown(
-  pattern: ExtractResult,
+  _pattern: ExtractResult,
   outcome: AssessResult,
 ): string {
-  const conds = PATTERN_CONDITIONS[pattern.displayName]
-  if (!conds) return `成格依据：${outcome.reason}。`
+  // 【诊断流程 L4/L10】成格条件分解只消费结构化 conditions,不再解析 reason 字符串
+  const conds = outcome.conditions
+  if (conds.length === 0) return `成格依据：${outcome.reason}。`
 
-  const reason = outcome.reason
+  // 成格条件与破格检查分开:破格触发点只看 kind==='破格' 且未通过者
+  const chengGe = conds.filter((c) => c.kind === '成格')
+  const met = chengGe.filter((c) => c.met)
+  const unmet = chengGe.filter((c) => !c.met)
+  const condList = chengGe.map((c) => c.desc).join('；')
 
   if (outcome.outcome === '成格') {
-    const met = conds.filter((c) => c.match.some((m) => reason.includes(m)))
-    const condList = conds.map((c) => c.desc).join('；')
-
-    if (met.length > 0) {
-      const metDetails = met.map((m) => `${m.label}（${m.desc}）`).join('、')
-      return `成格条件为：${condList}。你的命局满足${metDetails}，故格局成立。`
-    }
-    return `成格依据：${reason}。`
+    const metDetails = met.map((c) => `${c.label}（${c.desc}）`).join('、')
+    const unmetDetails = unmet.length > 0 ? `；未满足${unmet.map((c) => c.label).join('、')}（参考项）` : ''
+    return `成格条件为：${condList}。你的命局满足${metDetails || '全部关键条件'}${unmetDetails}，故格局成立。`
   }
 
   if (outcome.outcome === '不成格') {
-    const met = conds.filter((c) => c.match.some((m) => reason.includes(m)))
-    const unmet = conds.filter((c) => !c.match.some((m) => reason.includes(m)))
-    const condList = conds.map((c) => c.desc).join('；')
-
-    if (met.length > 0 && unmet.length > 0) {
-      const metPart = met.map((m) => `${m.label}（${m.desc}）`).join('、')
-      const unmetPart = unmet.map((u) => `${u.label}（${u.desc}）`).join('、')
-      return `成格条件为：${condList}。你的命局已满足${metPart}，但未满足${unmetPart}（${reason}），故格局不成立。这并非破格，格局处于待定状态——大运流年一旦补齐缺失条件，格局即可激活。`
-    }
-    return `成格条件为：${condList}。你的命局均未满足（${reason}），故格局不成立。大运流年补齐条件后格局可激活。`
+    const metPart = met.length > 0 ? met.map((c) => `${c.label}（${c.desc}）`).join('、') : '关键条件均未满足'
+    const unmetPart = unmet.length > 0 ? unmet.map((c) => `${c.label}（${c.desc}）`).join('、') : ''
+    return `成格条件为：${condList}。你的命局已满足${metPart}，但未满足${unmetPart}，故格局不成立。这并非破格，格局处于待定状态——大运流年一旦补齐缺失条件，格局即可激活。`
   }
 
-  // 破格
-  return `格局破败。触发破格条件：${reason}。核心结构遭到破坏，格局无法正常运作。`
+  // 破格:kind==='破格' 且未通过者即破格触发点
+  const failed = conds.find((c) => c.kind === '破格' && !c.met)
+  const failDesc = failed ? `${failed.label}（未通过：${failed.desc}）` : outcome.reason
+  return `格局破败。触发破格条件：${failDesc}。核心结构遭到破坏，格局无法正常运作。`
 }
 
 function getOutcomeSection(
@@ -513,7 +421,7 @@ function getOutcomeSection(
   strength: StrengthResult,
   pattern: ExtractResult,
 ): string {
-  const isJinShui = outcome.reason.includes('金水伤官喜见官')
+  const isJinShui = outcome.tiaoHouSpecial === '金水伤官喜见官'
   const insight = getMechanismInsight(outcome)
   const breakdown = buildConditionBreakdown(pattern, outcome)
 
@@ -560,15 +468,17 @@ function getDeficientElement(bazi: BaziResult): ElementType | null {
 // ── 模块3：病根诊断 ──
 
 function getDiagnosisSection(
-  bazi: BaziResult,
+  full: Omit<FullAnalysis, 'texts'>,
   pattern: ExtractResult,
   outcome: AssessResult,
   strength: StrengthResult,
 ): string | null {
   const parts: string[] = []
-  const tiaoHou = getTiaoHouType(bazi)
-  const dominant = getDominantElement(bazi)
-  const deficient = getDeficientElement(bazi)
+  const bazi = full.bazi
+  const tiaoHou = full.tiaoHou.type
+  const dominantEl = full.wuXing.dominant
+  const dominant = dominantEl ? { element: dominantEl, count: full.wuXing.count[dominantEl] } : null
+  const deficient = full.wuXing.deficient[0] ?? null
 
   // 调候问题优先
   if (tiaoHou === '火炎土燥') {
@@ -654,77 +564,6 @@ function elementDomain(el: ElementType): string {
   return map[el] ?? el
 }
 
-// ── 调候用神与格局喜忌区分 ──
-
-const EL_CONTROLLED_BY: Record<string, ElementType> = { '木':'土', '火':'金', '土':'水', '金':'木', '水':'火' }
-const EL_CONTROLS: Record<string, ElementType> = { '木':'金', '火':'水', '土':'木', '金':'火', '水':'土' }
-const EL_GENERATED: Record<string, ElementType> = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' }
-const EL_GENERATES: Record<string, ElementType> = { '木':'水', '火':'木', '土':'火', '金':'土', '水':'金' }
-
-function getPatternTabooElements(
-  bazi: BaziResult,
-  pattern: ExtractResult,
-): ElementType[] {
-  const dmEl = bazi.dayMasterElement
-  switch (pattern.category) {
-    case '官格':
-      // 伤官见官：伤官 = DM 所生
-      return [EL_GENERATED[dmEl]]
-    case '杀格':
-      // 财生杀党杀 + 官杀混杂
-      return [EL_CONTROLLED_BY[dmEl], EL_CONTROLS[dmEl]]
-    case '财格':
-      // 比劫夺财
-      return [dmEl]
-    case '印格':
-      // 财破印
-      return [EL_CONTROLLED_BY[dmEl]]
-    case '食神格':
-      // 枭神夺食
-      return [EL_GENERATES[dmEl]]
-    case '伤官格':
-      // 伤官见官
-      return [EL_CONTROLS[dmEl]]
-    default:
-      // 建禄月劫格、阳刃格、从格、化格：无普适忌神
-      return []
-  }
-}
-
-const EL_DOMAIN: Record<string, string> = {
-  '金': '技术、专业技能',
-  '水': '智慧、学习资源',
-  '木': '人脉、成长机会',
-  '火': '表达、行动热度',
-  '土': '稳定、物质积累',
-}
-
-const EL_BENEFIT: Record<string, string> = {
-  '金': '通过创造价值',
-  '水': '通过学习沉淀',
-  '木': '通过拓展人脉',
-  '火': '通过展示分享',
-  '土': '通过持续积累',
-}
-
-function getTiaoHouConflictNote(
-  tiaoHouGods: string[],
-  tabooElements: ElementType[],
-): string | null {
-  if (tabooElements.length === 0) return null
-
-  const tiaoHouElements = new Set(tiaoHouGods.map(s => getStemElement(s)).filter(Boolean))
-  const conflict = tabooElements.find(el => tiaoHouElements.has(el))
-  if (!conflict) return null
-
-  const generated = EL_GENERATED[conflict] ?? ''
-  const domain = EL_DOMAIN[conflict] ?? conflict
-  const benefit = generated ? EL_DOMAIN[generated] ?? generated : '更好的状态'
-  const way = EL_BENEFIT[conflict] ?? `通过${conflict}`
-
-  return `\n\n注意：你的格局忌${conflict}，但调候用神中出现了${conflict}。这里的「${conflict}」并非让你直接补${conflict}，而是通过${conflict}来生${generated}——你真正需要的是${generated}。建议从${domain}（${conflict}）入手，${way}来换取${benefit}（${generated}）。`
-}
-
 // ── 调候用神 → 发展建议 ──
 
 const TIAO_HOU_ELEMENT_ADVICE: Record<string, string> = {
@@ -735,90 +574,50 @@ const TIAO_HOU_ELEMENT_ADVICE: Record<string, string> = {
   '土': '稳固/储蓄',
 }
 
-function formatTiaoHouAdvice(gods: string[]): string {
-  const seen = new Set<string>()
-  const items: string[] = []
-  for (const stem of gods) {
-    const el = getStemElement(stem)
-    if (seen.has(el)) continue
-    seen.add(el)
-    items.push(`${el}（${TIAO_HOU_ELEMENT_ADVICE[el] || el}）`)
-  }
-  return items.join('、')
-}
-
 // ── 模块4：发展建议 ──
 
 function getAdviceSection(
-  bazi: BaziResult,
+  full: Omit<FullAnalysis, 'texts'>,
   pattern: ExtractResult,
   outcome: AssessResult,
   strength: StrengthResult,
 ): string | null {
-  const tiaoHou = getTiaoHouType(bazi)
-  const dominant = getDominantElement(bazi)
-  const deficient = getDeficientElement(bazi)
+  // 【诊断流程 L7】发展建议=喜忌引擎结论的翻译,不再自行推导喜用/忌神
+  const bazi = full.bazi
+  const xiYong = full.xiYong
+  const tiaoHou = full.tiaoHou.type
 
-  // 双轨：先判定调候方向，再查表给出具体用神
-  const tiaoHouGods = getTiaoHouYongShen(bazi.dayMaster, bazi.pillars.month.branch)
-  if (tiaoHouGods.length > 0) {
-    const dmElement = getStemElement(bazi.dayMaster)
-    const dmFull = `${bazi.dayMaster}${dmElement}`
-    const godList = tiaoHouGods.join('、')
-    const elementAdvice = formatTiaoHouAdvice(tiaoHouGods)
-    const prefix = tiaoHou === '寒暖适中'
-      ? `**发展建议**：你命局寒暖适中，但《穷通宝鉴》认为${dmFull}生于${bazi.pillars.month.branch}月，仍可参考${godList}调候。建议从${elementAdvice}方向微调。`
-      : `**发展建议**：从五行调候的角度看，${dmFull}生于${bazi.pillars.month.branch}月，最喜${godList}。建议你从${elementAdvice}方向调整。`
-    let text = prefix
+  const primary = xiYong.primaryFavorable
+  if (!primary || xiYong.favorable.length === 0) return null
 
-    // 调候用神与格局喜忌冲突检测
-    const tabooEls = getPatternTabooElements(bazi, pattern)
-    const conflictNote = getTiaoHouConflictNote(tiaoHouGods, tabooEls)
-    if (conflictNote) text += conflictNote
+  const favorableList = xiYong.favorable
+  const avoidList = xiYong.avoid
+  const dmFull = `${bazi.dayMaster}${bazi.dayMasterElement}`
+  const elementAdvice = favorableList
+    .map((el) => `${el}（${TIAO_HOU_ELEMENT_ADVICE[el] || el}）`)
+    .join('、')
 
-    return text
+  // 化格/从格只论化/从,调候仅标注【喜忌规格书 1.1/1.2】,文案不出现气候救治主张
+  const isHuaCong = pattern.category.startsWith('化') || pattern.category.startsWith('从')
+
+  let text: string
+  if (!isHuaCong && (tiaoHou === '火炎土燥' || tiaoHou === '金寒水冷')) {
+    const fixDesc = tiaoHou === '火炎土燥'
+      ? '命局偏燥,最需水来润局'
+      : '命局偏寒,最需火来暖局'
+    text = `**发展建议**：${dmFull}生于${bazi.pillars.month.branch}月,${fixDesc};综合格局喜忌,喜用依次为${favorableList.join('、')}。建议从${elementAdvice}方向调整,避开${avoidList.length > 0 ? avoidList.join('、') : '无'}。`
+  } else if (isHuaCong) {
+    text = `**发展建议**：你${pattern.displayName},只论${pattern.category.startsWith('化') ? '化' : '从'},喜用依次为${favorableList.join('、')}。建议从${elementAdvice}方向调整,避开${avoidList.length > 0 ? avoidList.join('、') : '无'}。`
+  } else {
+    text = `**发展建议**：你命局寒暖适中,喜用依次为${favorableList.join('、')}。建议从${elementAdvice}方向调整,避开${avoidList.length > 0 ? avoidList.join('、') : '无'}。`
   }
 
-  if (tiaoHou === '火炎土燥') {
-    const hasMetal = (bazi.elementCount['金'] ?? 0) > 0
-    if (!hasMetal) {
-      return `**发展建议**：从五行平衡来看，你最需要补"金"和"水"。金代表技术、作品、执行力——建议你找到一件能沉下心去打磨的硬技能或创作项目，把过剩的能量转化为实实在在的产出。水代表智慧、冷静和流动性——学会给自己留白，别把日程塞太满。`
-    }
-    return `**发展建议**：你需要补"水"来降温润局。水代表流动性、沟通和沉静的智慧。建议你多参与需要冷静分析和深度思考的工作，避免频繁切换注意力的碎片化任务。定期给自己一整块不受打扰的时间，比你想象中更重要。`
+  // 冲突说明(喜忌规格书 2.5 统一裁决,全软件同一措辞)
+  if (xiYong.conflicts.length > 0) {
+    text += '\n\n注意：' + xiYong.conflicts.map((c) => c.note).join(';')
   }
 
-  if (tiaoHou === '金寒水冷') {
-    const hasWood = (bazi.elementCount['木'] ?? 0) > 0
-    if (!hasWood) {
-      return `**发展建议**：你最需要补"火"和"木"。火代表热情、行动力和感染力——建议你主动参与需要公开表达或团队协作的工作，用外部热度来带动内在能量。木代表成长和创造力——培养一个能持续进步的兴趣或副业，让它自然生长。`
-    }
-    return `**发展建议**：你需要补"火"来暖局。火代表热情、行动力和感染力。建议你不要等"准备好"了再行动——你的优势是思考缜密，短板是过度思考。给自己设定一个不可撤销的截止日期，先动起来，热度自然就来了。`
-  }
-
-  // 财格补食伤
-  if (pattern.category === '财格' && outcome.outcome !== '成格') {
-    return `**发展建议**：财格需要"食伤"来生财。食伤代表你的才华、技能和创造力——你需要先打磨出一项能拿得出手的专业能力，财富自然随之而来。先练内功，再谈变现，这个顺序不能反。`
-  }
-
-  // 印格补食伤
-  if (pattern.category === '印格' && strength.level === '身强') {
-    return `**发展建议**：印星过旺时，需要"食伤"来泄秀。食伤代表输出和创造——你已经积累了足够多的输入，现在是时候把脑子里的东西做出来了。不要追求完美，先完成再完善。`
-  }
-
-  // 缺失元素
-  if (deficient) {
-    return `**发展建议**：你的命局缺"${deficient}"，这是你需要后天重点补充的维度。${deficient}代表${elementDomain(deficient)}——有意识地在这些领域投入时间和精力，会比别人更早感受到"补缺口"带来的变化。`
-  }
-
-  // 通用建议
-  if (strength.level === '身强') {
-    return `**发展建议**：日主身强，能量充沛，适合走"输出型"路线——创造、表达、管理、竞争都是你的强项。学会把过剩的能量导向具体目标，而不是内耗在犹豫和纠结中。`
-  }
-  if (strength.level === '身弱') {
-    return `**发展建议**：日主身弱，不适合单打独斗。你的策略应该是"借力"——找好的平台、好的伙伴、好的导师。不是能力不够，而是你的能量更适合用在刀刃上，而不是铺摊子。`
-  }
-
-  return null
+  return text
 }
 
 // ── 模块5：关键提醒 ──
@@ -972,12 +771,12 @@ function getOutcomeWarning(reason: string, outcome: string): string {
 }
 
 function getWarningSection(
-  bazi: BaziResult,
+  full: Omit<FullAnalysis, 'texts'>,
   pattern: ExtractResult,
   outcome: AssessResult,
 ): string {
-  const liuTong = analyzeWuXingLiuTong(bazi)
-  const dayEl = bazi.dayMasterElement
+  const liuTong = full.liuTong
+  const dayEl = full.bazi.dayMasterElement
 
   // 1. 格局智慧 — 格言 + 日主方向
   let wisdom: string
@@ -1014,8 +813,8 @@ const ELEMENT_DIRECTION: Record<string, string> = {
   '土': '稳固、储蓄',
 }
 
-function getLiuTongSection(bazi: BaziResult): string {
-  const { blockage, tongGuan, description } = analyzeWuXingLiuTong(bazi)
+function getLiuTongSection(full: Omit<FullAnalysis, 'texts'>): string {
+  const { blockage, tongGuan, description } = full.liuTong
 
   if (blockage && tongGuan) {
     const dir = ELEMENT_DIRECTION[tongGuan] ?? tongGuan
@@ -1063,14 +862,16 @@ const ELEMENT_ADVICE_SHORT: Record<string, string> = {
 }
 
 function getGeJuJieFa(
-  bazi: BaziResult,
+  full: Omit<FullAnalysis, 'texts'>,
   pattern: ExtractResult,
   outcome: AssessResult,
 ): string {
-  const liuTong = analyzeWuXingLiuTong(bazi)
+  // 【诊断流程 L7】格局解法=喜忌引擎结论的翻译,不再读 legacy yongShen 字段
+  const liuTong = full.liuTong
+  const xiYong = full.xiYong
   const charLine = PATTERN_CHARACTER[pattern.displayName] ?? `${pattern.displayName}是你的人生底色`
 
-  // Path A：有堵点 → 通关用神
+  // 有堵点 → 说明通关机制
   if (liuTong.blockage && liuTong.tongGuan) {
     const blockageEl = liuTong.blockage
     const tongGuanEl = liuTong.tongGuan
@@ -1080,12 +881,13 @@ function getGeJuJieFa(
     return `**格局解法**：${charLine}——${outcomeTag}。能量在${blockageEl}处淤堵，通关用神为${tongGuanEl}。${tongGuanEl}能泄${blockageEl}生${nextEl}，凿开困局。建议从${direction}方向突破。`
   }
 
-  // Path B：流通顺畅 → 格局用神
-  const yongShenEl = pattern.yongShen.length === 1 ? (getStemElement(pattern.yongShen) ?? null) : null
+  // 流通顺畅 → 喜用排序(来自喜忌引擎)
   const statusLine = outcome.outcome === '成格' ? '格局成立，流通顺畅' : '流通顺畅，格局待成'
-  if (yongShenEl) {
-    const direction = ELEMENT_ADVICE_SHORT[yongShenEl] ?? yongShenEl
-    return `**格局解法**：${charLine}——${statusLine}。你最需要${yongShenEl}，补${yongShenEl}以增强${direction}，把你的天赋引到对的方向上。`
+  const primary = xiYong.primaryFavorable
+  if (primary) {
+    const direction = ELEMENT_ADVICE_SHORT[primary] ?? primary
+    const others = xiYong.favorable.slice(1).join('、')
+    return `**格局解法**：${charLine}——${statusLine}。你最需要${primary}${others ? `，其次是${others}` : ''}，补${primary}以增强${direction}，把你的天赋引到对的方向上。`
   }
   return `**格局解法**：${charLine}——${statusLine}。${outcome.reason ? outcome.reason.slice(0, 30) + '。' : ''}顺势而行，自有出路。`
 }
@@ -1093,40 +895,45 @@ function getGeJuJieFa(
 // 主入口
 // ═══════════════════════════════════════════
 
-export function generateAnalysis(input: AnalysisInput): AnalysisResult {
-  const { bazi, pattern, outcome, strength } = input
+export function generateAnalysisFromFull(full: Omit<FullAnalysis, 'texts'>): AnalysisResult {
+  // 【诊断流程 L10】全部段落消费同一结构化结果,本函数内不再有任何重算
+  const { pattern, outcome, strength } = full
 
   // 第一层
-  const summary = getSummaryLine(bazi, pattern, outcome, strength)
+  const summary = getSummaryLine(full, pattern, outcome, strength)
 
   // 第二层
   const sections: string[] = []
 
-  const structure = getStructureSection(bazi, pattern, outcome)
+  const structure = getStructureSection(full.bazi, pattern, outcome)
   sections.push(structure)
 
   const outcomeText = getOutcomeSection(outcome, strength, pattern)
   sections.push(outcomeText)
 
-  const diagnosis = getDiagnosisSection(bazi, pattern, outcome, strength)
+  const diagnosis = getDiagnosisSection(full, pattern, outcome, strength)
   if (diagnosis) sections.push(diagnosis)
 
-  const liuTong = getLiuTongSection(bazi)
+  const liuTong = getLiuTongSection(full)
   sections.push(liuTong)
 
-  const advice = getAdviceSection(bazi, pattern, outcome, strength)
+  const advice = getAdviceSection(full, pattern, outcome, strength)
   if (advice) sections.push(advice)
 
-  const geJuJieFa = getGeJuJieFa(bazi, pattern, outcome)
+  const geJuJieFa = getGeJuJieFa(full, pattern, outcome)
   sections.push(geJuJieFa)
 
-  const warning = getWarningSection(bazi, pattern, outcome)
+  const warning = getWarningSection(full, pattern, outcome)
   sections.push(warning)
 
   const analysis = sections.join('\n\n')
 
-  const liuTongResult = analyzeWuXingLiuTong(bazi)
-  const narrative = generateNarrative(bazi, pattern, outcome, strength, liuTongResult)
+  const narrative = generateNarrative(full)
 
   return { summary, analysis, narrative }
+}
+
+/** 兼容旧签名:内部走统一管线(analyze 一次),pattern/outcome/strength 参数仅作契约 */
+export function generateAnalysis(input: AnalysisInput): AnalysisResult {
+  return generateAnalysisFromFull(analyze(input.bazi))
 }

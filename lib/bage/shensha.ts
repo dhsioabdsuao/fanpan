@@ -693,16 +693,22 @@ function findGuChen(bazi: BaziResult): ShenSha[] {
   return results
 }
 
-// 童子煞（传统双重查法：季节法 + 纳音法）
-// 规则一（季节法）：春(寅卯辰)/秋(申酉戌) → 日支或时支见寅或子
-//                   夏(巳午未)/冬(亥子丑) → 日支或时支见卯未辰
-// 规则二（纳音法）：年纳音金/木 → 午卯；水/火 → 酉戌；土 → 辰巳
-// 满足任一即命中
-
-const TONG_ZI_SEASON_SPRING = new Set(['寅','卯','辰'])
-const TONG_ZI_SEASON_SUMMER = new Set(['巳','午','未'])
-const TONG_ZI_SEASON_AUTUMN = new Set(['申','酉','戌'])
-const TONG_ZI_SEASON_WINTER = new Set(['亥','子','丑'])
+// 童子煞【shensha-spec #16】日柱+月支组合表法(民俗流传)
+// 查法:月支分组(四季),看日柱干支是否在对应组合表中
+const TONG_ZI_MAP: Record<string, string[]> = {
+  '寅': ['甲寅','乙卯','丙辰','丁巳','戊午','己未','庚申','辛酉','壬子','癸亥'],
+  '卯': ['甲寅','乙卯','丙辰','丁巳','戊午','己未','庚申','辛酉','壬子','癸亥'],
+  '辰': ['甲寅','乙卯','丙辰','丁巳','戊午','己未','庚申','辛酉','壬子','癸亥'],
+  '巳': ['甲辰','乙亥','丙寅','丁酉','戊寅','己未','庚午','辛巳','壬戌','癸未'],
+  '午': ['甲辰','乙亥','丙寅','丁酉','戊寅','己未','庚午','辛巳','壬戌','癸未'],
+  '未': ['甲辰','乙亥','丙寅','丁酉','戊寅','己未','庚午','辛巳','壬戌','癸未'],
+  '申': ['甲子','乙亥','丙寅','丁卯','戊午','己卯','庚申','辛巳','壬申','癸未'],
+  '酉': ['甲子','乙亥','丙寅','丁卯','戊午','己卯','庚申','辛巳','壬申','癸未'],
+  '戌': ['甲子','乙亥','丙寅','丁卯','戊午','己卯','庚申','辛巳','壬申','癸未'],
+  '亥': ['甲戌','乙亥','丙子','丁丑','戊申','己酉','庚子','辛卯','壬子','癸亥'],
+  '子': ['甲戌','乙亥','丙子','丁丑','戊申','己酉','庚子','辛卯','壬子','癸亥'],
+  '丑': ['甲戌','乙亥','丙子','丁丑','戊申','己酉','庚子','辛卯','壬子','癸亥'],
+}
 
 const NAYIN_WUXING_MAP: Record<string, string> = {
   '甲子':'金','乙丑':'金','丙寅':'火','丁卯':'火','戊辰':'木','己巳':'木',
@@ -723,91 +729,14 @@ function getNayinWuxing(yearPillar: string): string {
 
 function findTongZi(bazi: BaziResult): ShenSha[] {
   const mb = bazi.pillars.month.branch
-  const db = bazi.pillars.day.branch
-  const hb = bazi.pillars.hour.branch
-  const yearCombo = bazi.pillars.year.stem + bazi.pillars.year.branch
-  const nayinWx = getNayinWuxing(yearCombo)
-  const results: ShenSha[] = []
-
-  // 规则一：季节法
-  const isSpringOrAutumn = TONG_ZI_SEASON_SPRING.has(mb) || TONG_ZI_SEASON_AUTUMN.has(mb)
-  const isSummerOrWinter = TONG_ZI_SEASON_SUMMER.has(mb) || TONG_ZI_SEASON_WINTER.has(mb)
-
-  if (isSpringOrAutumn && (db === '寅' || db === '子')) {
-    results.push({
-      name: '童子煞', category: '凶星' as const, pillar: '日柱',
-      description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-      basis: '【通行惯例/季节法】',
-    })
-  } else if (isSpringOrAutumn && (hb === '寅' || hb === '子')) {
-    results.push({
-      name: '童子煞', category: '凶星' as const, pillar: '时柱',
-      description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-      basis: '【通行惯例/季节法】',
-    })
-  } else if (isSummerOrWinter && (db === '卯' || db === '未' || db === '辰')) {
-    results.push({
-      name: '童子煞', category: '凶星' as const, pillar: '日柱',
-      description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-      basis: '【通行惯例/季节法】',
-    })
-  } else if (isSummerOrWinter && (hb === '卯' || hb === '未' || hb === '辰')) {
-    results.push({
-      name: '童子煞', category: '凶星' as const, pillar: '时柱',
-      description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-      basis: '【通行惯例/季节法】',
-    })
-  }
-
-  // 规则二：纳音法
-  if (nayinWx === '金' || nayinWx === '木') {
-    if (db === '午' || db === '卯') {
-      results.push({
-        name: '童子煞', category: '凶星' as const, pillar: '日柱',
-        description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-        basis: '【通行惯例/纳音法】',
-      })
-    }
-    if (hb === '午' || hb === '卯') {
-      results.push({
-        name: '童子煞', category: '凶星' as const, pillar: '时柱',
-        description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-        basis: '【通行惯例/纳音法】',
-      })
-    }
-  } else if (nayinWx === '水' || nayinWx === '火') {
-    if (db === '酉' || db === '戌') {
-      results.push({
-        name: '童子煞', category: '凶星' as const, pillar: '日柱',
-        description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-        basis: '【通行惯例/纳音法】',
-      })
-    }
-    if (hb === '酉' || hb === '戌') {
-      results.push({
-        name: '童子煞', category: '凶星' as const, pillar: '时柱',
-        description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-        basis: '【通行惯例/纳音法】',
-      })
-    }
-  } else if (nayinWx === '土') {
-    if (db === '辰' || db === '巳') {
-      results.push({
-        name: '童子煞', category: '凶星' as const, pillar: '日柱',
-        description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-        basis: '【通行惯例/纳音法】',
-      })
-    }
-    if (hb === '辰' || hb === '巳') {
-      results.push({
-        name: '童子煞', category: '凶星' as const, pillar: '时柱',
-        description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
-        basis: '【通行惯例/纳音法】',
-      })
-    }
-  }
-
-  return results
+  const dayCombo = bazi.dayMaster + bazi.pillars.day.branch
+  const list = TONG_ZI_MAP[mb]
+  if (!list || !list.includes(dayCombo)) return []
+  return [{
+    name: '童子煞', category: '凶星' as const, pillar: '日柱',
+    description: `童子煞，传说为仙界童子下凡，多主婚姻迟滞，宜还愿化解`,
+    basis: '【民俗/日柱+月支组合表】',
+  }]
 }
 
 // 魁罡（日柱固定组合）
@@ -1216,12 +1145,11 @@ const YI_MA_MAP: Record<string, string> = {
 }
 
 function findYiMa(bazi: BaziResult): ShenSha[] {
+  // 【shensha-spec #20】年支+日支 → 地支(月支不参与,与规格书一致)
   const yb = bazi.pillars.year.branch
-  const mb = bazi.pillars.month.branch
   const db = bazi.pillars.day.branch
   const targets = new Set<string>()
   if (YI_MA_MAP[yb]) targets.add(YI_MA_MAP[yb])
-  if (YI_MA_MAP[mb]) targets.add(YI_MA_MAP[mb])
   if (YI_MA_MAP[db]) targets.add(YI_MA_MAP[db])
   return matchBranch(bazi, [...targets]).map((k) => ({
     name: '驿马', category: '泛星' as const, pillar: PILLAR_LABEL[k],
@@ -1239,12 +1167,11 @@ const HUA_GAI_MAP: Record<string, string> = {
 }
 
 function findHuaGai(bazi: BaziResult): ShenSha[] {
+  // 【shensha-spec #21】年支+日支 → 地支(月支不参与,与规格书一致)
   const yb = bazi.pillars.year.branch
-  const mb = bazi.pillars.month.branch
   const db = bazi.pillars.day.branch
   const targets = new Set<string>()
   if (HUA_GAI_MAP[yb]) targets.add(HUA_GAI_MAP[yb])
-  if (HUA_GAI_MAP[mb]) targets.add(HUA_GAI_MAP[mb])
   if (HUA_GAI_MAP[db]) targets.add(HUA_GAI_MAP[db])
   return matchBranch(bazi, [...targets]).map((k) => ({
     name: '华盖', category: '泛星' as const, pillar: PILLAR_LABEL[k],

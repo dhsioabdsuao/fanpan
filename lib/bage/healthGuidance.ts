@@ -1,16 +1,12 @@
 // ── 体质倾向（基于五行平衡与调候分析）──
-//
-// 本模块纯消费现有分析引擎输出：
-//   countWuXing → 五行分布
-//   getTiaoHouType → 气候寒暖燥湿
-//   determineStrength → 身强/弱
-//
+// CONSUMES-FULL-ANALYSIS-ONLY:本模块只消费 analyze() 的统一结果,
+// 不重复计算五行计数/调候类型/强弱(诊断流程 L10)。
 // 五行→脏腑映射依据《黄帝内经》基础理论。
 // 养生建议为传统体质养生的现代演绎。
 
 import type { BaziResult, ElementType } from '@/types/bazi'
-import { countWuXing, getTiaoHouType } from './tiaoHou'
-import { determineStrength } from '@/lib/strength/determineStrength'
+import type { FullAnalysis } from './analyze'
+import { analyze } from './analyze'
 
 // ═══════════════════════════════════════════
 // 类型
@@ -104,10 +100,10 @@ const STRENGTH_NOTE: Record<string, string> = {
 // 主函数
 // ═══════════════════════════════════════════
 
-export function generateHealthGuidance(bazi: BaziResult): HealthGuidance {
-  const wuXingCount = countWuXing(bazi)
-  const tiaoHouType = getTiaoHouType(bazi)
-  const strength = determineStrength(bazi)
+export function generateHealthGuidanceFromFull(full: Omit<FullAnalysis, 'texts'>): HealthGuidance {
+  const wuXingCount = full.wuXing.count
+  const tiaoHouType = full.tiaoHou.type
+  const strength = full.strength
 
   // ── 体质综述 ──
   const climateSummary = CLIMATE_SUMMARY[tiaoHouType] ?? CLIMATE_SUMMARY['寒暖适中']
@@ -199,4 +195,9 @@ export function generateHealthGuidance(bazi: BaziResult): HealthGuidance {
     organs,
     wellness: { exercise, rest, diet, seasonal },
   }
+}
+
+/** 兼容旧签名:内部走统一管线(analyze 一次) */
+export function generateHealthGuidance(bazi: BaziResult): HealthGuidance {
+  return generateHealthGuidanceFromFull(analyze(bazi))
 }

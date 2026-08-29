@@ -10,8 +10,8 @@ import {
   isHuaRenWeiYin,
 } from './helpers'
 import { getTenGod } from '@/lib/bazi-utils'
-import { isCongSha, isCongCai } from './congGe'
-import { isHuaGe, recalculateShiShen, getHuaQiDayMaster } from './huaGe'
+import { isCongShaDetailed, isCongCaiDetailed } from './congGe'
+import { isHuaGeDetailed, recalculateShiShen, getHuaQiDayMaster } from './huaGe'
 import type { HuaQiShiShenResult } from './huaGe'
 
 // ── 十神 → 格局映射 ──
@@ -43,8 +43,16 @@ const HUA_PARTNER_MAP: Record<string, string> = {
 export interface ExtractResult {
   category: PatternCategory
   displayName: PatternDisplayName
+  /**
+   * legacy 字段:内容为格神/另取用神,不是机制用神。
+   * 自 S4 起,喜忌用神由 computeXiYong 依据成败层 conditions 推导,
+   * 禁止新代码读取本字段推导喜用/忌神。
+   */
   yongShen: string
+  /** 格神描述(展示用) */
   patternGod: string
+  /** 格神十神(如七杀格的格神十神=七杀);化格/从格无传统格神,为 null */
+  patternGodTenGod: string | null
   origin: PatternOrigin
   /** 透干的格神所在天干位置（仅透干取格时有值） */
   patternStem: string | null
@@ -54,6 +62,19 @@ export interface ExtractResult {
   luJieYongShenTenGod: string | null
   /** 化格：化气后十神重排数据 */
   huaQiShiShen: HuaQiShiShenResult | null
+  /**
+   * 判定轨迹【格局规格书 §0.4】:每步级联检查了什么、依据哪条、命中与否。
+   * 供"判定依据"展示与测试核验。
+   */
+  judgementTrace: string[]
+}
+
+function fmtChain(steps: { label: string; met: boolean; note: string }[]): string {
+  return steps.map((s) => `${s.label}${s.met ? '✓' : '✗'}(${s.note})`).join(' → ')
+}
+
+function fmtSteps(label: string, steps: { label: string; met: boolean; note: string }[]): string {
+  return `【${label}】` + fmtChain(steps)
 }
 
 export function extractPattern(bazi: BaziResult): ExtractResult {
@@ -63,6 +84,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
   const benQi = hidden[0]
   const zhongQi = hidden[1] ?? null
   const yuQi = hidden[2] ?? null
+  const trace: string[] = []
 
   // 所有天干（不含日干，日干不透）
   const allStems = [
@@ -87,10 +109,12 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
 
   // ── 化格优先判定（《滴天髓》原文·任铁樵注）──
   // 优先级最高：化格 > 从格 > 八格。真化直取化格，假化（返回null）继续。
+  // 【格局规格书 §0.1 优先级链】
 
-  const huaGeResult = isHuaGe(bazi)
-  if (huaGeResult) {
-    const { name, huaShen } = huaGeResult
+  const huaDetail = isHuaGeDetailed(bazi)
+  if (huaDetail.result) {
+    trace.push(fmtSteps('化格', huaDetail.steps) + ` → 取${huaDetail.result.name}`)
+    const { name, huaShen } = huaDetail.result
     // 合神（partner stem）即化神五行之干
     const huaPartner = HUA_PARTNER_MAP[dayMaster]
     const huaStem = touGanStems.find((s) => s === huaPartner)
@@ -101,19 +125,26 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       displayName: name as PatternDisplayName,
       yongShen: huaStem ?? huaShen,
       patternGod: `日主${dayMaster}合${huaPartner}化${huaShen},化气成格`,
+      patternGodTenGod: null,
       origin: '化格',
       patternStem: huaStem ?? null,
       patternElement: huaShen,
       luJieYongShenTenGod: null,
       huaQiShiShen,
+      judgementTrace: trace,
     }
+  }
+  {
+    trace.push(`【化格】未成化:${fmtChain(huaDetail.steps)}`)
   }
 
   // ── 从格优先判定（《滴天髓》原文·任铁樵注）──
   // 从格在八格之前判定。真从则直取从格，假从（返回null）继续走八格。
+  // 【格局规格书 §0.2 从格不依赖强弱模块】
 
-  const congShaResult = isCongSha(bazi)
-  if (congShaResult) {
+  const congShaDetail = isCongShaDetailed(bazi)
+  if (congShaDetail.result) {
+    trace.push(fmtSteps('从杀', congShaDetail.steps) + ' → 取从杀格')
     const shaStem = touGanStems.find((s) => {
       const tg = getTenGod(dayMaster, s)
       return tg === '正官' || tg === '七杀'
@@ -123,16 +154,22 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       displayName: '从杀格',
       yongShen: shaStem ?? '官杀',
       patternGod: `日主${dayMaster}无根,全局官杀强旺,从杀为格`,
+      patternGodTenGod: null,
       origin: '从格',
       patternStem: shaStem ?? null,
       patternElement: null,
       luJieYongShenTenGod: null,
       huaQiShiShen: null,
+      judgementTrace: trace,
     }
   }
+  {
+    trace.push(`【从杀】未成从:${fmtChain(congShaDetail.steps)}`)
+  }
 
-  const congCaiResult = isCongCai(bazi)
-  if (congCaiResult) {
+  const congCaiDetail = isCongCaiDetailed(bazi)
+  if (congCaiDetail.result) {
+    trace.push(fmtSteps('从财', congCaiDetail.steps) + ' → 取从财格')
     const caiStem = touGanStems.find((s) => {
       const tg = getTenGod(dayMaster, s)
       return tg === '正财' || tg === '偏财'
@@ -142,12 +179,17 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       displayName: '从财格',
       yongShen: caiStem ?? '财星',
       patternGod: `日主${dayMaster}无根,全局财星强旺,从财为格`,
+      patternGodTenGod: null,
       origin: '从格',
       patternStem: caiStem ?? null,
       patternElement: null,
       luJieYongShenTenGod: null,
       huaQiShiShen: null,
+      judgementTrace: trace,
     }
+  }
+  {
+    trace.push(`【从财】未成从:${fmtChain(congCaiDetail.steps)}`)
   }
 
   // 调候特例：化刃为印——戊土日主 + 午月 + 天干透丙丁 + 地支会火局
@@ -157,17 +199,20 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     const primaryFire = fireStems[0]
     const tenGod = getTenGod(dayMaster, primaryFire)
     const displayName = tenGod === '偏印' ? '偏印格' : '正印格'
+    trace.push(`【化刃为印】戊土+午刃+透丙丁[${fireStems.join(',')}]+会火局 → 取${displayName}`)
 
     return {
       category: '印格',
       displayName,
       yongShen: primaryFire,
       patternGod: `月支午(刃)化火印,${primaryFire}(${tenGod})透干`,
+      patternGodTenGod: tenGod,
       origin: '比劫当令',
       patternStem: primaryFire,
       patternElement: null,
       luJieYongShenTenGod: null,
       huaQiShiShen: null,
+      judgementTrace: trace,
     }
   }
 
@@ -176,6 +221,7 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
 
   // 第二步分流：月支本气是不是比劫？
   const isBiJie = benQiTenGod === '比肩' || benQiTenGod === '劫财'
+  trace.push(`【分流】月支${monthBranch}本气${benQi}(${benQiTenGod})${isBiJie ? '为比劫 → 分支A(建禄/阳刃)' : '非比劫 → 分支B(八格)'}`)
 
   if (isBiJie) {
     // ── 分支 A：月支本气是比劫 ──
@@ -188,22 +234,25 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
         return tg === '正官' || tg === '七杀'
       })
       const yongShen = touStems.length > 0 ? touStems[0] : '官杀'
+      trace.push(`【阳刃】日主${dayMaster}阳干+月支${monthBranch}为刃 → 取阳刃格,用官杀[${touStems.join(',') || '无透,取官杀'}]`)
 
       return {
         category: '阳刃格',
         displayName: '阳刃格',
         yongShen,
         patternGod: `月支${monthBranch}(刃)`,
+        patternGodTenGod: benQiTenGod,
         origin: '比劫当令',
         patternStem: null,
         patternElement: null,
         luJieYongShenTenGod: null,
-      huaQiShiShen: null,
+        huaQiShiShen: null,
+        judgementTrace: trace,
       }
     }
 
     // A.2 建禄月劫格
-    // 从天干找另取的用神：官/杀优先，其次财，再次食伤
+    // 从天干找另取的用神：官/杀优先，其次财，再次食伤【本系统决策·待规格书4.7定序】
     const touStemTenGods = touGanStems.map((s) => ({
       stem: s,
       tenGod: getTenGod(dayMaster, s),
@@ -223,17 +272,20 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     const yongShen = selectedYongShen
       ? `${selectedYongShen.stem}(${selectedYongShen.tenGod})`
       : '无财官杀食可取'
+    trace.push(`【建禄月劫】另取用神,按序(七杀>正官>偏财>正财>食神>伤官)${selectedYongShen ? `取${selectedYongShen.stem}(${selectedYongShen.tenGod})` : '无财官杀食可取'}`)
 
     return {
       category: '建禄月劫格',
       displayName: '建禄月劫格',
       yongShen,
       patternGod: `月支${monthBranch}(比劫当令)`,
+      patternGodTenGod: benQiTenGod,
       origin: '比劫当令',
       patternStem: null,
       patternElement: null,
       luJieYongShenTenGod: selectedYongShen?.tenGod ?? null,
       huaQiShiShen: null,
+      judgementTrace: trace,
     }
   }
 
@@ -270,17 +322,20 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
       : '时干'
 
     const qiLabel = selectedStem === benQi ? '本气' : selectedStem === zhongQi ? '中气' : '余气'
+    trace.push(`【透干取格】月支${monthBranch}藏干${selectedStem}(${tenGod},${qiLabel})透${pos} → 取${displayName}`)
 
     return {
       category,
       displayName,
       yongShen: selectedStem,
       patternGod: `${selectedStem}(${tenGod},月支${monthBranch}${qiLabel}透${pos})`,
+      patternGodTenGod: tenGod,
       origin: '透干',
       patternStem: selectedStem,
       patternElement: null,
       luJieYongShenTenGod: null,
       huaQiShiShen: null,
+      judgementTrace: trace,
     }
   }
 
@@ -291,23 +346,32 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     // 会成五行对日主的十神；局按整体气势论，取‘same’阴阳侧（偏/杀/食/偏印）
     const tenGod = elementToTenGod(element, bazi.dayMasterElement, 'same')
 
-    const category = TEN_GOD_TO_CATEGORY[tenGod]
-    const displayName = TEN_GOD_TO_DISPLAY[tenGod]
+    // 【格局规格书 1.2-B.2】会成比劫局不可独立成格 → 回落本气取格
+    if (tenGod === '比肩' || tenGod === '劫财') {
+      trace.push(`【会支取格】月支${monthBranch}${heResult.type}${element}局成${tenGod},比劫不可成格 → 回落本气取格`)
+    } else {
+      const category = TEN_GOD_TO_CATEGORY[tenGod]
+      const displayName = TEN_GOD_TO_DISPLAY[tenGod]
 
-    if (!category) {
-      throw new Error(`无法确定格局：会${element}局(${tenGod})`)
-    }
+      if (!category) {
+        throw new Error(`无法确定格局：会${element}局(${tenGod})`)
+      }
 
-    return {
-      category,
-      displayName,
-      yongShen: `会${element}局`,
-      patternGod: `月支${monthBranch}${heResult.type}${element}局(${tenGod})`,
-      origin: '会支',
-      patternStem: null,
-      patternElement: element,
-      luJieYongShenTenGod: null,
-      huaQiShiShen: null,
+      trace.push(`【会支取格】月支${monthBranch}${heResult.type}${element}局(${tenGod}) → 取${displayName}`)
+
+      return {
+        category,
+        displayName,
+        yongShen: `会${element}局`,
+        patternGod: `月支${monthBranch}${heResult.type}${element}局(${tenGod})`,
+        patternGodTenGod: tenGod,
+        origin: '会支',
+        patternStem: null,
+        patternElement: element,
+        luJieYongShenTenGod: null,
+        huaQiShiShen: null,
+        judgementTrace: trace,
+      }
     }
   }
 
@@ -320,15 +384,19 @@ export function extractPattern(bazi: BaziResult): ExtractResult {
     throw new Error(`无法确定格局：本气${benQi}(${tenGod})`)
   }
 
+  trace.push(`【本气取格】月支${monthBranch}本气${benQi}(${tenGod})不透不会 → 取${displayName}`)
+
   return {
     category,
     displayName,
     yongShen: benQi,
     patternGod: `月支${monthBranch}本气${benQi}(${tenGod}),不透不会,取本气`,
+    patternGodTenGod: tenGod,
     origin: '不透不会',
     patternStem: null,
     patternElement: null,
     luJieYongShenTenGod: null,
     huaQiShiShen: null,
+    judgementTrace: trace,
   }
 }

@@ -22,17 +22,21 @@ function getSeason(monthBranch: string): Season {
   return '冬' // 亥子丑
 }
 
-// ── 旺相休囚死（季节五行强度）──
+// ── 旺相休囚死（季节五行强度）──【强弱规格书 v1.1 §1.1】
 // 春季(木旺): 木旺 火相 土死 金囚 水休
 // 夏季(火旺): 火旺 土相 金死 水囚 木休
 // 秋季(金旺): 金旺 水相 木死 火囚 土休
 // 冬季(水旺): 水旺 木相 火死 土囚 金休
+// 分值【本系统决策】:旺=3 相=2 休=1 囚=0.5 死=0
 const SEASON_STRENGTH: Record<Season, Record<string, number>> = {
   '春': { '木': 3, '火': 2, '水': 1, '金': 0.5, '土': 0 },
   '夏': { '火': 3, '土': 2, '木': 1, '水': 0.5, '金': 0 },
   '秋': { '金': 3, '水': 2, '土': 1, '火': 0.5, '木': 0 },
   '冬': { '水': 3, '木': 2, '金': 1, '土': 0.5, '火': 0 },
 }
+
+/** 得令:季节分 ≥ 2(旺/相)即算【本系统决策】 */
+const DE_LING_SEASON_SCORE = 2
 
 // ── 强根位置（禄/旺/长生）──
 const LU_POSITIONS: Record<string, string> = {
@@ -118,36 +122,38 @@ export function determineStrength(bazi: BaziResult): StrengthResult {
   const benQi = hidden[0]
   const benQiTenGod = getTenGod(dayMaster, benQi)
   const hasBenQiHelp = BANG_ZHU.has(benQiTenGod)
-  // 得令 = 季节分 ≥ 2（旺/相）或本气帮扶
-  const deLing = seasonalScore >= 2 || hasBenQiHelp
+  // 得令 = 季节分 ≥ 2（旺/相）或本气帮扶【强弱规格书 v1.1 §1.1】
+  const deLing = seasonalScore >= DE_LING_SEASON_SCORE || hasBenQiHelp
 
-  // ── 1.2 得地：区分强根/弱根 ──
+  // ── 1.2 得地：区分强根/弱根【强弱规格书 v1.1 §1.2】──
   const { strongCount, weakCount } = classifyRoots(dayMasterElement, branches)
-  // 有强根 → 得地；有 ≥2 弱根 → 也算得地
-  const deDi = strongCount >= 1 || weakCount >= 2
+  // 有强根 → 得地；有 ≥2 弱根 → 也算得地【本系统决策】
+  const DE_DI_WEAK_ROOT_MIN = 2
+  const deDi = strongCount >= 1 || weakCount >= DE_DI_WEAK_ROOT_MIN
 
-  // ── 1.3 得势：加权计数帮扶 vs 克泄耗 ──
+  // ── 1.3 得势：加权计数帮扶 vs 克泄耗【强弱规格书 v1.1 §1.3】──
   const counted: { char: string; source: string; tenGod: string; weight: number }[] = []
 
-  // 天干（年/月/时）— 权重较高
+  // 天干（年/月/时）权重【本系统决策】:月干为纲,取 1.5;年干/时干 1.0
+  const STEM_WEIGHTS = { year: 1.0, month: 1.5, hour: 1.0 }
   const stemSources = [
-    { char: pillars.year.stem, label: '年干', weight: 1.0 },
-    { char: pillars.month.stem, label: '月干', weight: 1.5 },
-    { char: pillars.hour.stem, label: '时干', weight: 1.0 },
+    { char: pillars.year.stem, label: '年干', weight: STEM_WEIGHTS.year },
+    { char: pillars.month.stem, label: '月干', weight: STEM_WEIGHTS.month },
+    { char: pillars.hour.stem, label: '时干', weight: STEM_WEIGHTS.hour },
   ]
   for (const { char, label, weight } of stemSources) {
     counted.push({ char, source: label, tenGod: getTenGod(dayMaster, char), weight })
   }
 
-  // 地支藏干 — 权重：本气 > 中气 > 余气；日支 > 月支 > 时支 > 年支
+  // 地支藏干 — 权重：本气 > 中气 > 余气；日支 > 月支 > 时支 > 年支【本系统决策】
   const branchLabels = ['年支', '月支', '日支', '时支']
-  const branchPositionWeight = [0.5, 0.8, 1.0, 0.6] // 日支最重要，月支其次
-  const qiWeights = [1.0, 0.6, 0.3] // 本气 > 中气 > 余气
+  const BRANCH_POSITION_WEIGHTS = [0.5, 0.8, 1.0, 0.6] // 日支最重要，月支其次
+  const QI_WEIGHTS = [1.0, 0.6, 0.3] // 本气 > 中气 > 余气
 
   for (let i = 0; i < branches.length; i++) {
     const hs = getHiddenStemsSpec(branches[i])
     for (let j = 0; j < hs.length; j++) {
-      const weight = branchPositionWeight[i] * qiWeights[Math.min(j, qiWeights.length - 1)]
+      const weight = BRANCH_POSITION_WEIGHTS[i] * QI_WEIGHTS[Math.min(j, QI_WEIGHTS.length - 1)]
       counted.push({
         char: hs[j],
         source: `${branchLabels[i]}藏干`,
@@ -162,13 +168,14 @@ export function determineStrength(bazi: BaziResult): StrengthResult {
   for (const adj of heAdjustments) {
     // 合会局形成的五行对日主的十神
     const tenGod = getTenGod(dayMaster, adj.element)
-    // 将该五行作为额外虚拟字加入计数
+    // 将该五行作为额外虚拟字加入计数【本系统决策】:帮扶方加成 ×1.5
     const isBang = BANG_ZHU.has(tenGod)
+    const HE_BANG_MULTIPLIER = 1.5
     counted.push({
       char: `[${adj.element}局]`,
       source: '合会局',
       tenGod,
-      weight: adj.bonus * (isBang ? 1.5 : 1.0),
+      weight: adj.bonus * (isBang ? HE_BANG_MULTIPLIER : 1.0),
     })
   }
 
@@ -189,20 +196,30 @@ export function determineStrength(bazi: BaziResult): StrengthResult {
     }
   }
 
-  // 得势判断：加权帮扶 vs 克泄耗
+  // 得势判断：加权帮扶 vs 克泄耗【强弱规格书 v1.1 §1.3】
   let deShi: '得势' | '失势' | '均衡'
-  // 帮扶显著多于克泄耗（>20%）才算得势
-  if (bangWeight > keWeight * 1.2) {
+  // 帮扶显著多于克泄耗(>20%)才算得势【本系统决策】
+  const DE_SHI_MARGIN = 1.2
+  if (bangWeight > keWeight * DE_SHI_MARGIN) {
     deShi = '得势'
-  } else if (keWeight > bangWeight * 1.2) {
+  } else if (keWeight > bangWeight * DE_SHI_MARGIN) {
     deShi = '失势'
   } else {
     deShi = '均衡'
   }
 
-  // ── 第二章 合成三档（扩展分类）──
+  // ── 第二章 合成三档【强弱规格书 v1.1 §2】──
   // 用加权比例辅助判断
   const ratio = keWeight > 0 ? bangWeight / keWeight : (bangWeight > 0 ? 999 : 1)
+
+  // 加权比例分档阈值【本系统决策】
+  const RATIO_STRONG_LOW = 0.6   // 得令得地时:比值 ≥ 0.6 判身强
+  const RATIO_WEAK_HIGH = 1.5    // 失令失地时:比值 ≤ 1.5 判身弱
+  const RATIO_STRONG_MID = 1.3   // 得地得势时:比值 ≥ 1.3 判身强
+  const RATIO_STRONG_HIGH = 1.5  // 兜底:比值 ≥ 1.5 判身强
+  const RATIO_WEAK_LOW = 0.6     // 兜底:比值 ≤ 0.6 判身弱
+  // 模糊带:比值落在阈值 ±0.05 内归「中和」,消灭阈值悬线【本系统决策】
+  const RATIO_BAND = 0.05
 
   let level: '身强' | '中和' | '身弱'
 
@@ -216,22 +233,22 @@ export function determineStrength(bazi: BaziResult): StrengthResult {
     level = '身弱'
   } else if (deLing && deDi) {
     // 得令+得地 → 根基扎实，即使得势不占优也偏强
-    // 但若加权比例过低（克泄耗远大于帮扶），则降为中和
-    level = ratio >= 0.6 ? '身强' : '中和'
+    // 但若加权比例过低（克泄耗远大于帮扶），则降为中和;阈值 ±0.05 模糊带归中和
+    level = ratio >= RATIO_STRONG_LOW + RATIO_BAND ? '身强' : '中和'
   } else if (!deLing && !deDi) {
-    // 失令+失地 → 根基全无，即使得势占优也偏弱
-    level = ratio <= 1.5 ? '身弱' : '中和'
+    // 失令+失地 → 根基全无，即使得势占优也偏弱;阈值 ±0.05 模糊带归中和
+    level = ratio <= RATIO_WEAK_HIGH - RATIO_BAND ? '身弱' : '中和'
   } else if (deLing && deShi === '得势') {
     // 得令+得势（失地但有根在别处）
     level = '身强'
   } else if (deDi && deShi === '得势') {
-    // 得地+得势（失令但根基和数量占优）
-    level = ratio >= 1.3 ? '身强' : '中和'
+    // 得地+得势（失令但根基和数量占优）;阈值 ±0.05 模糊带归中和
+    level = ratio >= RATIO_STRONG_MID + RATIO_BAND ? '身强' : '中和'
   } else {
-    // 其余组合用加权比例
-    if (ratio >= 1.5) {
+    // 其余组合用加权比例;阈值 ±0.05 模糊带归中和
+    if (ratio >= RATIO_STRONG_HIGH + RATIO_BAND) {
       level = '身强'
-    } else if (ratio <= 0.6) {
+    } else if (ratio <= RATIO_WEAK_LOW - RATIO_BAND) {
       level = '身弱'
     } else {
       level = '中和'

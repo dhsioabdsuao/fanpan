@@ -1,6 +1,40 @@
 import { LunarUtil } from 'lunar-typescript'
 import type { ElementType } from '@/types/bazi'
 
+// ── 五行生克关系(元素级)【喜忌规格书 2.2 共用】──
+
+/** 克我者(官杀) */
+export function getControllingElement(el: ElementType): ElementType {
+  const map: Record<ElementType, ElementType> = {
+    '木': '金', '火': '水', '土': '木', '金': '火', '水': '土',
+  }
+  return map[el]
+}
+
+/** 我克者(财) */
+export function getControlledElement(el: ElementType): ElementType {
+  const map: Record<ElementType, ElementType> = {
+    '木': '土', '火': '金', '土': '水', '金': '木', '水': '火',
+  }
+  return map[el]
+}
+
+/** 生我者(印) */
+export function getGeneratingElement(el: ElementType): ElementType {
+  const map: Record<ElementType, ElementType> = {
+    '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
+  }
+  return map[el]
+}
+
+/** 我生者(食伤) */
+export function getGeneratedElement(el: ElementType): ElementType {
+  const map: Record<ElementType, ElementType> = {
+    '木': '火', '火': '土', '土': '金', '金': '水', '水': '木',
+  }
+  return map[el]
+}
+
 // 天干
 export const GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'] as const
 // 地支

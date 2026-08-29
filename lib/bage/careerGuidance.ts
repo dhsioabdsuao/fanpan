@@ -1,20 +1,11 @@
-// ── 事业指引（基于命局综合分析）──
-//
-// 本模块不重复计算，完全消费现有分析引擎的输出：
-//   extractPattern → 格局名、用神
-//   determineStrength → 身强/弱
-//   getTiaoHouYongShen / getTiaoHouType → 调候用神
-//   countWuXing → 五行分布
-//   analyzeWuXingLiuTong → 五行流通
-//
-// 综合以上 → 行业建议 / 方位建议 / 城市推荐 / 行动建议
+// ── 事业指引(基于命局综合分析)──
+// CONSUMES-FULL-ANALYSIS-ONLY:本模块只消费 analyze() 的统一结果,
+// 不重复计算格局/强弱/调候/流通/喜忌(诊断流程 L7/L10)。
+// 行业建议/方位建议/城市推荐/行动建议 = 喜忌结论的翻译。
 
 import type { BaziResult, ElementType } from '@/types/bazi'
-import { getStemElement } from '@/lib/bazi-utils'
-import { extractPattern } from './extractPattern'
-import { determineStrength } from '@/lib/strength/determineStrength'
-import { getTiaoHouYongShen, getTiaoHouType, countWuXing } from './tiaoHou'
-import { analyzeWuXingLiuTong } from './liuTong'
+import type { FullAnalysis } from './analyze'
+import { analyze } from './analyze'
 
 // ═══════════════════════════════════════════
 // 类型定义
@@ -46,71 +37,12 @@ export interface CareerGuidance {
   cities: CityAdvice[]
   /** 3条行动建议 */
   actionSuggestions: string[]
+  /** 喜忌冲突说明(来自喜忌规格书 2.5 裁决,所有文案统一呈现) */
+  conflictNotes: string[]
 }
 
 // ═══════════════════════════════════════════
-// 用神元素提取
-// ═══════════════════════════════════════════
-
-const DAY_MASTER_TO_GUAN_SHA: Record<string, ElementType> = {
-  '甲': '金', '乙': '金', '丙': '水', '丁': '水', '戊': '木',
-  '己': '木', '庚': '火', '辛': '火', '壬': '土', '癸': '土',
-}
-
-const DAY_MASTER_TO_CAI: Record<string, ElementType> = {
-  '甲': '土', '乙': '土', '丙': '金', '丁': '金', '戊': '水',
-  '己': '水', '庚': '木', '辛': '木', '壬': '火', '癸': '火',
-}
-
-const DAY_MASTER_TO_SHI_SHANG: Record<string, ElementType> = {
-  '甲': '火', '乙': '火', '丙': '土', '丁': '土', '戊': '金',
-  '己': '金', '庚': '水', '辛': '水', '壬': '木', '癸': '木',
-}
-
-/** 从用神字符串中提取五行元素列表 */
-function yongShenToElements(yongShen: string, dayMaster: string): ElementType[] {
-  // "会X局" 格式
-  const huiMatch = yongShen.match(/^会(.)局$/)
-  if (huiMatch) return [huiMatch[1] as ElementType]
-
-  // "无财官杀食可取" → 无法提取
-  if (yongShen === '无财官杀食可取') return []
-
-  // "官杀" / "财星" / "食伤" 格式 (阳刃格/从格)
-  if (yongShen === '官杀') return [DAY_MASTER_TO_GUAN_SHA[dayMaster]]
-  if (yongShen === '财星') return [DAY_MASTER_TO_CAI[dayMaster]]
-  if (yongShen === '食伤') return [DAY_MASTER_TO_SHI_SHANG[dayMaster]]
-
-  // "甲(七杀)" 格式 (建禄月劫格) → 取第一个字
-  const parenMatch = yongShen.match(/^(\S)\(/)
-  if (parenMatch) return [getStemElement(parenMatch[1]) as ElementType]
-
-  // 单个天干如 "甲"
-  if (yongShen.length === 1) return [getStemElement(yongShen) as ElementType]
-
-  // 化格：化神五行名如 "火"
-  const huaElements: ElementType[] = ['木', '火', '土', '金', '水']
-  if (huaElements.includes(yongShen as ElementType)) return [yongShen as ElementType]
-
-  return []
-}
-
-// ═══════════════════════════════════════════
-// 五行克制关系
-// ═══════════════════════════════════════════
-
-const KE_RELATION: Record<ElementType, ElementType> = {
-  '木': '土', '火': '金', '土': '水', '金': '木', '水': '火',
-}
-
-/** 克制 el 的五行 */
-function keElement(el: ElementType): ElementType {
-  const entry = Object.entries(KE_RELATION).find(([, v]) => v === el)
-  return (entry?.[0] ?? '木') as ElementType
-}
-
-// ═══════════════════════════════════════════
-// 五行 → 职业映射表
+// 行业五行数据库
 // ═══════════════════════════════════════════
 
 interface ElementProfession {
@@ -297,55 +229,20 @@ const EXCESS_ELEMENT_WARNING: Record<ElementType, string> = {
 // 主函数
 // ═══════════════════════════════════════════
 
-export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
-  const pattern = extractPattern(bazi)
-  const strength = determineStrength(bazi)
-  const tiaoHouGods = getTiaoHouYongShen(bazi.dayMaster, bazi.pillars.month.branch)
-  const tiaoHouType = getTiaoHouType(bazi)
-  const wuXingCount = countWuXing(bazi)
-  const liuTong = analyzeWuXingLiuTong(bazi)
+export function generateCareerGuidanceFromFull(full: Omit<FullAnalysis, 'texts'>): CareerGuidance {
+  const bazi = full.bazi
+  const pattern = full.pattern
+  const strength = full.strength
+  const tiaoHouType = full.tiaoHou.type
+  const tiaoHouElements = full.tiaoHou.elements
+  const wuXingCount = full.wuXing.count
+  const liuTong = full.liuTong
 
-  // ── 1. 确定喜用神元素（综合排序）──
-  const patternElements = yongShenToElements(pattern.yongShen, bazi.dayMaster)
-  const tiaoHouElements = [...new Set(tiaoHouGods.map((s) => getStemElement(s) as ElementType))]
-  const tongGuanElement = liuTong.tongGuan
-
-  // 合并去重，按优先级排序：格局用神 → 调候用神 → 通关用神
-  const favorableElements: ElementType[] = []
-  for (const el of patternElements) {
-    if (!favorableElements.includes(el)) favorableElements.push(el)
-  }
-  for (const el of tiaoHouElements) {
-    if (!favorableElements.includes(el)) favorableElements.push(el)
-  }
-  if (tongGuanElement && !favorableElements.includes(tongGuanElement)) {
-    favorableElements.push(tongGuanElement)
-  }
-
-  const primaryElement = favorableElements[0]
-  const secondaryElement = favorableElements[1]
-
-  // 忌神：从过旺五行中筛选，排除喜用神
-  const avoidElements: ElementType[] = []
-  // 1. 五行计数中过旺（≥3）且不在喜用神列表的
-  const ALL_ELEMENTS: ElementType[] = ['木', '火', '土', '金', '水']
-  for (const el of ALL_ELEMENTS) {
-    if ((wuXingCount[el] ?? 0) >= 3 && !favorableElements.includes(el)) {
-      avoidElements.push(el)
-    }
-  }
-  // 2. 克制主喜用神的五行（仅当它不在喜用神列表且不过旺补充）
-  if (primaryElement) {
-    const primaryKe = keElement(primaryElement)
-    if (!favorableElements.includes(primaryKe) && !avoidElements.includes(primaryKe)) {
-      avoidElements.push(primaryKe)
-    }
-  }
-  // 3. 日主自身如果过旺（≥3）且不在喜用神
-  const dayEl = bazi.dayMasterElement
-  if ((wuXingCount[dayEl] ?? 0) >= 3 && !favorableElements.includes(dayEl) && !avoidElements.includes(dayEl)) {
-    avoidElements.push(dayEl)
-  }
+  const favorableElements = full.xiYong.favorable
+  const primaryElement = full.xiYong.primaryFavorable
+  const secondaryElement = full.xiYong.secondaryFavorable
+  const avoidElements = full.xiYong.avoid
+  const conflictNotes = full.xiYong.conflicts.map((c) => c.note)
 
   // ── 2. 汇总 ──
   const stTemplate = STRENGTH_TEMPLATES[strength.level]
@@ -418,9 +315,12 @@ export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
   const cities: CityAdvice[] = []
 
   // 按 primary/secondary element 匹配城市
+  // 【本系统决策】确定性排序:按城市名+四柱哈希稳定排序,同一命盘每次结果一致
+  const pillarKey = `${bazi.pillars.year.stem}${bazi.pillars.year.branch}${bazi.pillars.month.stem}${bazi.pillars.month.branch}${bazi.dayMaster}${bazi.pillars.day.branch}${bazi.pillars.hour.stem}${bazi.pillars.hour.branch}`
+  const cityHash = (c: CityEntry) => (pillarKey + c.name).split('').reduce((a, ch) => a + ch.charCodeAt(0), 0)
   const primaryCities = CITY_DB
     .filter((c) => c.element === primaryElement)
-    .sort(() => 0.5 - Math.random()) // 简单随机排序，每次不同命局结果相同（因为不依赖 Date）
+    .sort((a, b) => cityHash(a) - cityHash(b))
   const secondaryCities = CITY_DB
     .filter((c) => c.element === secondaryElement && c.element !== primaryElement)
   const avoidCities = CITY_DB
@@ -454,15 +354,15 @@ export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
   const primaryPatternTip = patternTips[0] ?? `${pattern.displayName}，靠专业能力立足，深耕一个领域`
   actionSuggestions.push(primaryPatternTip)
 
-  // 6.2 调候或五行建议
-  if (tiaoHouType !== '寒暖适中' && tiaoHouElements.length > 0) {
-    const thEl = tiaoHouElements[0]
-    const thDesc = ELEMENT_DIRECTION[thEl].desc
+  // 6.2 调候或五行建议(救治元素=气候极端时的主喜用,来自喜忌规格书 2.1)
+  if (tiaoHouType !== '寒暖适中') {
+    const fixEl: ElementType = tiaoHouType === '火炎土燥' ? '水' : '火'
+    const thDesc = ELEMENT_DIRECTION[fixEl].desc
     const tip2Templates: Record<string, string> = {
       '火炎土燥': `命局偏燥，多接触水相关环境——${thDesc}的城市、蓝色调空间、安静氛围，对你有加持`,
       '金寒水冷': `命局偏寒，多接触火相关环境——${thDesc}的城市、温暖色调空间、热闹氛围，对你有加持`,
     }
-    actionSuggestions.push(tip2Templates[tiaoHouType] ?? `从调候角度看，多接触${thEl}相关环境和人群，有助平衡`)
+    actionSuggestions.push(tip2Templates[tiaoHouType])
   } else if (secondaryElement) {
     actionSuggestions.push(`第二喜用神为${secondaryElement}，在${primaryElement}方向之外，${ELEMENT_DIRECTION[secondaryElement].direction}发展也是加分项`)
   } else {
@@ -502,5 +402,11 @@ export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
     directionAvoid: dirAvoid,
     cities,
     actionSuggestions: actionSuggestions.slice(0, 3),
+    conflictNotes,
   }
+}
+
+/** 兼容旧签名:内部走统一管线(analyze 一次) */
+export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
+  return generateCareerGuidanceFromFull(analyze(bazi))
 }
