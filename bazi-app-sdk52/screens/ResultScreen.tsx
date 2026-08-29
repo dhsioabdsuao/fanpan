@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Text } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -243,6 +243,14 @@ export default function ResultScreen({ navigation, route }: Props) {
           })}
         </View>
 
+        {/* 历史排盘入口 */}
+        <Pressable
+          style={styles.historyEntry}
+          onPress={() => navigation.navigate('History')}
+        >
+          <Text style={styles.historyEntryText}>历史排盘 →(本次命盘已自动保存)</Text>
+        </Pressable>
+
         {/* Disclaimer — 古籍批注风格 */}
         <View style={styles.disclaimerContainer}>
           <View style={styles.disclaimerDivider} />
@@ -432,6 +440,20 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     color: Colors.destructive,
     textAlign: 'center',
+  },
+  historyEntry: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surface,
+    marginBottom: Spacing.lg,
+  },
+  historyEntryText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
   },
   disclaimerContainer: {
     marginTop: Spacing.xl,

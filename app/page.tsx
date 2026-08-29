@@ -1,5 +1,7 @@
 import { Noto_Serif_SC } from 'next/font/google';
 import { Suspense } from 'react';
+import Link from 'next/link';
+import { History } from 'lucide-react';
 import { BirthForm } from '@/components/bazi/BirthForm';
 
 const notoSerifSC = Noto_Serif_SC({
@@ -27,6 +29,16 @@ export default function Home() {
           <BirthForm />
         </Suspense>
       </div>
+
+      {/* 历史排盘入口 */}
+      <Link
+        href="/history"
+        className="mt-12 flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50/60 px-5 py-3 text-sm text-stone-600 transition-colors hover:border-amber-300 hover:text-stone-700"
+      >
+        <History className="size-4 text-stone-400" />
+        历史排盘
+        <span className="text-xs text-stone-400">最近排过的命盘都在这里</span>
+      </Link>
     </div>
   );
 }

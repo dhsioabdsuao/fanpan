@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, FontSize, FONT_SERIF, Spacing } from '../theme';
+import { Colors, FontSize, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import BirthForm from '../components/bazi/BirthForm';
 import RecentReadings from '../components/RecentReadings';
 import { loadRecords, deleteRecord } from '../services/storage';
@@ -68,6 +68,14 @@ export default function HomeScreen() {
             onPress={handleRecordPress}
             onDelete={handleRecordDelete}
           />
+
+          {/* 历史排盘入口 */}
+          <Pressable
+            style={styles.historyEntry}
+            onPress={() => navigation.navigate('History')}
+          >
+            <Text style={styles.historyEntryText}>历史排盘 →</Text>
+          </Pressable>
 
           <Pressable
             style={styles.privacyLink}
@@ -149,6 +157,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     elevation: 4,
+  },
+  historyEntry: {
+    alignSelf: 'center',
+    marginTop: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surface,
+  },
+  historyEntryText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
   },
   privacyLink: {
     alignItems: 'center',

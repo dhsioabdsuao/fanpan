@@ -85,3 +85,12 @@ export async function deleteRecord(id: string): Promise<void> {
     // 静默失败
   }
 }
+
+export async function clearRecords(): Promise<void> {
+  try {
+    const file = getFilePath();
+    if (file.exists) file.delete();
+  } catch {
+    // 静默失败
+  }
+}

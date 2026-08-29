@@ -4,6 +4,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ResultScreen from '../screens/ResultScreen';
 import AboutScreen from '../screens/AboutScreen';
 import PrivacyScreen from '../screens/PrivacyScreen';
+import HistoryScreen from '../screens/HistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -19,6 +20,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Result" component={ResultScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
+      <Stack.Screen name="History" component={HistoryScreen} />
     </Stack.Navigator>
   );
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,8 @@ import { HealthGuidanceBlock } from '@/components/bazi/HealthGuidanceBlock'
 import { XiYongBlock } from '@/components/bazi/XiYongBlock'
 import { LiuTongBlock } from '@/components/bazi/LiuTongBlock'
 import { ShenShaBlock } from '@/components/bazi/ShenShaBlock'
+import { History } from 'lucide-react'
+import { saveRecord } from '@/lib/history-storage'
 
 function SkeletonResult() {
   return (
@@ -117,6 +119,37 @@ function ResultContent() {
 
   // 【诊断流程】全页只算一次统一管线,所有卡片消费同一结果
   const full = useMemo(() => analyze(result), [result])
+
+  // 自动保存历史(同参数去重,上限 20 条)
+  useEffect(() => {
+    try {
+      saveRecord(
+        {
+          calendar: input.isLunar ? 'lunar' : 'solar',
+          year: input.year,
+          month: input.month,
+          day: input.day,
+          hour: input.hour,
+          minute: input.minute,
+          gender: input.gender,
+          isLeapMonth: searchParams.get('isLeapMonth') ?? undefined,
+          province: searchParams.get('province') ?? undefined,
+          city: searchParams.get('city') ?? undefined,
+          district: searchParams.get('district') ?? undefined,
+        },
+        {
+          baziBrief: `${full.bazi.pillars.year.stem}${full.bazi.pillars.year.branch} ${full.bazi.pillars.month.stem}${full.bazi.pillars.month.branch} ${full.bazi.pillars.day.stem}${full.bazi.pillars.day.branch} ${full.bazi.pillars.hour.stem}${full.bazi.pillars.hour.branch}`,
+          patternDisplay: full.pattern.displayName,
+          patternOutcome: full.outcome.outcome,
+          patternResult: full.outcome.reason.split(';')[0].trim(),
+          dayMaster: full.bazi.dayMaster,
+        },
+      )
+    } catch {
+      // 静默失败,不影响排盘
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const noHour = searchParams.get('noHour')
 
@@ -278,6 +311,16 @@ function ResultContent() {
             )
           })}
         </div>
+
+        {/* 历史排盘入口 */}
+        <Link
+          href="/history"
+          className="flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50/60 px-5 py-3 text-sm text-stone-600 transition-colors hover:border-amber-300 hover:text-stone-700"
+        >
+          <History className="size-4 text-stone-400" />
+          历史排盘
+          <span className="text-xs text-stone-400">本次命盘已自动保存</span>
+        </Link>
 
         <Methodology />
 
