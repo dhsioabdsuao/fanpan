@@ -6,7 +6,6 @@
 
 import type { BaziResult, ElementType } from '@/types/bazi'
 import type { FullAnalysis } from './analyze'
-import { analyze } from './analyze'
 
 // ═══════════════════════════════════════════
 // 类型
@@ -197,7 +196,3 @@ export function generateHealthGuidanceFromFull(full: Omit<FullAnalysis, 'texts'>
   }
 }
 
-/** 兼容旧签名:内部走统一管线(analyze 一次) */
-export function generateHealthGuidance(bazi: BaziResult): HealthGuidance {
-  return generateHealthGuidanceFromFull(analyze(bazi))
-}

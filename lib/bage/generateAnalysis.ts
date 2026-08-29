@@ -7,7 +7,6 @@ import { getTenGod } from '@/lib/bazi-utils'
 import { getTiaoHouYongShen, getTiaoHouType } from './tiaoHou'
 import { analyzeWuXingLiuTong } from './liuTong'
 import { generateNarrative } from './narrative'
-import { analyze } from './analyze'
 import type { FullAnalysis } from './analyze'
 
 // ── 类型 ──
@@ -933,7 +932,3 @@ export function generateAnalysisFromFull(full: Omit<FullAnalysis, 'texts'>): Ana
   return { summary, analysis, narrative }
 }
 
-/** 兼容旧签名:内部走统一管线(analyze 一次),pattern/outcome/strength 参数仅作契约 */
-export function generateAnalysis(input: AnalysisInput): AnalysisResult {
-  return generateAnalysisFromFull(analyze(input.bazi))
-}

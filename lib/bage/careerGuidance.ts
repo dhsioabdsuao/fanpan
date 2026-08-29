@@ -5,7 +5,6 @@
 
 import type { BaziResult, ElementType } from '@/types/bazi'
 import type { FullAnalysis } from './analyze'
-import { analyze } from './analyze'
 
 // ═══════════════════════════════════════════
 // 类型定义
@@ -406,7 +405,3 @@ export function generateCareerGuidanceFromFull(full: Omit<FullAnalysis, 'texts'>
   }
 }
 
-/** 兼容旧签名:内部走统一管线(analyze 一次) */
-export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
-  return generateCareerGuidanceFromFull(analyze(bazi))
-}

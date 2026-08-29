@@ -23,7 +23,7 @@ import { getAllShenSha } from './shensha'
 import type { ShenSha } from './shensha'
 import { getStemElement } from '@/lib/bazi-utils'
 import { generateAnalysisFromFull } from './generateAnalysis'
-import type { AnalysisResult } from './generateAnalysis'
+import type { AnalysisInput, AnalysisResult } from './generateAnalysis'
 import { generateNarrative } from './narrative'
 import { generateCareerGuidanceFromFull } from './careerGuidance'
 import type { CareerGuidance } from './careerGuidance'
@@ -70,6 +70,21 @@ export interface FullAnalysis {
 }
 
 const ELEMENTS: ElementType[] = ['木', '火', '土', '金', '水']
+
+/** 兼容旧签名:内部走统一管线(analyze 一次),pattern/outcome/strength 参数仅作契约 */
+export function generateAnalysis(input: AnalysisInput): AnalysisResult {
+  return generateAnalysisFromFull(analyze(input.bazi))
+}
+
+/** 兼容旧签名:内部走统一管线(analyze 一次) */
+export function generateCareerGuidance(bazi: BaziResult): CareerGuidance {
+  return generateCareerGuidanceFromFull(analyze(bazi))
+}
+
+/** 兼容旧签名:内部走统一管线(analyze 一次) */
+export function generateHealthGuidance(bazi: BaziResult): HealthGuidance {
+  return generateHealthGuidanceFromFull(analyze(bazi))
+}
 
 export function analyze(bazi: BaziResult): FullAnalysis {
   // L2 取格(含化格/从格先行判定与判定轨迹)

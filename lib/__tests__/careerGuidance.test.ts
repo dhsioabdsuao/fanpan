@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildChartFromPillars } from './testChart'
 import { analyze } from '../bage/analyze'
-import { generateCareerGuidance } from '../bage/careerGuidance'
+import { generateCareerGuidance } from '../bage/analyze'
 
 const CHARTS: [string, string, string, string][] = [
   ['壬午', '甲辰', '戊午', '己未'], // 建禄月劫·火炎土燥(user-001)

@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildChartFromPillars } from './testChart'
 import { analyze } from '../bage/analyze'
-import { generateHealthGuidance } from '../bage/healthGuidance'
+import { generateHealthGuidance } from '../bage/analyze'
 
 describe('体质倾向', () => {
   it('user-001(火炎土燥,土4金0):体质综述偏燥,脾胃偏旺,肺与大肠偏弱', () => {
