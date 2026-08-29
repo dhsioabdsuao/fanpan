@@ -1,6 +1,9 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, View, Text, Pressable, Animated, LayoutAnimation } from 'react-native';
-import { Colors, FontSize, FontWeight, Spacing } from '../../theme';
+import { FontSize, FontWeight, Spacing } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
+import GlassCard from './GlassCard';
 
 interface Props {
   title: string;
@@ -10,6 +13,8 @@ interface Props {
 }
 
 export default function CollapsibleSection({ title, isOpen, onToggle, children }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const rotateAnim = useRef(new Animated.Value(isOpen ? 1 : 0)).current;
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function CollapsibleSection({ title, isOpen, onToggle, children }
   });
 
   return (
-    <View style={styles.card}>
+    <GlassCard intensity={30} contentStyle={styles.glassContent} style={styles.cardShell}>
       <Pressable style={styles.header} onPress={handleToggle}>
         <Text style={styles.title}>{title}</Text>
         <Animated.Text style={[styles.chevron, { transform: [{ rotate: chevronRotation }] }]}>
@@ -39,36 +44,36 @@ export default function CollapsibleSection({ title, isOpen, onToggle, children }
         </Animated.Text>
       </Pressable>
       {isOpen && <View style={styles.content}>{children}</View>}
-    </View>
+    </GlassCard>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
-  },
-  chevron: {
-    fontSize: FontSize.lg,
-    color: Colors.textMuted,
-  },
-  content: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    cardShell: {
+      borderRadius: 16,
+    },
+    glassContent: {
+      padding: 0,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+    },
+    title: {
+      fontSize: FontSize.md,
+      fontWeight: FontWeight.semibold,
+      color: colors.textPrimary,
+    },
+    chevron: {
+      fontSize: FontSize.lg,
+      color: colors.textMuted,
+    },
+    content: {
+      paddingHorizontal: Spacing.md,
+      paddingBottom: Spacing.md,
+    },
+  });

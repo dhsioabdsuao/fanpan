@@ -7,6 +7,9 @@ import { useThemeColors } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/ThemeContext';
 import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import { loadRecords, deleteRecord, clearRecords } from '../services/storage';
+import AuroraBackground from '../components/layout/AuroraBackground';
+import GlassCard from '../components/ui/GlassCard';
+import { BlurTargetView } from 'expo-blur';
 import type { SavedRecord } from '../services/storage';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -47,7 +50,9 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+      <AuroraBackground />
+      <BlurTargetView style={styles.flex}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()}>
@@ -68,7 +73,7 @@ export default function HistoryScreen() {
 
         <View style={styles.list}>
           {records.map((r) => (
-            <View key={r.id} style={styles.card}>
+            <GlassCard key={r.id} intensity={30} style={styles.cardShell}>
               <Pressable onPress={() => handlePress(r)}>
                 <View style={styles.cardHead}>
                   <Text style={styles.brief}>{r.summary.baziBrief}</Text>
@@ -90,7 +95,7 @@ export default function HistoryScreen() {
                   <Text style={styles.deleteText}>删除</Text>
                 </Pressable>
               </View>
-            </View>
+            </GlassCard>
           ))}
         </View>
 
@@ -99,7 +104,8 @@ export default function HistoryScreen() {
             <Text style={styles.clearAllText}>清空全部历史</Text>
           </Pressable>
         )}
-      </ScrollView>
+        </ScrollView>
+      </BlurTargetView>
     </SafeAreaView>
   );
 }
@@ -143,12 +149,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textMuted,
   },
   list: { gap: Spacing.md },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
+  flex: { flex: 1 },
+  cardShell: {
+    borderRadius: BorderRadius.xl,
   },
   cardHead: {
     flexDirection: 'row',

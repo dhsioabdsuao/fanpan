@@ -7,6 +7,9 @@ import { useThemeColors } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/ThemeContext';
 import { FontSize, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import BirthForm from '../components/bazi/BirthForm';
+import AuroraBackground from '../components/layout/AuroraBackground';
+import GlassCard from '../components/ui/GlassCard';
+import { BlurTargetView } from 'expo-blur';
 import type { RootStackParamList } from '../navigation/types';
 
 export default function HomeScreen() {
@@ -15,36 +18,38 @@ export default function HomeScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
+      <AuroraBackground />
+      <BlurTargetView style={styles.flex}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
         >
-          {/* Title */}
-          <Text style={styles.title}>四柱八字</Text>
-          <Text style={styles.subtitle}>输入生辰，知晓命局</Text>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Title */}
+            <Text style={styles.title}>四柱八字</Text>
+            <Text style={styles.subtitle}>输入生辰，知晓命局</Text>
 
-          {/* Decorative divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerDiamond}>◆</Text>
-            <View style={styles.dividerLine} />
-          </View>
+            {/* Decorative divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerDiamond}>◆</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-          {/* One-line tagline */}
-          <Text style={styles.tagline}>
-            古籍算法 · 真太阳时校正 · 节气匹配
-          </Text>
+            {/* One-line tagline */}
+            <Text style={styles.tagline}>
+              古籍算法 · 真太阳时校正 · 节气匹配
+            </Text>
 
-          {/* Form */}
-          <View style={styles.formWrapper}>
-            <BirthForm />
-          </View>
+            {/* Form —— 玻璃拟态卡 */}
+            <GlassCard intensity={35} style={styles.formWrapper}>
+              <BirthForm />
+            </GlassCard>
 
           {/* 历史排盘入口 */}
           <Pressable
@@ -60,8 +65,9 @@ export default function HomeScreen() {
           >
             <Text style={styles.privacyLinkText}>隐私政策</Text>
           </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </BlurTargetView>
     </SafeAreaView>
   );
 }

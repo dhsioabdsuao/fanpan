@@ -18,3 +18,8 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
 export function useThemeColors(): ThemeColors {
   return useContext(ThemeContext);
 }
+
+export function useIsDark(): boolean {
+  const scheme = useColorScheme();
+  return scheme === 'dark';
+}

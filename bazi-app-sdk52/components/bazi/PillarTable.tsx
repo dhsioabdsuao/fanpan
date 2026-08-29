@@ -1,37 +1,29 @@
-import { StyleSheet, View, Text } from 'react-native';
+// 四柱题签(曜金夜宴):玻璃外框 + 金色双细线内框 + 日主柱金底高亮
+import { StyleSheet, View, Text, useMemo } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
-import { getAllShenSha } from '@/lib/bage/shensha';
 import type { ShenSha } from '@/lib/bage/shensha';
-import Card from '../ui/Card';
-import { Colors, FontSize, FontWeight, Spacing, FONT_SERIF, BorderRadius } from '../../theme';
-
-const ELEMENT_COLORS: Record<string, string> = {
-  金: Colors.gold,
-  木: Colors.wood,
-  水: Colors.water,
-  火: Colors.fire,
-  土: Colors.earth,
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  '贵人': Colors.guiRen,
-  '凶星': Colors.xiongXing,
-  '泛星': Colors.fanXing,
-};
+import GlassCard from '../ui/GlassCard';
+import { FontSize, FontWeight, Spacing, FONT_SERIF, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
+import { ELEMENT_COLORS } from '@/lib/theme-tokens';
 
 const PILLAR_LABELS: Record<string, '年柱' | '月柱' | '日柱' | '时柱'> = {
   year: '年柱', month: '月柱', day: '日柱', hour: '时柱',
 };
 
 interface Props {
-  full: FullAnalysis; hideHour?: boolean;
-
+  full: FullAnalysis;
+  hideHour?: boolean;
 }
 
 export default function PillarTable({ full, hideHour }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const result = full.bazi;
   const { pillars, tenGods, naYin } = result;
-  const shensha = getAllShenSha(result);
+  const shensha: ShenSha[] = full.shensha;
   const pillarKeys = ['year', 'month', 'day', 'hour'] as const;
 
   const columns = [
@@ -42,9 +34,8 @@ export default function PillarTable({ full, hideHour }: Props) {
   ];
 
   return (
-    <View style={styles.classicalFrame}>
+    <GlassCard intensity={28} contentStyle={styles.glassContent} style={styles.shell}>
       <View style={styles.innerFrame}>
-        <View style={styles.content}>
         {/* 4-column grid */}
         <View style={styles.grid}>
           {columns.map((col) => {
@@ -76,10 +67,10 @@ export default function PillarTable({ full, hideHour }: Props) {
 
                     {/* Stem and branch */}
                     <View style={styles.stemBranchCol}>
-                      <Text style={[styles.stemChar, col.pillar.stemElement ? { color: ELEMENT_COLORS[col.pillar.stemElement] || Colors.textPrimary } : {}]}>
+                      <Text style={[styles.stemChar, { color: ELEMENT_COLORS[col.pillar.stemElement as keyof typeof ELEMENT_COLORS] ?? colors.textPrimary }]}>
                         {col.pillar.stem}
                       </Text>
-                      <Text style={[styles.branchChar, col.pillar.branchElement ? { color: ELEMENT_COLORS[col.pillar.branchElement] || Colors.textPrimary } : {}]}>
+                      <Text style={[styles.branchChar, { color: ELEMENT_COLORS[col.pillar.branchElement as keyof typeof ELEMENT_COLORS] ?? colors.textPrimary }]}>
                         {col.pillar.branch}
                       </Text>
                     </View>
@@ -115,10 +106,7 @@ export default function PillarTable({ full, hideHour }: Props) {
                   ) : (
                     <View style={styles.shenshaList}>
                       {stars.map((s, i) => (
-                        <Text
-                          key={i}
-                          style={[styles.shenshaName, { color: CATEGORY_COLORS[s.category] || Colors.textMuted }]}
-                        >
+                        <Text key={i} style={[styles.shenshaName, { color: colors.fanXing }]}>
                           {s.name}
                         </Text>
                       ))}
@@ -130,122 +118,119 @@ export default function PillarTable({ full, hideHour }: Props) {
           </View>
         </View>
       </View>
-      </View>
-    </View>
+    </GlassCard>
   );
 }
 
-const styles = StyleSheet.create({
-  classicalFrame: {
-    borderWidth: 1,
-    borderColor: '#d6d3d1',
-    borderRadius: BorderRadius.lg,
-    padding: 4,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-  },
-  innerFrame: {
-    borderWidth: 1,
-    borderColor: '#e7e5e4',
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-  },
-  content: {
-    padding: Spacing.md,
-    paddingTop: Spacing.md,
-  },
-  grid: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  column: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.sm,
-  },
-  columnHighlight: {
-    backgroundColor: '#fef2f0',
-    borderWidth: 1,
-    borderColor: '#f5c6c2',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  columnLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
-    color: Colors.textMuted,
-  },
-  dayMasterBadge: {
-    backgroundColor: '#f5c6c2',
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  dayMasterBadgeText: {
-    fontSize: 9,
-    fontWeight: FontWeight.medium,
-    color: '#9b2c2c',
-  },
-  tenGod: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-  },
-  stemBranchCol: {
-    alignItems: 'center',
-    gap: 0,
-  },
-  stemChar: {
-    fontSize: FontSize.huge,
-    fontFamily: FONT_SERIF,
-    lineHeight: 52,
-  },
-  branchChar: {
-    fontSize: FontSize.huge,
-    fontFamily: FONT_SERIF,
-    lineHeight: 52,
-  },
-  subText: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-  },
-  hiddenPlaceholder: {
-    paddingVertical: Spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  hiddenText: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-  },
-  shenshaContainer: {
-    marginTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
-    paddingTop: Spacing.md,
-  },
-  shenshaGrid: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  shenshaCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  shenshaList: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 2,
-  },
-  shenshaName: {
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  shenshaNone: {
-    fontSize: 10,
-    color: Colors.textMuted,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    shell: {
+      borderRadius: BorderRadius.xl,
+    },
+    glassContent: {
+      padding: 6,
+    },
+    innerFrame: {
+      borderWidth: StyleSheet.hairlineWidth * 2,
+      borderColor: colors.hairlineGold,
+      borderRadius: BorderRadius.lg,
+      overflow: 'hidden',
+      padding: Spacing.md,
+    },
+    grid: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    column: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 4,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.sm,
+    },
+    columnHighlight: {
+      backgroundColor: colors.dayMasterBg,
+      borderWidth: 1,
+      borderColor: colors.dayMasterBorder,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    columnLabel: {
+      fontSize: FontSize.sm,
+      fontWeight: FontWeight.medium,
+      color: colors.textMuted,
+    },
+    dayMasterBadge: {
+      backgroundColor: colors.dayMasterBadge,
+      borderRadius: BorderRadius.sm,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    dayMasterBadgeText: {
+      fontSize: 9,
+      fontWeight: FontWeight.medium,
+      color: colors.goldDark,
+    },
+    hiddenPlaceholder: {
+      paddingVertical: Spacing.xl,
+    },
+    hiddenText: {
+      fontSize: FontSize.sm,
+      color: colors.textMuted,
+    },
+    tenGod: {
+      fontSize: FontSize.xs,
+      color: colors.textMuted,
+    },
+    stemBranchCol: {
+      alignItems: 'center',
+      gap: 2,
+    },
+    stemChar: {
+      fontFamily: FONT_SERIF,
+      fontSize: 34,
+      fontWeight: FontWeight.bold,
+      lineHeight: 40,
+    },
+    branchChar: {
+      fontFamily: FONT_SERIF,
+      fontSize: 34,
+      fontWeight: FontWeight.bold,
+      lineHeight: 40,
+    },
+    subText: {
+      fontSize: FontSize.xs,
+      color: colors.textMuted,
+    },
+    shenshaContainer: {
+      marginTop: Spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth * 2,
+      borderTopColor: colors.hairlineGold,
+      paddingTop: Spacing.sm,
+    },
+    shenshaGrid: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    shenshaCol: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    shenshaNone: {
+      fontSize: FontSize.xs,
+      color: colors.textMuted,
+      paddingVertical: Spacing.sm,
+    },
+    shenshaList: {
+      alignItems: 'center',
+      gap: 2,
+      paddingVertical: Spacing.sm,
+    },
+    shenshaName: {
+      fontSize: FontSize.xs,
+      textAlign: 'center',
+    },
+  });

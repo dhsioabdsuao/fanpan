@@ -12,7 +12,11 @@ import LiuTongBlock from '../components/bazi/LiuTongBlock';
 import ShenShaBlock from '../components/bazi/ShenShaBlock';
 import { DAY_MASTER_INTERPRETATIONS } from '@/lib/interpretations/dayMaster';
 import { ZODIAC_TRAITS } from '@/lib/interpretations/zodiac';
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../theme';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../theme';
+import { useThemeColors } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/ThemeContext';
+import AuroraBackground from '../components/layout/AuroraBackground';
+import { BlurTargetView } from 'expo-blur';
 import PillarTable from '../components/bazi/PillarTable';
 import BasicInfo from '../components/bazi/BasicInfo';
 import DaYunTable from '../components/bazi/DaYunTable';
@@ -30,6 +34,8 @@ import { saveRecord } from '../services/storage';
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
 export default function ResultScreen({ navigation, route }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [openId, setOpenId] = useState<string | null>('narrative');
 
   const { result, error } = useMemo(() => {
@@ -211,6 +217,8 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <AuroraBackground />
+      <BlurTargetView style={styles.flex}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -263,6 +271,7 @@ export default function ResultScreen({ navigation, route }: Props) {
           </Text>
         </View>
       </ScrollView>
+      </BlurTargetView>
     </SafeAreaView>
   );
 }
@@ -285,17 +294,17 @@ const interpretStyles = StyleSheet.create({
   heading: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   body: {
     fontSize: FontSize.base,
     lineHeight: 24,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -317,7 +326,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.semibold,
-    color: Colors.goldText,
+    color: colors.goldText,
     fontFamily: FONT_SERIF,
   },
   headerSpacer: {
@@ -325,14 +334,14 @@ const styles = StyleSheet.create({
   },
   backLink: {
     fontSize: FontSize.base,
-    color: Colors.goldText,
+    color: colors.goldText,
     fontWeight: FontWeight.medium,
     padding: Spacing.xs,
   },
   narrativeWrap: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
@@ -348,12 +357,12 @@ const styles = StyleSheet.create({
   },
   outcomeLabel: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   outcomeValue: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   tiaoHouTag: {
     fontSize: FontSize.xs,
@@ -379,21 +388,21 @@ const styles = StyleSheet.create({
   },
   condText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
     lineHeight: 20,
   },
   condLabel: {
     fontWeight: FontWeight.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   condDesc: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   narrativeBody: {
     fontSize: FontSize.base,
     lineHeight: 28,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.md,
   },
   sections: {
@@ -402,7 +411,7 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     fontSize: FontSize.base,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     paddingVertical: Spacing.lg,
   },
@@ -417,17 +426,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     fontFamily: FONT_SERIF,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   dmSub: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   interpretBody: {
     fontSize: FontSize.base,
     lineHeight: 24,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -438,22 +447,22 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: FontSize.md,
-    color: Colors.destructive,
+    color: colors.destructive,
     textAlign: 'center',
   },
   historyEntry: {
     alignSelf: 'center',
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.full,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginBottom: Spacing.lg,
   },
   historyEntryText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   disclaimerContainer: {
     marginTop: Spacing.xl,
@@ -463,19 +472,19 @@ const styles = StyleSheet.create({
   disclaimerDivider: {
     width: '100%',
     height: 1,
-    backgroundColor: Colors.surfaceBorder,
+    backgroundColor: colors.surfaceBorder,
     marginBottom: Spacing.md,
   },
   disclaimerText: {
     fontSize: 10,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'right',
     lineHeight: 18,
     writingDirection: 'ltr' as const,
   },
   disclaimerNote: {
     fontSize: 10,
-    color: Colors.textSubtle,
+    color: colors.textSubtle,
     textAlign: 'right',
     lineHeight: 18,
     marginTop: Spacing.xs,
@@ -483,7 +492,7 @@ const styles = StyleSheet.create({
   motto: {
     fontSize: FontSize.md,
     fontFamily: FONT_SERIF,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'right',
     marginVertical: Spacing.sm,
   },
