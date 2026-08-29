@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { calculateBazi } from '../bazi'
 import { getAllShenSha } from '../bage/shensha'
 
@@ -428,7 +428,7 @@ describe('shensha-full-diagnostic', () => {
       // ── 独立验证25星，逐颗对比 ──
       console.log(`\n── 逐颗独立验证 ──`)
 
-      interface Check { name: string; category: string; expected: string[]; actual: string[] }
+      interface Check { name: string; category: string; expected: string[]; act: string[] }
       const checks: Check[] = []
 
       const toCN = (k: string) => PILLAR_LABEL[k] ?? k
@@ -463,32 +463,11 @@ describe('shensha-full-diagnostic', () => {
       addCheck('十灵', '泛星', checkShiLing(dayCombo) ? ['日柱'] : [])
       addCheck('六秀', '泛星', checkLiuXiu(dayCombo) ? ['日柱'] : [])
 
-      const mismatches: string[] = []
-      const matches: string[] = []
+      // 断言版:独立预言机(本文件内重实现的查法表) vs 应用实现,逐星对柱位
       for (const c of checks) {
         const exp = c.expected.sort().join(',') || '(无)'
         const act = c.act.sort().join(',') || '(无)'
-        if (exp !== act) {
-          mismatches.push(`  ⚠️  ${c.name}: 期望[${exp}] ≠ 实际[${act}]`)
-        } else {
-          matches.push(`  ✓ ${c.name}: [${exp}]`)
-        }
-      }
-
-      // 只输出不匹配的
-      if (mismatches.length > 0) {
-        console.log(`  ⚠️⚠️⚠️ 不一致 (${mismatches.length}颗):`)
-        for (const m of mismatches) console.log(m)
-      } else {
-        console.log(`  ✅ 全部25颗一致`)
-      }
-
-      // 输出全部详情 (折叠)
-      console.log(`\n── 全部25颗详情 ──`)
-      for (const c of checks) {
-        const exp = c.expected.sort().join(',') || '(无)'
-        const status = c.expected.sort().join(',') === c.act.sort().join(',') ? '✓' : '⚠️'
-        console.log(`  ${status} ${c.name}[${c.category}]: ${exp}`)
+        expect(act, `${c.name}[${c.category}] 柱位`).toBe(exp)
       }
 
       // ── 22颗缺失星，手工检查是否命中 ──

@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { calculateBazi } from '../bazi'
 import { getAllShenSha } from '../bage/shensha'
 
@@ -39,23 +39,16 @@ describe('diagnose-luoyang', () => {
     const allBranches = [p.year.branch, p.month.branch, p.day.branch, p.hour.branch]
     const allStems = [p.year.stem, p.month.stem, bazi.dayMaster, p.hour.stem]
 
-    // Helper to check
+    // 断言版:独立预言机(本文件内重实现的查法表) vs 应用实现,逐星对柱位
     function checkStar(name: string, expectedPillars: string[], actualPillars: string[]) {
-      const missing = expectedPillars.filter(e => !actualPillars.includes(e))
-      const extra = actualPillars.filter(a => !expectedPillars.includes(a))
-      if (missing.length > 0 || extra.length > 0) {
-        console.log(`\n⚠️  ${name}:`)
-        if (missing.length > 0) console.log(`   缺失柱位: ${missing.join(', ')}`)
-        if (extra.length > 0) console.log(`   多余柱位: ${extra.join(', ')}`)
-      }
-      return { missing, extra }
+      expect([...actualPillars].sort(), `${name} 柱位(缺失/多余即应用实现与预言机不符)`).toEqual([...expectedPillars].sort())
     }
 
     const actualPillars = (name: string) => shensha.filter(s => s.name === name).map(s => s.pillar)
 
     // --- 1. 天乙贵人 ---
     // 日干查 + 年干查
-    const tianYiDay = { '甲': ['丑','未'], '乙': ['子','申'], '丙': ['亥','酉'], '丁': ['亥','酉'], '戊': ['丑','未'], '己': ['子','申'], '庚': ['丑','未'], '辛': ['寅','午'], '壬': ['卯','巳'], '癸': ['卯','巳'] }
+    const tianYiDay: Record<string, string[]> = { '甲': ['丑','未'], '乙': ['子','申'], '丙': ['亥','酉'], '丁': ['亥','酉'], '戊': ['丑','未'], '己': ['子','申'], '庚': ['丑','未'], '辛': ['寅','午'], '壬': ['卯','巳'], '癸': ['卯','巳'] }
     const tianYiTargets = new Set([...(tianYiDay[bazi.dayMaster] || []), ...(tianYiDay[p.year.stem] || [])])
     const tianYiPillars: string[] = []
     for (const [key, label] of [['year','年柱'],['month','月柱'],['day','日柱'],['hour','时柱']] as const) {

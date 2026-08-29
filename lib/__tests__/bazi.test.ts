@@ -12,6 +12,7 @@ import { isHuaGe, getHuaQiDayMaster, recalculateShiShen } from '../bage/huaGe'
 import type { HuaQiShiShenResult } from '../bage/huaGe'
 import { getBranchElement } from '@/lib/bazi-utils'
 import { analyzeWuXingLiuTong } from '../bage/liuTong'
+import { analyze } from '../bage/analyze'
 import { getAllShenSha } from '../bage/shensha'
 import type { ShenSha } from '../bage/shensha'
 
@@ -584,34 +585,57 @@ describe('getTiaoHouYongShen', () => {
   })
 })
 
-// ── 调候诊断接入格局解析文案 ──
+// ── 发展建议消费喜忌引擎(S4 重写:火炎土燥命盘不再被推荐火)──
 
-describe('generateAnalysis 调候建议', () => {
-  it('甲木午月 → 发展建议含调候内容', () => {
-    const bazi = calculateBazi(makeInput({ year: 2000, month: 6, day: 15 }))
+describe('generateAnalysis 发展建议(消费喜忌引擎)', () => {
+  it('甲木午月伤官格(火炎土燥)→ 建议以水润局为主,不再推荐火', () => {
+    // 08:00 避开时干己(否则甲己合→化土格)
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 6, day: 15, hour: 8 }))
     const pattern = extractPattern(bazi)
     const outcome = assessOutcome(bazi, pattern)
     const strength = determineStrength(bazi)
     const result = generateAnalysis({ bazi, pattern, outcome, strength })
+    const full = analyze(bazi)
 
-    expect(result.analysis).toContain('从五行调候的角度看')
+    // 结构化断言:火炎土燥,主喜用为水,火不在喜用
+    expect(full.pattern.category).toBe('伤官格')
+    expect(full.tiaoHou.type).toBe('火炎土燥')
+    expect(full.xiYong.primaryFavorable).toBe('水')
+    expect(full.xiYong.favorable).not.toContain('火')
+
+    // 文案断言:建议以水润局为主
     expect(result.analysis).toContain('甲木生于午月')
-    expect(result.analysis).toContain('壬、庚、丁')
-    expect(result.analysis).toContain('水（学习/沟通）')
-    expect(result.analysis).toContain('金（技术/专业技能）')
-    expect(result.analysis).toContain('火（展示/分享）')
+    expect(result.analysis).toContain('最需水来润局')
+    expect(result.analysis).toContain('避开')
   })
 
-  it('甲木子月 → 发展建议含调候内容', () => {
+  it('甲木午月化土格(10:00)→ 只论化:喜用土金,不出现气候救治主张', () => {
+    const bazi = calculateBazi(makeInput({ year: 2000, month: 6, day: 15, hour: 10 }))
+    const pattern = extractPattern(bazi)
+    const outcome = assessOutcome(bazi, pattern)
+    const strength = determineStrength(bazi)
+    const result = generateAnalysis({ bazi, pattern, outcome, strength })
+    const full = analyze(bazi)
+
+    expect(full.pattern.category).toBe('化土格')
+    expect(full.xiYong.favorable).toEqual(['土', '金'])
+    expect(result.analysis).toContain('只论化')
+    expect(result.analysis).toContain('喜用依次为土、金')
+    expect(result.analysis).not.toContain('最需水来润局')
+  })
+
+  it('甲木子月印格(金寒水冷)→ 建议以火暖局为主', () => {
     const bazi = calculateBazi(makeInput({ year: 2000, month: 12, day: 12 }))
     const pattern = extractPattern(bazi)
     const outcome = assessOutcome(bazi, pattern)
     const strength = determineStrength(bazi)
     const result = generateAnalysis({ bazi, pattern, outcome, strength })
+    const full = analyze(bazi)
 
-    expect(result.analysis).toContain('从五行调候的角度看')
+    expect(full.tiaoHou.type).toBe('金寒水冷')
+    expect(full.xiYong.primaryFavorable).toBe('火')
     expect(result.analysis).toContain('甲木生于子月')
-    expect(result.analysis).toContain('丁、庚、丙')
+    expect(result.analysis).toContain('最需火来暖局')
   })
 })
 
@@ -951,8 +975,8 @@ describe('generateAnalysis 成格条件分解', () => {
 
     expect(result.analysis).toContain('成格条件为')
     expect(result.analysis).toContain('满足')
-    expect(result.analysis).toContain('日主合化')
-    expect(result.analysis).toContain('化神透干')
+    expect(result.analysis).toContain('化气纯粹')
+    expect(result.analysis).toContain('生扶化神')
     expect(result.analysis).toContain('故格局成立')
   })
 
@@ -1012,7 +1036,7 @@ describe('generateAnalysis 关键提醒（全格局触发）', () => {
     const warning = getWarningText(result)
     expect(warning).toBeTruthy()
     expect(warning).toContain('创造力')
-    expect(warning).toContain('淤堵')
+    expect(warning).toContain('略有不畅')
     expect(warning).toContain('技术、专业技能')
   })
 
@@ -1026,8 +1050,8 @@ describe('generateAnalysis 关键提醒（全格局触发）', () => {
 
     const warning = getWarningText(result)
     expect(warning).toBeTruthy()
-    expect(warning).toContain('才华需要出口')
-    expect(warning).toContain('时候未到')
+    expect(warning).toContain('才华的火候尚欠几分')
+    expect(warning).toContain('东风迟早会来')
   })
 
   it('破格(食神格·1991-02-11) → 含格局智慧+破格警示', () => {
@@ -1054,7 +1078,7 @@ describe('generateAnalysis 关键提醒（全格局触发）', () => {
 
     const warning = getWarningText(result)
     expect(warning).toBeTruthy()
-    expect(warning).toContain('财富')
+    expect(warning).toContain('财源')
     expect(warning).toContain('流通顺畅')
     expect(warning).toContain('福气')
   })
@@ -1069,7 +1093,7 @@ describe('generateAnalysis 关键提醒（全格局触发）', () => {
 
     const warning = getWarningText(result)
     expect(warning).toBeTruthy()
-    expect(warning).toContain('转变')
+    expect(warning).toContain('破土重生')
   })
 })
 
@@ -1086,7 +1110,7 @@ describe('getAllShenSha', () => {
       expect(['贵人', '凶星', '泛星']).toContain(s.category)
       expect(['年柱', '月柱', '日柱', '时柱']).toContain(s.pillar)
       expect(s.description).toBeTruthy()
-      expect(s.basis).toMatch(/渊海子平|三命通会|季节法|纳音法/)
+      expect(s.basis).toMatch(/渊海子平|三命通会|季节法|纳音法|民俗/)
     }
   })
 
