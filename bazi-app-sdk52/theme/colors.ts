@@ -75,6 +75,13 @@ export const Colors = {
   dryHot: '#fef2f2',
   cold: '#eff6ff',
   balanced: '#ecfdf5',
+
+  // ── 曜金夜宴:玻璃拟态令牌 ──
+  glassBg: 'rgba(255, 253, 247, 0.78)',
+  hairlineGold: 'rgba(184, 136, 11, 0.35)',
+  glowGold: 'rgba(184, 136, 11, 0.18)',
+  auroraStart: '#faf6f0',
+  auroraEnd: '#efe6d8',
 } as const;
 
 export type ColorKey = keyof typeof Colors;
