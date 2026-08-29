@@ -45,7 +45,7 @@ export default function CareerGuidanceBlock({ full }: Props) {
 
       {/* ── 适合从事的领域 ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🎯 适合从事的领域</Text>
+        <Text style={styles.sectionTitle}>适合从事的领域</Text>
         {guidance.industries.map((group) => (
           <View key={group.element} style={styles.industryGroup}>
             <Text style={styles.industryLabel}>{group.label}</Text>
@@ -61,7 +61,7 @@ export default function CareerGuidanceBlock({ full }: Props) {
 
       {/* ── 发展方位 ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🧭 发展方位</Text>
+        <Text style={styles.sectionTitle}>发展方位</Text>
         <Text style={styles.directionText}>{guidance.directionPrimary}</Text>
         {guidance.directionSecondary ? (
           <Text style={styles.directionText}>{guidance.directionSecondary}</Text>
@@ -89,7 +89,7 @@ export default function CareerGuidanceBlock({ full }: Props) {
 
       {/* ── 具体建议 ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💡 具体建议</Text>
+        <Text style={styles.sectionTitle}>具体建议</Text>
         {guidance.actionSuggestions.map((suggestion, i) => (
           <View key={i} style={styles.suggestionItem}>
             <Text style={styles.suggestionNum}>{i + 1}.</Text>

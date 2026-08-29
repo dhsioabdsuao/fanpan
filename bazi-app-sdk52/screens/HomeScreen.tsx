@@ -41,13 +41,11 @@ export default function HomeScreen() {
               <View style={styles.dividerLine} />
             </View>
 
-            {/* One-line tagline */}
-            <Text style={styles.tagline}>
-              古籍算法 · 真太阳时校正 · 节气匹配
-            </Text>
-
-            {/* Form —— 玻璃拟态卡 */}
+            {/* Form —— 玻璃拟态卡(标语移入卡内,保证对比度) */}
             <GlassCard intensity={35} style={styles.formWrapper}>
+              <Text style={styles.tagline}>
+                古籍算法 · 真太阳时校正 · 节气匹配
+              </Text>
               <BirthForm />
             </GlassCard>
 
@@ -124,7 +122,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   tagline: {
     fontSize: FontSize.xs,
-    color: colors.textSubtle,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.xl,
     letterSpacing: 2,

@@ -75,7 +75,7 @@ export function CareerGuidanceBlock({ full }: { full: FullAnalysis }) {
 
       {/* ── 适合从事的领域 ── */}
       <div>
-        <h3 className="text-sm font-semibold text-stone-700 mb-3">🎯 适合从事的领域</h3>
+        <h3 className="text-sm font-semibold text-stone-700 mb-3">适合从事的领域</h3>
         <div className="space-y-3">
           {guidance.industries.map((group) => (
             <div key={group.element}>
@@ -95,7 +95,7 @@ export function CareerGuidanceBlock({ full }: { full: FullAnalysis }) {
 
       {/* ── 发展方位 ── */}
       <div>
-        <h3 className="text-sm font-semibold text-stone-700 mb-3">🧭 发展方位</h3>
+        <h3 className="text-sm font-semibold text-stone-700 mb-3">发展方位</h3>
 
         <div className="space-y-2 text-sm text-stone-600">
           <p>{guidance.directionPrimary}</p>
@@ -128,7 +128,7 @@ export function CareerGuidanceBlock({ full }: { full: FullAnalysis }) {
 
       {/* ── 具体建议 ── */}
       <div>
-        <h3 className="text-sm font-semibold text-stone-700 mb-3">💡 具体建议</h3>
+        <h3 className="text-sm font-semibold text-stone-700 mb-3">具体建议</h3>
         <ol className="space-y-3">
           {guidance.actionSuggestions.map((suggestion, i) => (
             <li key={i} className="flex gap-2 text-sm text-stone-600 leading-relaxed">
