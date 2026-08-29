@@ -1,9 +1,12 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 
 import type { FullAnalysis } from '@/lib/bage/analyze';
 
 import { getStemElement } from '@/lib/bazi-utils';
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 const ELEMENT_ADVICE: Record<string, string> = {
   金: '技术/专业技能',
@@ -13,36 +16,39 @@ const ELEMENT_ADVICE: Record<string, string> = {
   土: '稳固/储蓄',
 };
 
-const TYPE_STYLES: Record<string, { text: string; bg: string; color: string; border: string }> = {
+const typeStylesOf = (colors: ThemeColors): Record<string, { text: string; bg: string; color: string; border: string }> => ({
   '火炎土燥': {
     text: '命局偏燥(火炎土燥)',
-    bg: Colors.dryHot,
+    bg: colors.dryHot,
     color: '#991b1b',
     border: '#fecaca',
   },
   '金寒水冷': {
     text: '命局偏寒(金寒水冷)',
-    bg: Colors.cold,
+    bg: colors.cold,
     color: '#1e3a5f',
     border: '#bfdbfe',
   },
   '寒暖适中': {
     text: '命局寒暖适中',
-    bg: Colors.balanced,
+    bg: colors.balanced,
     color: '#064e3b',
     border: '#a7f3d0',
   },
-};
+});
 
 interface Props {
   full: FullAnalysis;
 }
 
 export default function TiaoHouBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   // 【诊断流程 L7】调候与喜忌冲突结论唯一来自喜忌引擎
   const { tiaoHou, xiYong, pattern } = full;
   const gods = tiaoHou.gods;
-  const style = TYPE_STYLES[tiaoHou.type];
+  const typeStyles = useMemo(() => typeStylesOf(colors), [colors]);
+  const style = typeStyles[tiaoHou.type];
 
   const isHuaCong = pattern.category.startsWith('化') || pattern.category.startsWith('从');
 
@@ -122,7 +128,7 @@ export default function TiaoHouBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.md,
   },
@@ -141,7 +147,7 @@ const styles = StyleSheet.create({
   },
   desc: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   godsWrap: {
@@ -154,9 +160,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
@@ -165,15 +171,15 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     fontFamily: FONT_SERIF,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   godElement: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   godAdvice: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   tag: {
     fontSize: FontSize.xs,
@@ -192,12 +198,12 @@ const styles = StyleSheet.create({
   },
   noData: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   huaCongNote: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   conflictWrap: {
@@ -211,7 +217,7 @@ const styles = StyleSheet.create({
   },
   conflictText: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
   explanation: {
@@ -219,7 +225,7 @@ const styles = StyleSheet.create({
   },
   explanationText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
 });

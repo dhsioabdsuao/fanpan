@@ -1,15 +1,20 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 
 import type { CareerGuidance } from '@/lib/bage/careerGuidance';
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
+
+import { ELEMENT_COLORS } from '@/lib/theme-tokens';
 
 const ELEMENT_DOT: Record<string, string> = {
-  '金': Colors.gold,
-  '木': Colors.wood,
-  '水': Colors.water,
-  '火': Colors.fire,
-  '土': Colors.earth,
+  '金': ELEMENT_COLORS['金'],
+  '木': ELEMENT_COLORS['木'],
+  '水': ELEMENT_COLORS['水'],
+  '火': ELEMENT_COLORS['火'],
+  '土': ELEMENT_COLORS['土'],
 };
 
 const TIER_STYLES: Record<string, { label: string; bg: string; color: string; border: string }> = {
@@ -23,6 +28,8 @@ interface Props {
 }
 
 export default function CareerGuidanceBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   let guidance: CareerGuidance;
   try {
     guidance = full.texts.career;
@@ -51,7 +58,7 @@ export default function CareerGuidanceBlock({ full }: Props) {
             <Text style={styles.industryLabel}>{group.label}</Text>
             {group.items.map((item, i) => (
               <View key={i} style={styles.industryItem}>
-                <View style={[styles.dot, { backgroundColor: ELEMENT_DOT[group.element] || Colors.textMuted }]} />
+                <View style={[styles.dot, { backgroundColor: ELEMENT_DOT[group.element] || colors.textMuted }]} />
                 <Text style={styles.industryText}>{item}</Text>
               </View>
             ))}
@@ -117,14 +124,14 @@ export default function CareerGuidanceBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.lg,
   },
   summary: {
     fontSize: FontSize.sm,
     lineHeight: 22,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   section: {
     gap: Spacing.sm,
@@ -132,7 +139,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   industryGroup: {
@@ -141,7 +148,7 @@ const styles = StyleSheet.create({
   },
   industryLabel: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   industryItem: {
@@ -158,18 +165,18 @@ const styles = StyleSheet.create({
   },
   industryText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 20,
     flex: 1,
   },
   directionText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   directionAvoid: {
     fontSize: FontSize.sm,
-    color: Colors.destructive,
+    color: colors.destructive,
     lineHeight: 20,
   },
   cityWrap: {
@@ -202,23 +209,23 @@ const styles = StyleSheet.create({
   suggestionNum: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     width: 16,
   },
   suggestionText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     flex: 1,
   },
   disclaimer: {
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    borderTopColor: colors.surfaceBorder,
     paddingTop: Spacing.sm,
   },
   disclaimerText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   conflictWrap: {
@@ -232,12 +239,12 @@ const styles = StyleSheet.create({
   },
   conflictText: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
   errorText: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     paddingVertical: Spacing.lg,
   },

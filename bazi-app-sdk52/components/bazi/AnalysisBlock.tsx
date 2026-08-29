@@ -1,12 +1,17 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 interface Props {
   full: FullAnalysis;
 }
 
 export default function AnalysisBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { summary, analysis } = full.texts;
 
   // Parse the analysis text into sections
@@ -40,14 +45,14 @@ export default function AnalysisBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.lg,
   },
   summary: {
-    backgroundColor: Colors.analysisSummaryBg,
+    backgroundColor: colors.analysisSummaryBg,
     borderWidth: 1,
-    borderColor: Colors.analysisSummaryBorder,
+    borderColor: colors.analysisSummaryBorder,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
@@ -67,13 +72,13 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: 6,
   },
   sectionBody: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
   },
 });

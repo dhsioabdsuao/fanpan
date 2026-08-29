@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
@@ -23,7 +23,9 @@ import RadioButton from '../ui/RadioButton';
 import PickerModal from '../ui/PickerModal';
 import SearchablePicker from '../ui/SearchablePicker';
 import Checkbox from '../ui/Checkbox';
-import { Colors, FontSize, FontWeight, Spacing, FONT_SERIF } from '../../theme';
+import { FontSize, FontWeight, Spacing, FONT_SERIF } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 const SHICHEN_OPTIONS = [
   { value: '子', label: '子时(23:00-00:59)', hour: 0 },
@@ -60,6 +62,8 @@ const resolver: Resolver<BirthFormData> = async (values) => {
 };
 
 export default function BirthForm() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const form = useForm<BirthFormData>({
@@ -465,14 +469,14 @@ export default function BirthForm() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     marginTop: Spacing.xl,
   },
   cardTitle: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.lg,
@@ -499,25 +503,25 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FontSize.base,
     fontWeight: FontWeight.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   sublabel: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   error: {
     fontSize: FontSize.sm,
-    color: Colors.destructive,
+    color: colors.destructive,
     marginTop: 2,
   },
   hint: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   divider: {
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    borderTopColor: colors.surfaceBorder,
     paddingTop: Spacing.md,
     gap: Spacing.sm,
   },
@@ -531,12 +535,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    borderTopColor: colors.surfaceBorder,
     paddingVertical: Spacing.md,
     alignItems: 'center',
   },
   footerText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 });

@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 const LEVEL_LABEL: Record<string, string> = {
   '身强': '身强',
@@ -14,6 +17,8 @@ interface Props {
 }
 
 export default function StrengthBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const s = full.strength;
 
   const reasons = s.reason
@@ -66,7 +71,7 @@ export default function StrengthBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.md,
   },
@@ -77,13 +82,13 @@ const styles = StyleSheet.create({
   },
   levelLabel: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   levelValue: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     fontFamily: FONT_SERIF,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   factorGrid: {
     flexDirection: 'row',
@@ -91,23 +96,23 @@ const styles = StyleSheet.create({
   },
   factorCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
   },
   factorTitle: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   factorBool: {
     fontSize: FontSize.base,
     fontWeight: FontWeight.semibold,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   factorHint: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   reasonSection: {
@@ -115,7 +120,7 @@ const styles = StyleSheet.create({
   },
   reasonTitle: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   reasonRow: {
@@ -124,11 +129,11 @@ const styles = StyleSheet.create({
   },
   reasonDash: {
     fontSize: FontSize.sm,
-    color: Colors.textSubtle,
+    color: colors.textSubtle,
   },
   reasonText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
   },
 });

@@ -279,15 +279,17 @@ export default function ResultScreen({ navigation, route }: Props) {
 // ── Sub-components ──
 
 function InterpretSection({ title, text }: { title: string; text: string }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeInterpretStyles(colors), [colors]);
   return (
-    <View style={interpretStyles.section}>
-      <Text style={interpretStyles.heading}>{title}</Text>
-      <Text style={interpretStyles.body}>{text}</Text>
+    <View style={styles.section}>
+      <Text style={styles.heading}>{title}</Text>
+      <Text style={styles.body}>{text}</Text>
     </View>
   );
 }
 
-const interpretStyles = StyleSheet.create({
+const makeInterpretStyles = (colors: ThemeColors) => StyleSheet.create({
   section: {
     marginTop: Spacing.md,
   },
@@ -305,6 +307,7 @@ const interpretStyles = StyleSheet.create({
 });
 
 const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  flex: { flex: 1 },
   safe: {
     flex: 1,
     backgroundColor: 'transparent',

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 import {
@@ -6,7 +7,9 @@ import {
   formatDateHM,
 } from '@/lib/format-time';
 import Card from '../ui/Card';
-import { Colors, FontSize, FontWeight, Spacing, FONT_SERIF } from '../../theme';
+import { FontSize, FontWeight, Spacing, FONT_SERIF } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 const GENDER_LABEL: Record<string, string> = { male: '男', female: '女' };
 
@@ -15,6 +18,8 @@ interface Props {
 }
 
 export default function BasicInfo({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const result = full.bazi;
   const adj = result.solarTimeAdjustment;
 
@@ -49,6 +54,8 @@ export default function BasicInfo({ full }: Props) {
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.gridRow}>
       <Text style={styles.label}>{label}</Text>
@@ -57,7 +64,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.sm,
   },
@@ -82,18 +89,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     minWidth: 64,
   },
   value: {
     fontSize: FontSize.base,
     fontWeight: FontWeight.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     flex: 1,
   },
   subText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 2,
   },
 });

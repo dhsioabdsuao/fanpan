@@ -1,12 +1,17 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
-import { Colors, FontSize, FontWeight, Spacing } from '../../theme';
+import { FontSize, FontWeight, Spacing } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 interface Props {
   full: FullAnalysis;
 }
 
 export default function LiuTongBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const lt = full.liuTong;
 
   return (
@@ -25,19 +30,19 @@ export default function LiuTongBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { gap: Spacing.sm },
   meta: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
   },
-  strong: { fontWeight: FontWeight.semibold, color: Colors.textPrimary },
+  strong: { fontWeight: FontWeight.semibold, color: colors.textPrimary },
   red: { fontWeight: FontWeight.semibold, color: '#b91c1c' },
   green: { fontWeight: FontWeight.semibold, color: '#047857' },
   desc: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
   },
 });

@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, LayoutAnimation, FlatList } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 import type { DaYunData } from '@/types/bazi';
 import { getTenGod, getStemElement, getBranchElement } from '@/lib/bazi-utils';
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
-const ELEMENT_COLORS: Record<string, string> = {
-  金: Colors.gold,
-  木: Colors.wood,
-  水: Colors.water,
-  火: Colors.fire,
-  土: Colors.earth,
+import { ELEMENT_COLORS } from '@/lib/theme-tokens';
+
+const ELEMENT_COLORS_MAP: Record<string, string> = {
+  金: ELEMENT_COLORS['金'],
+  木: ELEMENT_COLORS['木'],
+  水: ELEMENT_COLORS['水'],
+  火: ELEMENT_COLORS['火'],
+  土: ELEMENT_COLORS['土'],
 };
 
 const ANNOTATION_STYLES: Record<string, { bg: string; color: string; border: string }> = {
@@ -34,6 +38,8 @@ interface Props {
 }
 
 export default function DaYunTable({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const result = full.bazi;
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
@@ -95,10 +101,10 @@ export default function DaYunTable({ full }: Props) {
                     {dy.startYear}–{dy.endYear}
                   </Text>
                   <View style={[styles.cellCenter, styles.cellGZ, styles.stemBranchRow]}>
-                    <Text style={[styles.stemText, { color: ELEMENT_COLORS[stemEl] || Colors.textPrimary }]}>
+                    <Text style={[styles.stemText, { color: ELEMENT_COLORS_MAP[stemEl] || colors.textPrimary }]}>
                       {stem}
                     </Text>
-                    <Text style={[styles.branchText, { color: ELEMENT_COLORS[branchEl] || Colors.textPrimary }]}>
+                    <Text style={[styles.branchText, { color: ELEMENT_COLORS_MAP[branchEl] || colors.textPrimary }]}>
                       {branch}
                     </Text>
                   </View>
@@ -135,10 +141,10 @@ export default function DaYunTable({ full }: Props) {
                               {hasNotes && <View style={styles.dot} />}
                             </View>
                             <View style={styles.stemBranchMini}>
-                              <Text style={[styles.stemMini, { color: ELEMENT_COLORS[lnStemEl] || Colors.textPrimary }]}>
+                              <Text style={[styles.stemMini, { color: ELEMENT_COLORS_MAP[lnStemEl] || colors.textPrimary }]}>
                                 {lnStem}
                               </Text>
-                              <Text style={[styles.branchMini, { color: ELEMENT_COLORS[lnBranchEl] || Colors.textPrimary }]}>
+                              <Text style={[styles.branchMini, { color: ELEMENT_COLORS_MAP[lnBranchEl] || colors.textPrimary }]}>
                                 {lnBranch}
                               </Text>
                             </View>
@@ -155,9 +161,9 @@ export default function DaYunTable({ full }: Props) {
                           .map((ln) =>
                             ln.annotations.map((a, i) => {
                               const style = ANNOTATION_STYLES[a.type] || {
-                                bg: Colors.surface,
-                                color: Colors.textSecondary,
-                                border: Colors.textSubtle,
+                                bg: colors.surface,
+                                color: colors.textSecondary,
+                                border: colors.textSubtle,
                               };
                               return (
                                 <View
@@ -192,7 +198,7 @@ export default function DaYunTable({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.md,
   },
@@ -200,40 +206,40 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
     fontFamily: FONT_SERIF,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   startInfo: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   headerRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
+    borderBottomColor: colors.surfaceBorder,
     paddingVertical: Spacing.xs,
   },
   headerCell: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceBorder,
+    borderBottomColor: colors.surfaceBorder,
     paddingVertical: Spacing.sm - 2,
     alignItems: 'center',
   },
   rowCurrent: {
-    backgroundColor: Colors.currentYearBg,
+    backgroundColor: colors.currentYearBg,
   },
   cell: {
     fontSize: FontSize.xs,
     textAlign: 'center' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   cellCenter: {
     alignItems: 'center' as const,
@@ -262,11 +268,11 @@ const styles = StyleSheet.create({
   },
   // LiuNian expanded section
   liuNianContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
+    borderBottomColor: colors.surfaceBorder,
   },
   liuNianGrid: {
     flexDirection: 'row',
@@ -280,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   liuNianCurrent: {
-    backgroundColor: Colors.currentYearBg,
+    backgroundColor: colors.currentYearBg,
   },
   liuNianHasNotes: {
     borderWidth: 1,
@@ -293,17 +299,17 @@ const styles = StyleSheet.create({
   },
   liuNianYear: {
     fontSize: 10,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   liuNianYearCurrent: {
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.xiongXing,
+    backgroundColor: colors.xiongXing,
   },
   stemBranchMini: {
     flexDirection: 'row',
@@ -321,7 +327,7 @@ const styles = StyleSheet.create({
   annotationContainer: {
     marginTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    borderTopColor: colors.surfaceBorder,
     paddingTop: Spacing.sm,
     gap: Spacing.xs,
   },
@@ -344,7 +350,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 10,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 });

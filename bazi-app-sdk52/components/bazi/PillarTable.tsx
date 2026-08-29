@@ -1,5 +1,6 @@
 // 四柱题签(曜金夜宴):玻璃外框 + 金色双细线内框 + 日主柱金底高亮
-import { StyleSheet, View, Text, useMemo } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { useMemo } from 'react';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 import type { ShenSha } from '@/lib/bage/shensha';
 import GlassCard from '../ui/GlassCard';
@@ -23,7 +24,7 @@ export default function PillarTable({ full, hideHour }: Props) {
 
   const result = full.bazi;
   const { pillars, tenGods, naYin } = result;
-  const shensha: ShenSha[] = full.shensha;
+  const shensha: ShenSha[] = full.shenSha;
   const pillarKeys = ['year', 'month', 'day', 'hour'] as const;
 
   const columns = [

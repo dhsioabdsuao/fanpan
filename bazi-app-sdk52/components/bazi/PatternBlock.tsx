@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 const OUTCOME_LABEL: Record<string, string> = {
   '成格': '成格',
@@ -14,6 +17,8 @@ interface Props {
 }
 
 export default function PatternBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const pattern = full.pattern;
   const ao = full.outcome;
 
@@ -70,7 +75,7 @@ export default function PatternBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.md,
   },
@@ -83,17 +88,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     fontFamily: FONT_SERIF,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   outcomeBadge: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.sm + 2,
     paddingVertical: 2,
   },
   outcomeText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: FontWeight.medium,
   },
   infoLine: {
@@ -101,21 +106,21 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   infoLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   infoValue: {
     fontWeight: FontWeight.semibold,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   infoMuted: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   reasonSection: {
     gap: Spacing.xs,
   },
   reasonTitle: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   reasonRow: {
@@ -124,11 +129,11 @@ const styles = StyleSheet.create({
   },
   reasonDash: {
     fontSize: FontSize.sm,
-    color: Colors.textSubtle,
+    color: colors.textSubtle,
   },
   reasonText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
   },
 });

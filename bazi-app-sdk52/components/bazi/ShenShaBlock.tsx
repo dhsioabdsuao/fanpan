@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
 
 const CATEGORY_LABEL: Record<string, string> = {
   '贵人': '贵人星',
@@ -13,6 +16,8 @@ interface Props {
 }
 
 export default function ShenShaBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const shenSha = full.shenSha;
   const groups = (['贵人', '凶星', '泛星'] as const)
     .map((cat) => ({ cat, stars: shenSha.filter((s) => s.category === cat) }))
@@ -41,17 +46,17 @@ export default function ShenShaBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { gap: Spacing.md },
   note: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   heading: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   chips: {
@@ -63,19 +68,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
   },
   chipText: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   chipPillar: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 });

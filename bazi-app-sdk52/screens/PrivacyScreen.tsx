@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Colors, FontSize, FONT_SERIF, Spacing, FONT_SANS } from '../theme';
+import { FontSize, FONT_SERIF, Spacing, FONT_SANS } from '../theme';
+import { useThemeColors } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/ThemeContext';
 
 const SECTIONS = [
   {
@@ -27,6 +30,8 @@ const SECTIONS = [
 ];
 
 export default function PrivacyScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation();
 
   return (
@@ -59,7 +64,7 @@ export default function PrivacyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -78,19 +83,19 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: FontSize.base,
-    color: Colors.goldText,
+    color: colors.goldText,
     fontWeight: '500',
   },
   title: {
     fontSize: FontSize.xxl,
     fontWeight: '700',
-    color: Colors.goldText,
+    color: colors.goldText,
     textAlign: 'center',
     fontFamily: FONT_SERIF,
   },
   updateDate: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.xs,
   },
@@ -104,12 +109,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.goldTextSubtle as string,
+    backgroundColor: colors.goldTextSubtle as string,
   },
   dividerDiamond: {
     marginHorizontal: Spacing.md,
     fontSize: FontSize.xs,
-    color: Colors.goldTextSubtle as string,
+    color: colors.goldTextSubtle as string,
   },
   section: {
     marginBottom: Spacing.md,
@@ -117,18 +122,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FontSize.md,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: FONT_SERIF,
     marginBottom: Spacing.xs,
   },
   body: {
     fontSize: FontSize.base,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 26,
   },
   footer: {
     fontSize: FontSize.base,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.xl,
     fontFamily: FONT_SERIF,

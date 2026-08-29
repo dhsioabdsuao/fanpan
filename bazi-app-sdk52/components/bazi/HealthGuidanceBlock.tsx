@@ -1,13 +1,18 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 
 import type { HealthGuidance } from '@/lib/bage/healthGuidance';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
+import type { ThemeColors } from '../../theme/ThemeContext';
+
+import { ELEMENT_COLORS } from '@/lib/theme-tokens';
 
 const STATUS_COLORS: Record<string, string> = {
-  '偏旺': Colors.earth,
-  '偏弱': Colors.water,
-  '适中': Colors.wood,
+  '偏旺': ELEMENT_COLORS['土'],
+  '偏弱': ELEMENT_COLORS['水'],
+  '适中': ELEMENT_COLORS['木'],
 };
 
 interface Props {
@@ -15,6 +20,8 @@ interface Props {
 }
 
 export default function HealthGuidanceBlock({ full }: Props) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   let guidance: HealthGuidance;
   try {
     guidance = full.texts.health;
@@ -92,7 +99,7 @@ export default function HealthGuidanceBlock({ full }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: Spacing.lg,
   },
@@ -102,13 +109,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   bodyText: {
     fontSize: FontSize.sm,
     lineHeight: 22,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   organItem: {
     flexDirection: 'row',
@@ -129,9 +136,9 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   adviceCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
@@ -139,27 +146,27 @@ const styles = StyleSheet.create({
   adviceLabel: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 4,
   },
   adviceText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
   },
   disclaimer: {
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    borderTopColor: colors.surfaceBorder,
     paddingTop: Spacing.sm,
   },
   disclaimerText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   errorText: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     paddingVertical: Spacing.lg,
   },

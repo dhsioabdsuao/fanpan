@@ -1,5 +1,6 @@
 // 喜忌总览(曜金夜宴):金榜容器 + 五行徽章 + 冲突批注
-import { StyleSheet, View, Text, useMemo } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { useMemo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { FullAnalysis } from '@/lib/bage/analyze';
 import { FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';

@@ -1,12 +1,17 @@
+import { useMemo } from 'react';
 import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import Svg, { Circle, Path, ClipPath, Defs, Rect } from 'react-native-svg';
-import { Colors, FontSize, FONT_SERIF, Spacing } from '../theme';
+import { FontSize, FONT_SERIF, Spacing } from '../theme';
+import { useThemeColors } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/ThemeContext';
 
 export default function AboutScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
     <SafeAreaView style={styles.safe}>
@@ -64,7 +69,7 @@ export default function AboutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -80,7 +85,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.xxl,
     fontWeight: '700',
-    color: Colors.goldText,
+    color: colors.goldText,
     textAlign: 'center',
     fontFamily: FONT_SERIF,
   },
@@ -94,22 +99,22 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.goldTextSubtle as string,
+    backgroundColor: colors.goldTextSubtle as string,
   },
   dividerDiamond: {
     marginHorizontal: Spacing.md,
     fontSize: FontSize.xs,
-    color: Colors.goldTextSubtle as string,
+    color: colors.goldTextSubtle as string,
   },
   paragraph: {
     fontSize: FontSize.base,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 28,
     marginBottom: Spacing.md,
   },
   footer: {
     fontSize: FontSize.base,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.xl,
     fontFamily: FONT_SERIF,
@@ -130,7 +135,7 @@ const styles = StyleSheet.create({
   },
   privacyLinkText: {
     fontSize: FontSize.sm,
-    color: Colors.goldText,
+    color: colors.goldText,
     fontWeight: '500',
   },
 });
