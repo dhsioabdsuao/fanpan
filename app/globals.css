@@ -77,6 +77,8 @@
 }
 
 :root {
+  --bg-yang: #f5f0e8;
+  --bg-yin: #1f1d1a;
   --background: #faf6f0;
   --foreground: #2c2416;
   --card: rgba(255, 255, 255, 0.9);
@@ -112,6 +114,8 @@
 }
 
 .dark {
+  --bg-yang: #141b29;
+  --bg-yin: #0a0f18;
   --background: #0e1420;
   --foreground: #efe7d6;
   --card: rgba(23, 32, 48, 0.72);

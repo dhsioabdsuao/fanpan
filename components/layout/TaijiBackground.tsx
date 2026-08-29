@@ -20,9 +20,9 @@ export function TaijiBackground() {
 
         {/* ── Background split ── */}
         {/* Yang (light) side — fills entire rect first */}
-        <rect x="0" y="0" width="1000" height="1000" fill="#f5f0e8" />
+        <rect x="0" y="0" width="1000" height="1000" fill="var(--bg-yang, #f5f0e8)" />
         {/* Yin (dark) side — clipped to left of S-curve */}
-        <rect x="0" y="0" width="1000" height="1000" fill="#1f1d1a" clipPath="url(#yin-bg)" />
+        <rect x="0" y="0" width="1000" height="1000" fill="var(--bg-yin, #1f1d1a)" clipPath="url(#yin-bg)" />
 
         {/* Subtle S-curve divider line */}
         <path
@@ -39,13 +39,13 @@ export function TaijiBackground() {
           style={{ transformOrigin: '500px 500px' }}
         >
           {/* Taiji circle background — yin */}
-          <circle cx="500" cy="500" r="440" fill="#1f1d1a" />
+          <circle cx="500" cy="500" r="440" fill="var(--bg-yin, #1f1d1a)" />
           {/* Taiji circle — yang half */}
-          <circle cx="500" cy="500" r="440" fill="#f5f0e8" clipPath="url(#taiji-yang)" />
+          <circle cx="500" cy="500" r="440" fill="var(--bg-yang, #f5f0e8)" clipPath="url(#taiji-yang)" />
 
           {/* Fish eyes — 阴中有阳（亮点在左下阴鱼头），阳中有阴（暗点在右上阳鱼头） */}
-          <circle cx="420" cy="780" r="40" fill="#f5f0e8" />
-          <circle cx="580" cy="220" r="40" fill="#1f1d1a" />
+          <circle cx="420" cy="780" r="40" fill="var(--bg-yang, #f5f0e8)" />
+          <circle cx="580" cy="220" r="40" fill="var(--bg-yin, #1f1d1a)" />
 
           {/* Inner ring */}
           <circle

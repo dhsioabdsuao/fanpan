@@ -1,6 +1,5 @@
 import type { FullAnalysis } from '@/lib/bage/analyze'
 import { Card, CardContent } from '@/components/ui/card'
-import { getAllShenSha } from '@/lib/bage/shensha'
 import type { ShenSha } from '@/lib/bage/shensha'
 
 const ELEMENT_COLORS: Record<string, string> = {
@@ -47,7 +46,7 @@ function StemBranch({
 export function PillarTable({ full, hideHour }: { full: FullAnalysis; hideHour?: boolean }) {
   const result = full.bazi
   const { pillars, tenGods, naYin } = result
-  const shensha = getAllShenSha(result)
+  const shensha: ShenSha[] = full.shenSha
   const pillarKeys = ['year', 'month', 'day', 'hour'] as const
   const pillarLabelMap: Record<string, '年柱' | '月柱' | '日柱' | '时柱'> = {
     year: '年柱', month: '月柱', day: '日柱', hour: '时柱',
@@ -61,7 +60,7 @@ export function PillarTable({ full, hideHour }: { full: FullAnalysis; hideHour?:
   ]
 
   return (
-    <Card>
+    <Card className="border-amber-300/60 dark:border-amber-400/30 shadow-sm">
       <CardContent className="pt-6">
         <div className="grid grid-cols-4 gap-2 text-center">
           {columns.map((col) => {
@@ -70,7 +69,7 @@ export function PillarTable({ full, hideHour }: { full: FullAnalysis; hideHour?:
             return (
               <div
                 key={col.key}
-                className={`flex flex-col items-center gap-1.5 rounded-lg p-2 ${col.highlight ? 'bg-yellow-50 ring-1 ring-yellow-200' : ''}`}
+                className={`flex flex-col items-center gap-1.5 rounded-lg p-2 ${col.highlight ? 'bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-500/30' : ''}`}
               >
                 {/* Column title */}
                 <div className="flex items-center gap-1">

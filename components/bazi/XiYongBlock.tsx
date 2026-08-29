@@ -13,9 +13,9 @@ export function XiYongBlock({ full }: { full: FullAnalysis }) {
 
   return (
     <div className="space-y-4">
-      {/* 喜用(有序) */}
-      <div>
-        <h4 className="text-xs font-semibold text-stone-700 mb-2">喜用五行(有序,第一为最喜)</h4>
+      {/* 喜用(有序)——金榜 */}
+      <div className="rounded-xl border border-amber-300/50 bg-gradient-to-b from-amber-50/80 to-transparent p-3 dark:border-amber-400/25 dark:from-amber-950/30">
+        <h4 className="text-xs font-semibold text-stone-700 dark:text-stone-200 mb-2">喜用五行(有序,第一为最喜)</h4>
         <div className="flex flex-wrap gap-2">
           {xi.favorable.map((el, i) => (
             <span

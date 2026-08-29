@@ -4,6 +4,8 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/layout/Footer";
 import { TaijiBackground } from "@/components/layout/TaijiBackground";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { StarfieldBackground } from "@/components/layout/StarfieldBackground";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +37,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <TaijiBackground />
+          <StarfieldBackground />
+          <div className="fixed right-4 top-4 z-50">
+            <ThemeToggle />
+          </div>
           {children}
           <Footer />
           <Toaster />
