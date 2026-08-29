@@ -1,4 +1,5 @@
 import { StyleSheet, View, ScrollView, Text, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -31,8 +32,10 @@ export default function HomeScreen() {
             keyboardShouldPersistTaps="handled"
           >
             {/* Title */}
-            <Text style={styles.title}>四柱八字</Text>
-            <Text style={styles.subtitle}>输入生辰，知晓命局</Text>
+            <Animated.View entering={FadeInDown.duration(360)}>
+              <Text style={styles.title}>四柱八字</Text>
+              <Text style={styles.subtitle}>输入生辰，知晓命局</Text>
+            </Animated.View>
 
             {/* Decorative divider */}
             <View style={styles.divider}>
@@ -42,12 +45,14 @@ export default function HomeScreen() {
             </View>
 
             {/* Form —— 玻璃拟态卡(标语移入卡内,保证对比度) */}
+            <Animated.View entering={FadeInDown.delay(90).duration(360)}>
             <GlassCard intensity={35} style={styles.formWrapper}>
               <Text style={styles.tagline}>
                 古籍算法 · 真太阳时校正 · 节气匹配
               </Text>
               <BirthForm />
             </GlassCard>
+            </Animated.View>
 
           {/* 历史排盘入口 */}
           <Pressable

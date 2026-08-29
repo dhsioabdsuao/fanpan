@@ -1,5 +1,12 @@
-import { useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, View, Text, Pressable, Animated, LayoutAnimation } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { StyleSheet, View, Text, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  FadeInDown,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { FontSize, FontWeight, Spacing } from '../../theme';
 import { useThemeColors } from '../../theme/ThemeContext';
 import type { ThemeColors } from '../../theme/ThemeContext';
@@ -15,35 +22,34 @@ interface Props {
 export default function CollapsibleSection({ title, isOpen, onToggle, children }: Props) {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const rotateAnim = useRef(new Animated.Value(isOpen ? 1 : 0)).current;
+  const rotate = useSharedValue(isOpen ? 1 : 0);
 
   useEffect(() => {
-    Animated.timing(rotateAnim, {
-      toValue: isOpen ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
+    rotate.value = withSpring(isOpen ? 1 : 0, { damping: 16, stiffness: 160 });
   }, [isOpen]);
 
   const handleToggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onToggle();
   };
 
-  const chevronRotation = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotate.value * 180}deg` }],
+  }));
 
   return (
     <GlassCard intensity={30} contentStyle={styles.glassContent} style={styles.cardShell}>
       <Pressable style={styles.header} onPress={handleToggle}>
         <Text style={styles.title}>{title}</Text>
-        <Animated.Text style={[styles.chevron, { transform: [{ rotate: chevronRotation }] }]}>
+        <Animated.Text style={[styles.chevron, chevronStyle]}>
           ▾
         </Animated.Text>
       </Pressable>
-      {isOpen && <View style={styles.content}>{children}</View>}
+      {isOpen && (
+        <Animated.View entering={FadeInDown.duration(240)} style={styles.content}>
+          {children}
+        </Animated.View>
+      )}
     </GlassCard>
   );
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import { StyleSheet, View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
@@ -149,6 +150,7 @@ export default function BirthForm() {
   }
 
   function onSubmit(data: BirthFormData) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     const noHour = data.timeMode === 'unknown';
 
     const params = {

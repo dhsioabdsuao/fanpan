@@ -1,4 +1,5 @@
 import { StyleSheet, View, ScrollView, Text, Pressable, Alert } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemo, useState, useCallback  } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -30,6 +31,7 @@ export default function HistoryScreen() {
   };
 
   const handleDelete = async (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     await deleteRecord(id);
     setRecords(await loadRecords());
   };
@@ -41,6 +43,7 @@ export default function HistoryScreen() {
         text: '清空',
         style: 'destructive',
         onPress: async () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
           await clearRecords();
           setRecords([]);
         },
