@@ -1,34 +1,13 @@
 import { StyleSheet, View, ScrollView, Text, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors, FontSize, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import BirthForm from '../components/bazi/BirthForm';
-import RecentReadings from '../components/RecentReadings';
-import { loadRecords, deleteRecord } from '../services/storage';
-import type { SavedRecord } from '../services/storage';
 import type { RootStackParamList } from '../navigation/types';
 
 export default function HomeScreen() {
-  const [records, setRecords] = useState<SavedRecord[]>([]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
-  useFocusEffect(
-    useCallback(() => {
-      loadRecords().then(setRecords);
-    }, [])
-  );
-
-  const handleRecordPress = (record: SavedRecord) => {
-    navigation.navigate('Result', record.birthParams);
-  };
-
-  const handleRecordDelete = async (id: string) => {
-    await deleteRecord(id);
-    const updated = await loadRecords();
-    setRecords(updated);
-  };
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -61,13 +40,6 @@ export default function HomeScreen() {
           <View style={styles.formWrapper}>
             <BirthForm />
           </View>
-
-          {/* Recent Readings */}
-          <RecentReadings
-            records={records}
-            onPress={handleRecordPress}
-            onDelete={handleRecordDelete}
-          />
 
           {/* 历史排盘入口 */}
           <Pressable
