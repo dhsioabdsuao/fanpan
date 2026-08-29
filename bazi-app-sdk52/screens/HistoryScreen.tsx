@@ -1,14 +1,18 @@
 import { StyleSheet, View, ScrollView, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback } from 'react';
+import { useMemo, useState, useCallback  } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../theme';
+import { useThemeColors } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/ThemeContext';
+import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import { loadRecords, deleteRecord, clearRecords } from '../services/storage';
 import type { SavedRecord } from '../services/storage';
 import type { RootStackParamList } from '../navigation/types';
 
 export default function HistoryScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [records, setRecords] = useState<SavedRecord[]>([]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -100,8 +104,8 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   container: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 48 },
   header: {
@@ -110,17 +114,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  backLink: { fontSize: FontSize.sm, color: Colors.goldText },
+  backLink: { fontSize: FontSize.sm, color: colors.goldText },
   headerTitle: {
     fontFamily: FONT_SERIF,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerSpacer: { width: 72 },
   subtitle: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -132,17 +136,17 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: FONT_SERIF,
     fontSize: FontSize.lg,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   emptyDesc: {
     fontSize: FontSize.sm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   list: { gap: Spacing.md },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
   },
@@ -157,41 +161,41 @@ const styles = StyleSheet.create({
     fontFamily: FONT_SERIF,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   badge: {
-    backgroundColor: Colors.dayMasterBg,
+    backgroundColor: colors.dayMasterBg,
     borderWidth: 1,
-    borderColor: Colors.dayMasterBorder,
+    borderColor: colors.dayMasterBorder,
     borderRadius: BorderRadius.md,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   badgeText: {
     fontSize: FontSize.xs,
-    color: Colors.goldDark,
+    color: colors.goldDark,
   },
   meta: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: Spacing.xs,
   },
   time: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 4,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     borderTopWidth: 1,
-    borderTopColor: Colors.inkLight,
+    borderTopColor: colors.inkLight,
     marginTop: Spacing.sm,
     paddingTop: Spacing.xs,
   },
   deleteText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   clearAll: {
     alignSelf: 'center',
@@ -199,6 +203,6 @@ const styles = StyleSheet.create({
   },
   clearAllText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 });

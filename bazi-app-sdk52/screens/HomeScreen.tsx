@@ -1,13 +1,18 @@
 import { StyleSheet, View, ScrollView, Text, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, FontSize, FONT_SERIF, Spacing, BorderRadius } from '../theme';
+import { useThemeColors } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/ThemeContext';
+import { FontSize, FONT_SERIF, Spacing, BorderRadius } from '../theme';
 import BirthForm from '../components/bazi/BirthForm';
 import type { RootStackParamList } from '../navigation/types';
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -61,7 +66,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -80,7 +85,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '300',
-    color: Colors.goldDark,
+    color: colors.goldDark,
     textAlign: 'center',
     fontFamily: FONT_SERIF,
     letterSpacing: 8,
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSize.md,
     fontWeight: '400',
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.sm,
     fontFamily: FONT_SERIF,
@@ -104,27 +109,27 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
   },
   dividerDiamond: {
     marginHorizontal: Spacing.lg,
     fontSize: 8,
-    color: Colors.gold,
+    color: colors.gold,
   },
   tagline: {
     fontSize: FontSize.xs,
-    color: Colors.textSubtle,
+    color: colors.textSubtle,
     textAlign: 'center',
     marginBottom: Spacing.xl,
     letterSpacing: 2,
   },
   formWrapper: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     borderWidth: 0.5,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     overflow: 'hidden',
-    shadowColor: Colors.ink,
+    shadowColor: colors.ink,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -134,15 +139,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: colors.surfaceBorder,
     borderRadius: BorderRadius.full,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   },
   historyEntryText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   privacyLink: {
     alignItems: 'center',
@@ -151,6 +156,6 @@ const styles = StyleSheet.create({
   },
   privacyLinkText: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 });
