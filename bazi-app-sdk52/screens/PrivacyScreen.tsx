@@ -8,20 +8,28 @@ import type { ThemeColors } from '../theme/ThemeContext';
 
 const SECTIONS = [
   {
-    title: '数据收集',
-    body: '本应用不收集任何个人信息。您的出生时间、姓名等全部数据仅存储在设备本地，不会上传至任何服务器。',
+    title: '排盘数据与本地存储',
+    body: '排盘功能完全离线：出生信息与排盘历史仅存储在设备本地文件系统，可在历史页随时删除。删除后数据不可恢复。',
   },
   {
-    title: '本地存储',
-    body: '排盘历史记录使用设备本地文件系统存储，您可以随时在首页滑动删除。删除后数据不可恢复。',
+    title: '账号与手机号',
+    body: '广场社区功能需使用手机号验证码登录（短信由 LeanCloud 国内版服务发送）。手机号仅用于登录验证，不对其他用户展示；社区中显示的是掩码昵称（如「命友·138****5678」）。',
   },
   {
-    title: '网络使用',
-    body: '本应用不依赖网络连接。排盘计算、格局判定、神煞查表、大运流年等全部功能均在设备本地完成。',
+    title: '广场帖子信息（脱敏）',
+    body: '发布求测帖时，仅上传四柱八字、性别及格局、强弱、喜忌、神煞、大运摘要等衍生信息。我们不会收集或存储您的精确出生分钟、姓名、出生地点。四柱本身可能被推算者反推出大致出生日期，发布即视为您自愿公开。帖子可随时删除。',
   },
   {
     title: '第三方服务',
-    body: '本应用不使用任何第三方分析、广告或追踪服务。',
+    body: '社区功能使用 LeanCloud 国内版（腾讯云运营）提供数据存储与短信服务，数据存储于中国大陆境内。除此外无任何第三方分析、广告或追踪服务。',
+  },
+  {
+    title: '账号注销',
+    body: '您可以在「我的」页退出登录；注销账号入口位于「我的」页「注销账号」（需二次确认），注销后账号与相关数据将被删除且不可恢复。',
+  },
+  {
+    title: '内容治理',
+    body: '社区内容经敏感词过滤；如发现违规内容可使用举报功能，我们将在后台核实处理。批注内容为用户个人观点，不代表本应用立场。',
   },
   {
     title: '免责声明',
@@ -43,7 +51,7 @@ export default function PrivacyScreen() {
         </Pressable>
 
         <Text style={styles.title}>隐私政策</Text>
-        <Text style={styles.updateDate}>更新日期：2026年7月27日</Text>
+        <Text style={styles.updateDate}>更新日期：2026年8月30日</Text>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
@@ -75,7 +83,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl * 2,
+    paddingBottom: Spacing.xxl * 2 + 32, // 底部悬浮 tab bar 留白
   },
   backLink: {
     marginBottom: Spacing.lg,

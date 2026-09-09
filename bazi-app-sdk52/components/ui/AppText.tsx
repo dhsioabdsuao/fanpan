@@ -1,5 +1,6 @@
-import { Text, type TextProps, StyleSheet } from 'react-native';
-import { FontSize, FontWeight, FONT_SANS, Spacing } from '../../theme';
+import { Text, type TextProps } from 'react-native';
+import { FontSize, FontWeight, FONT_SANS } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 
 interface AppTextProps extends TextProps {
   size?: number;
@@ -18,6 +19,7 @@ export default function AppText({
   muted,
   ...rest
 }: AppTextProps) {
+  const colors = useThemeColors();
   return (
     <Text
       style={[
@@ -25,7 +27,7 @@ export default function AppText({
           fontSize: size,
           fontWeight: weight,
           fontFamily: FONT_SANS,
-          color: muted ? '#78716c' : color || '#1c1917',
+          color: muted ? colors.textMuted : color || colors.textPrimary,
           textAlign: center ? 'center' : 'auto',
         },
         style,

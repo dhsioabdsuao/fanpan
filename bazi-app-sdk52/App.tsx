@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
 import { AppThemeProvider } from './theme/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
 import TaijiBackground from './components/layout/TaijiBackground';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -13,9 +14,11 @@ export default function App() {
         <TaijiBackground opacity={0.7} />
         <SafeAreaProvider>
           <AppThemeProvider>
-            <NavigationContainer>
-              <AppNavigator />
-            </NavigationContainer>
+            <AuthProvider>
+              <NavigationContainer>
+                <AppNavigator />
+              </NavigationContainer>
+            </AuthProvider>
           </AppThemeProvider>
         </SafeAreaProvider>
       </View>

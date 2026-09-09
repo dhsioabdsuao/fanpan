@@ -3,11 +3,12 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Watch the parent project's lib and types directories for hot reload
+// Watch the parent project's lib, types and community directories for hot reload
 config.watchFolders = [
   ...config.watchFolders,
   __dirname + '/../lib',
   __dirname + '/../types',
+  __dirname + '/../community',
 ];
 
 // Resolve @/ imports to the mobile project root (which has the symlinks)

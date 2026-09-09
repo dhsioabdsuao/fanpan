@@ -19,10 +19,26 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.tonyybr.bazi",
       "privacyManifests": {
-        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhoneNumber",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          }
+        ],
         "NSPrivacyTrackingDomains": [],
         "NSPrivacyTracking": false,
-        "NSPrivacyAccessedAPITypes": []
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          }
+        ]
       },
       "infoPlist": {
         "NSPrivacyPolicyURL": "https://dhsioabdsuao.github.io/fanpan/privacy.html",

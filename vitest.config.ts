@@ -13,7 +13,7 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "bazi-app-sdk52/**"],
     coverage: {
       provider: "v8",
-      include: ["lib/**/*.ts"],
+      include: ["lib/**/*.ts", "community/**/*.ts"],
       exclude: ["lib/**/*.test.ts", "lib/__tests__/**", "lib/data/**"],
     },
   },

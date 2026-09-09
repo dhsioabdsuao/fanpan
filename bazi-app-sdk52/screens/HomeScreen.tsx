@@ -11,10 +11,10 @@ import BirthForm from '../components/bazi/BirthForm';
 import AuroraBackground from '../components/layout/AuroraBackground';
 import GlassCard from '../components/ui/GlassCard';
 import { BlurTargetView } from 'expo-blur';
-import type { RootStackParamList } from '../navigation/types';
+import type { HomeStackParamList } from '../navigation/types';
 
 export default function HomeScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
@@ -89,7 +89,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xxl + Spacing.md,
-    paddingBottom: Spacing.xxl * 2,
+    paddingBottom: Spacing.xxl * 2 + 32, // 底部悬浮 tab bar 留白
   },
   title: {
     fontSize: 36,

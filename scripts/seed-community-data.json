@@ -1,0 +1,1997 @@
+[
+  {
+    "label": "seed-1",
+    "question": "求看事业方向,现在的工作要不要换",
+    "draft": {
+      "gender": "male",
+      "baziBrief": "庚辰 壬午 甲辰 庚午",
+      "pillars": {
+        "year": {
+          "stem": "庚",
+          "branch": "辰",
+          "stemElement": "金",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "七杀",
+          "naYin": "白蜡金"
+        },
+        "month": {
+          "stem": "壬",
+          "branch": "午",
+          "stemElement": "水",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "偏印",
+          "naYin": "杨柳木"
+        },
+        "day": {
+          "stem": "甲",
+          "branch": "辰",
+          "stemElement": "木",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": null,
+          "naYin": "覆灯火"
+        },
+        "hour": {
+          "stem": "庚",
+          "branch": "午",
+          "stemElement": "金",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "七杀",
+          "naYin": "路旁土"
+        }
+      },
+      "dayMaster": "甲",
+      "dayMasterElement": "木",
+      "pattern": {
+        "displayName": "伤官格",
+        "outcome": "不成格",
+        "summary": "印星无根(透干但地支无长生/禄/旺),佩印乏力"
+      },
+      "strength": {
+        "level": "身弱"
+      },
+      "xiYong": {
+        "favorable": [
+          "水",
+          "土",
+          "金"
+        ],
+        "avoid": [
+          "火"
+        ],
+        "yongShenTenGod": null
+      },
+      "shensha": [
+        {
+          "name": "国印贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "年柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "月柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "月柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "月柱"
+        },
+        {
+          "name": "红艳",
+          "pillar": "月柱"
+        },
+        {
+          "name": "国印贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "日柱"
+        },
+        {
+          "name": "童子煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "日柱"
+        },
+        {
+          "name": "十恶大败",
+          "pillar": "日柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "日柱"
+        },
+        {
+          "name": "十灵",
+          "pillar": "日柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "时柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "时柱"
+        },
+        {
+          "name": "红艳",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 2007,
+          "month": 9,
+          "day": 4
+        },
+        "isForward": true,
+        "decades": [
+          {
+            "startYear": 2007,
+            "startAge": 8,
+            "ganZhi": "癸未"
+          },
+          {
+            "startYear": 2017,
+            "startAge": 18,
+            "ganZhi": "甲申"
+          },
+          {
+            "startYear": 2027,
+            "startAge": 28,
+            "ganZhi": "乙酉"
+          },
+          {
+            "startYear": 2037,
+            "startAge": 38,
+            "ganZhi": "丙戌"
+          },
+          {
+            "startYear": 2047,
+            "startAge": 48,
+            "ganZhi": "丁亥"
+          },
+          {
+            "startYear": 2057,
+            "startAge": 58,
+            "ganZhi": "戊子"
+          },
+          {
+            "startYear": 2067,
+            "startAge": 68,
+            "ganZhi": "己丑"
+          },
+          {
+            "startYear": 2077,
+            "startAge": 78,
+            "ganZhi": "庚寅"
+          },
+          {
+            "startYear": 2087,
+            "startAge": 88,
+            "ganZhi": "辛卯"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-2",
+    "question": "今年想考编,有机会上岸吗",
+    "draft": {
+      "gender": "male",
+      "baziBrief": "己卯 丁丑 壬申 丙午",
+      "pillars": {
+        "year": {
+          "stem": "己",
+          "branch": "卯",
+          "stemElement": "土",
+          "branchElement": "木",
+          "hiddenStems": [
+            "乙"
+          ],
+          "tenGod": "正官",
+          "naYin": "城头土"
+        },
+        "month": {
+          "stem": "丁",
+          "branch": "丑",
+          "stemElement": "火",
+          "branchElement": "土",
+          "hiddenStems": [
+            "己",
+            "癸",
+            "辛"
+          ],
+          "tenGod": "正财",
+          "naYin": "涧下水"
+        },
+        "day": {
+          "stem": "壬",
+          "branch": "申",
+          "stemElement": "水",
+          "branchElement": "金",
+          "hiddenStems": [
+            "庚",
+            "壬",
+            "戊"
+          ],
+          "tenGod": null,
+          "naYin": "剑锋金"
+        },
+        "hour": {
+          "stem": "丙",
+          "branch": "午",
+          "stemElement": "火",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "偏财",
+          "naYin": "天河水"
+        }
+      },
+      "dayMaster": "壬",
+      "dayMasterElement": "水",
+      "pattern": {
+        "displayName": "正官格",
+        "outcome": "成格",
+        "summary": "有财生官"
+      },
+      "strength": {
+        "level": "中和"
+      },
+      "xiYong": {
+        "favorable": [
+          "火",
+          "金"
+        ],
+        "avoid": [
+          "木"
+        ],
+        "yongShenTenGod": "财星"
+      },
+      "shensha": [
+        {
+          "name": "天乙贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "年柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "年柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "月柱"
+        },
+        {
+          "name": "寡宿",
+          "pillar": "月柱"
+        },
+        {
+          "name": "吊客",
+          "pillar": "月柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "月柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "日柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "日柱"
+        },
+        {
+          "name": "劫煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "十恶大败",
+          "pillar": "日柱"
+        },
+        {
+          "name": "亡神",
+          "pillar": "日柱"
+        },
+        {
+          "name": "元辰",
+          "pillar": "日柱"
+        },
+        {
+          "name": "禄神",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "时柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "时柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "勾绞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "桃花",
+          "pillar": "时柱"
+        },
+        {
+          "name": "天喜",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 2003,
+          "month": 1,
+          "day": 25
+        },
+        "isForward": false,
+        "decades": [
+          {
+            "startYear": 2003,
+            "startAge": 4,
+            "ganZhi": "丙子"
+          },
+          {
+            "startYear": 2013,
+            "startAge": 14,
+            "ganZhi": "乙亥"
+          },
+          {
+            "startYear": 2023,
+            "startAge": 24,
+            "ganZhi": "甲戌"
+          },
+          {
+            "startYear": 2033,
+            "startAge": 34,
+            "ganZhi": "癸酉"
+          },
+          {
+            "startYear": 2043,
+            "startAge": 44,
+            "ganZhi": "壬申"
+          },
+          {
+            "startYear": 2053,
+            "startAge": 54,
+            "ganZhi": "辛未"
+          },
+          {
+            "startYear": 2063,
+            "startAge": 64,
+            "ganZhi": "庚午"
+          },
+          {
+            "startYear": 2073,
+            "startAge": 74,
+            "ganZhi": "己巳"
+          },
+          {
+            "startYear": 2083,
+            "startAge": 84,
+            "ganZhi": "戊辰"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-3",
+    "question": "女命婚姻走势如何,何时有正缘",
+    "draft": {
+      "gender": "female",
+      "baziBrief": "庚辰 乙酉 丙子 甲午",
+      "pillars": {
+        "year": {
+          "stem": "庚",
+          "branch": "辰",
+          "stemElement": "金",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "偏财",
+          "naYin": "白蜡金"
+        },
+        "month": {
+          "stem": "乙",
+          "branch": "酉",
+          "stemElement": "木",
+          "branchElement": "金",
+          "hiddenStems": [
+            "辛"
+          ],
+          "tenGod": "正印",
+          "naYin": "泉中水"
+        },
+        "day": {
+          "stem": "丙",
+          "branch": "子",
+          "stemElement": "火",
+          "branchElement": "水",
+          "hiddenStems": [
+            "癸"
+          ],
+          "tenGod": null,
+          "naYin": "涧下水"
+        },
+        "hour": {
+          "stem": "甲",
+          "branch": "午",
+          "stemElement": "木",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "偏印",
+          "naYin": "沙中金"
+        }
+      },
+      "dayMaster": "丙",
+      "dayMasterElement": "火",
+      "pattern": {
+        "displayName": "正财格",
+        "outcome": "不成格",
+        "summary": "财孤(无食伤生、无官护),未被比劫夺尽"
+      },
+      "strength": {
+        "level": "中和"
+      },
+      "xiYong": {
+        "favorable": [
+          "土",
+          "水"
+        ],
+        "avoid": [
+          "火"
+        ],
+        "yongShenTenGod": null
+      },
+      "shensha": [
+        {
+          "name": "月德贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "国印贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "月德合",
+          "pillar": "月柱"
+        },
+        {
+          "name": "羊刃",
+          "pillar": "月柱"
+        },
+        {
+          "name": "空亡",
+          "pillar": "月柱"
+        },
+        {
+          "name": "元辰",
+          "pillar": "月柱"
+        },
+        {
+          "name": "桃花",
+          "pillar": "月柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "月柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "日柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "日柱"
+        },
+        {
+          "name": "阴差阳错",
+          "pillar": "日柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "日柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "羊刃",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "时柱"
+        },
+        {
+          "name": "桃花",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 2003,
+          "month": 4,
+          "day": 25
+        },
+        "isForward": false,
+        "decades": [
+          {
+            "startYear": 2003,
+            "startAge": 4,
+            "ganZhi": "甲申"
+          },
+          {
+            "startYear": 2013,
+            "startAge": 14,
+            "ganZhi": "癸未"
+          },
+          {
+            "startYear": 2023,
+            "startAge": 24,
+            "ganZhi": "壬午"
+          },
+          {
+            "startYear": 2033,
+            "startAge": 34,
+            "ganZhi": "辛巳"
+          },
+          {
+            "startYear": 2043,
+            "startAge": 44,
+            "ganZhi": "庚辰"
+          },
+          {
+            "startYear": 2053,
+            "startAge": 54,
+            "ganZhi": "己卯"
+          },
+          {
+            "startYear": 2063,
+            "startAge": 64,
+            "ganZhi": "戊寅"
+          },
+          {
+            "startYear": 2073,
+            "startAge": 74,
+            "ganZhi": "丁丑"
+          },
+          {
+            "startYear": 2083,
+            "startAge": 84,
+            "ganZhi": "丙子"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-4",
+    "question": "财运一直一般,什么时候能起运",
+    "draft": {
+      "gender": "male",
+      "baziBrief": "丁巳 己酉 乙亥 壬午",
+      "pillars": {
+        "year": {
+          "stem": "丁",
+          "branch": "巳",
+          "stemElement": "火",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丙",
+            "庚",
+            "戊"
+          ],
+          "tenGod": "食神",
+          "naYin": "沙中土"
+        },
+        "month": {
+          "stem": "己",
+          "branch": "酉",
+          "stemElement": "土",
+          "branchElement": "金",
+          "hiddenStems": [
+            "辛"
+          ],
+          "tenGod": "偏财",
+          "naYin": "大驿土"
+        },
+        "day": {
+          "stem": "乙",
+          "branch": "亥",
+          "stemElement": "木",
+          "branchElement": "水",
+          "hiddenStems": [
+            "壬",
+            "甲"
+          ],
+          "tenGod": null,
+          "naYin": "山头火"
+        },
+        "hour": {
+          "stem": "壬",
+          "branch": "午",
+          "stemElement": "水",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "正印",
+          "naYin": "杨柳木"
+        }
+      },
+      "dayMaster": "乙",
+      "dayMasterElement": "木",
+      "pattern": {
+        "displayName": "七杀格",
+        "outcome": "成格",
+        "summary": "食神制杀"
+      },
+      "strength": {
+        "level": "身弱"
+      },
+      "xiYong": {
+        "favorable": [
+          "火",
+          "水"
+        ],
+        "avoid": [
+          "土",
+          "金"
+        ],
+        "yongShenTenGod": "食神"
+      },
+      "shensha": [
+        {
+          "name": "德秀贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "年柱"
+        },
+        {
+          "name": "羊刃",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "驿马",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "文昌贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "月柱"
+        },
+        {
+          "name": "词馆",
+          "pillar": "月柱"
+        },
+        {
+          "name": "空亡",
+          "pillar": "月柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "月柱"
+        },
+        {
+          "name": "暗金的煞",
+          "pillar": "月柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "月柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "国印贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天德合",
+          "pillar": "日柱"
+        },
+        {
+          "name": "月德合",
+          "pillar": "日柱"
+        },
+        {
+          "name": "童子煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "日柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "日柱"
+        },
+        {
+          "name": "驿马",
+          "pillar": "日柱"
+        },
+        {
+          "name": "十灵",
+          "pillar": "日柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "文昌贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "天厨贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "时柱"
+        },
+        {
+          "name": "禄神",
+          "pillar": "时柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "时柱"
+        },
+        {
+          "name": "桃花",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 1980,
+          "month": 3,
+          "day": 6
+        },
+        "isForward": false,
+        "decades": [
+          {
+            "startYear": 1980,
+            "startAge": 4,
+            "ganZhi": "戊申"
+          },
+          {
+            "startYear": 1990,
+            "startAge": 14,
+            "ganZhi": "丁未"
+          },
+          {
+            "startYear": 2000,
+            "startAge": 24,
+            "ganZhi": "丙午"
+          },
+          {
+            "startYear": 2010,
+            "startAge": 34,
+            "ganZhi": "乙巳"
+          },
+          {
+            "startYear": 2020,
+            "startAge": 44,
+            "ganZhi": "甲辰"
+          },
+          {
+            "startYear": 2030,
+            "startAge": 54,
+            "ganZhi": "癸卯"
+          },
+          {
+            "startYear": 2040,
+            "startAge": 64,
+            "ganZhi": "壬寅"
+          },
+          {
+            "startYear": 2050,
+            "startAge": 74,
+            "ganZhi": "辛丑"
+          },
+          {
+            "startYear": 2060,
+            "startAge": 84,
+            "ganZhi": "庚子"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-5",
+    "question": "帮看子女缘与学业",
+    "draft": {
+      "gender": "female",
+      "baziBrief": "庚辰 庚辰 癸卯 戊午",
+      "pillars": {
+        "year": {
+          "stem": "庚",
+          "branch": "辰",
+          "stemElement": "金",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "正印",
+          "naYin": "白蜡金"
+        },
+        "month": {
+          "stem": "庚",
+          "branch": "辰",
+          "stemElement": "金",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "正印",
+          "naYin": "白蜡金"
+        },
+        "day": {
+          "stem": "癸",
+          "branch": "卯",
+          "stemElement": "水",
+          "branchElement": "木",
+          "hiddenStems": [
+            "乙"
+          ],
+          "tenGod": null,
+          "naYin": "金箔金"
+        },
+        "hour": {
+          "stem": "戊",
+          "branch": "午",
+          "stemElement": "土",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "正官",
+          "naYin": "天上火"
+        }
+      },
+      "dayMaster": "癸",
+      "dayMasterElement": "水",
+      "pattern": {
+        "displayName": "正官格",
+        "outcome": "破格",
+        "summary": "正官被合去"
+      },
+      "strength": {
+        "level": "身弱"
+      },
+      "xiYong": {
+        "favorable": [
+          "金",
+          "火"
+        ],
+        "avoid": [
+          "木",
+          "土"
+        ],
+        "yongShenTenGod": "印星"
+      },
+      "shensha": [
+        {
+          "name": "德秀贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "国印贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "空亡",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "年柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "国印贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "空亡",
+          "pillar": "月柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "月柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "月柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "文昌贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天厨贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天医",
+          "pillar": "日柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "日柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "日柱"
+        },
+        {
+          "name": "病符",
+          "pillar": "日柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "日柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "词馆",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "时柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 2003,
+          "month": 11,
+          "day": 4
+        },
+        "isForward": false,
+        "decades": [
+          {
+            "startYear": 2003,
+            "startAge": 4,
+            "ganZhi": "己卯"
+          },
+          {
+            "startYear": 2013,
+            "startAge": 14,
+            "ganZhi": "戊寅"
+          },
+          {
+            "startYear": 2023,
+            "startAge": 24,
+            "ganZhi": "丁丑"
+          },
+          {
+            "startYear": 2033,
+            "startAge": 34,
+            "ganZhi": "丙子"
+          },
+          {
+            "startYear": 2043,
+            "startAge": 44,
+            "ganZhi": "乙亥"
+          },
+          {
+            "startYear": 2053,
+            "startAge": 54,
+            "ganZhi": "甲戌"
+          },
+          {
+            "startYear": 2063,
+            "startAge": 64,
+            "ganZhi": "癸酉"
+          },
+          {
+            "startYear": 2073,
+            "startAge": 74,
+            "ganZhi": "壬申"
+          },
+          {
+            "startYear": 2083,
+            "startAge": 84,
+            "ganZhi": "辛未"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-6",
+    "question": "最近诸事不顺,求指点近年运势",
+    "draft": {
+      "gender": "male",
+      "baziBrief": "壬辰 癸卯 庚申 壬午",
+      "pillars": {
+        "year": {
+          "stem": "壬",
+          "branch": "辰",
+          "stemElement": "水",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "食神",
+          "naYin": "长流水"
+        },
+        "month": {
+          "stem": "癸",
+          "branch": "卯",
+          "stemElement": "水",
+          "branchElement": "木",
+          "hiddenStems": [
+            "乙"
+          ],
+          "tenGod": "伤官",
+          "naYin": "金箔金"
+        },
+        "day": {
+          "stem": "庚",
+          "branch": "申",
+          "stemElement": "金",
+          "branchElement": "金",
+          "hiddenStems": [
+            "庚",
+            "壬",
+            "戊"
+          ],
+          "tenGod": null,
+          "naYin": "石榴木"
+        },
+        "hour": {
+          "stem": "壬",
+          "branch": "午",
+          "stemElement": "水",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "食神",
+          "naYin": "杨柳木"
+        }
+      },
+      "dayMaster": "庚",
+      "dayMasterElement": "金",
+      "pattern": {
+        "displayName": "正财格",
+        "outcome": "成格",
+        "summary": "食伤生财(财有源)"
+      },
+      "strength": {
+        "level": "身弱"
+      },
+      "xiYong": {
+        "favorable": [
+          "火",
+          "水",
+          "木"
+        ],
+        "avoid": [
+          "金"
+        ],
+        "yongShenTenGod": "食伤"
+      },
+      "shensha": [
+        {
+          "name": "福星贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "国印贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "月柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "月柱"
+        },
+        {
+          "name": "病符",
+          "pillar": "月柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "月柱"
+        },
+        {
+          "name": "天德贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "日柱"
+        },
+        {
+          "name": "禄神",
+          "pillar": "日柱"
+        },
+        {
+          "name": "孤鸾煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "劫煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "童子煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "四废日",
+          "pillar": "日柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "时柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "时柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 1959,
+          "month": 2,
+          "day": 4
+        },
+        "isForward": true,
+        "decades": [
+          {
+            "startYear": 1959,
+            "startAge": 8,
+            "ganZhi": "甲辰"
+          },
+          {
+            "startYear": 1969,
+            "startAge": 18,
+            "ganZhi": "乙巳"
+          },
+          {
+            "startYear": 1979,
+            "startAge": 28,
+            "ganZhi": "丙午"
+          },
+          {
+            "startYear": 1989,
+            "startAge": 38,
+            "ganZhi": "丁未"
+          },
+          {
+            "startYear": 1999,
+            "startAge": 48,
+            "ganZhi": "戊申"
+          },
+          {
+            "startYear": 2009,
+            "startAge": 58,
+            "ganZhi": "己酉"
+          },
+          {
+            "startYear": 2019,
+            "startAge": 68,
+            "ganZhi": "庚戌"
+          },
+          {
+            "startYear": 2029,
+            "startAge": 78,
+            "ganZhi": "辛亥"
+          },
+          {
+            "startYear": 2039,
+            "startAge": 88,
+            "ganZhi": "壬子"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-7",
+    "question": "想创业做餐饮,命局适合吗",
+    "draft": {
+      "gender": "male",
+      "baziBrief": "庚辰 壬午 乙巳 丙子",
+      "pillars": {
+        "year": {
+          "stem": "庚",
+          "branch": "辰",
+          "stemElement": "金",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "正官",
+          "naYin": "白蜡金"
+        },
+        "month": {
+          "stem": "壬",
+          "branch": "午",
+          "stemElement": "水",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "正印",
+          "naYin": "杨柳木"
+        },
+        "day": {
+          "stem": "乙",
+          "branch": "巳",
+          "stemElement": "木",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丙",
+            "庚",
+            "戊"
+          ],
+          "tenGod": null,
+          "naYin": "覆灯火"
+        },
+        "hour": {
+          "stem": "丙",
+          "branch": "子",
+          "stemElement": "火",
+          "branchElement": "水",
+          "hiddenStems": [
+            "癸"
+          ],
+          "tenGod": "伤官",
+          "naYin": "涧下水"
+        }
+      },
+      "dayMaster": "乙",
+      "dayMasterElement": "木",
+      "pattern": {
+        "displayName": "食神格",
+        "outcome": "破格",
+        "summary": "食神(月支)被冲"
+      },
+      "strength": {
+        "level": "身弱"
+      },
+      "xiYong": {
+        "favorable": [
+          "土",
+          "火"
+        ],
+        "avoid": [
+          "水"
+        ],
+        "yongShenTenGod": null
+      },
+      "shensha": [
+        {
+          "name": "国印贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "寡宿",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "年柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "文昌贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "天厨贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "月柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "月柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "月柱"
+        },
+        {
+          "name": "桃花",
+          "pillar": "月柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "月柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "日柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天医",
+          "pillar": "日柱"
+        },
+        {
+          "name": "劫煞",
+          "pillar": "日柱"
+        },
+        {
+          "name": "孤辰",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "日柱"
+        },
+        {
+          "name": "十恶大败",
+          "pillar": "日柱"
+        },
+        {
+          "name": "亡神",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天喜",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "月德贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "时柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 2007,
+          "month": 7,
+          "day": 15
+        },
+        "isForward": true,
+        "decades": [
+          {
+            "startYear": 2007,
+            "startAge": 8,
+            "ganZhi": "癸未"
+          },
+          {
+            "startYear": 2017,
+            "startAge": 18,
+            "ganZhi": "甲申"
+          },
+          {
+            "startYear": 2027,
+            "startAge": 28,
+            "ganZhi": "乙酉"
+          },
+          {
+            "startYear": 2037,
+            "startAge": 38,
+            "ganZhi": "丙戌"
+          },
+          {
+            "startYear": 2047,
+            "startAge": 48,
+            "ganZhi": "丁亥"
+          },
+          {
+            "startYear": 2057,
+            "startAge": 58,
+            "ganZhi": "戊子"
+          },
+          {
+            "startYear": 2067,
+            "startAge": 68,
+            "ganZhi": "己丑"
+          },
+          {
+            "startYear": 2077,
+            "startAge": 78,
+            "ganZhi": "庚寅"
+          },
+          {
+            "startYear": 2087,
+            "startAge": 88,
+            "ganZhi": "辛卯"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "seed-8",
+    "question": "老来福禄如何,适合早退休吗",
+    "draft": {
+      "gender": "female",
+      "baziBrief": "庚辰 戊寅 癸卯 戊午",
+      "pillars": {
+        "year": {
+          "stem": "庚",
+          "branch": "辰",
+          "stemElement": "金",
+          "branchElement": "土",
+          "hiddenStems": [
+            "戊",
+            "乙",
+            "癸"
+          ],
+          "tenGod": "正印",
+          "naYin": "白蜡金"
+        },
+        "month": {
+          "stem": "戊",
+          "branch": "寅",
+          "stemElement": "土",
+          "branchElement": "木",
+          "hiddenStems": [
+            "甲",
+            "丙",
+            "戊"
+          ],
+          "tenGod": "正官",
+          "naYin": "城头土"
+        },
+        "day": {
+          "stem": "癸",
+          "branch": "卯",
+          "stemElement": "水",
+          "branchElement": "木",
+          "hiddenStems": [
+            "乙"
+          ],
+          "tenGod": null,
+          "naYin": "金箔金"
+        },
+        "hour": {
+          "stem": "戊",
+          "branch": "午",
+          "stemElement": "土",
+          "branchElement": "火",
+          "hiddenStems": [
+            "丁",
+            "己"
+          ],
+          "tenGod": "正官",
+          "naYin": "天上火"
+        }
+      },
+      "dayMaster": "癸",
+      "dayMasterElement": "水",
+      "pattern": {
+        "displayName": "正官格",
+        "outcome": "破格",
+        "summary": "正官被合去"
+      },
+      "strength": {
+        "level": "身弱"
+      },
+      "xiYong": {
+        "favorable": [
+          "金",
+          "火"
+        ],
+        "avoid": [
+          "木",
+          "土"
+        ],
+        "yongShenTenGod": "印星"
+      },
+      "shensha": [
+        {
+          "name": "国印贵人",
+          "pillar": "年柱"
+        },
+        {
+          "name": "空亡",
+          "pillar": "年柱"
+        },
+        {
+          "name": "天罗地网",
+          "pillar": "年柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "年柱"
+        },
+        {
+          "name": "华盖",
+          "pillar": "年柱"
+        },
+        {
+          "name": "太极贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "月柱"
+        },
+        {
+          "name": "金舆",
+          "pillar": "月柱"
+        },
+        {
+          "name": "词馆",
+          "pillar": "月柱"
+        },
+        {
+          "name": "吊客",
+          "pillar": "月柱"
+        },
+        {
+          "name": "亡神",
+          "pillar": "月柱"
+        },
+        {
+          "name": "流霞",
+          "pillar": "月柱"
+        },
+        {
+          "name": "驿马",
+          "pillar": "月柱"
+        },
+        {
+          "name": "天乙贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "文昌贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "天厨贵人",
+          "pillar": "日柱"
+        },
+        {
+          "name": "学堂",
+          "pillar": "日柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "日柱"
+        },
+        {
+          "name": "飞刃",
+          "pillar": "日柱"
+        },
+        {
+          "name": "病符",
+          "pillar": "日柱"
+        },
+        {
+          "name": "桃花",
+          "pillar": "日柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "日柱"
+        },
+        {
+          "name": "福星贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "德秀贵人",
+          "pillar": "时柱"
+        },
+        {
+          "name": "词馆",
+          "pillar": "时柱"
+        },
+        {
+          "name": "灾煞",
+          "pillar": "时柱"
+        },
+        {
+          "name": "六厄",
+          "pillar": "时柱"
+        },
+        {
+          "name": "丧门",
+          "pillar": "时柱"
+        },
+        {
+          "name": "将星",
+          "pillar": "时柱"
+        }
+      ],
+      "daYun": {
+        "startSolar": {
+          "year": 2003,
+          "month": 9,
+          "day": 4
+        },
+        "isForward": false,
+        "decades": [
+          {
+            "startYear": 2003,
+            "startAge": 4,
+            "ganZhi": "丁丑"
+          },
+          {
+            "startYear": 2013,
+            "startAge": 14,
+            "ganZhi": "丙子"
+          },
+          {
+            "startYear": 2023,
+            "startAge": 24,
+            "ganZhi": "乙亥"
+          },
+          {
+            "startYear": 2033,
+            "startAge": 34,
+            "ganZhi": "甲戌"
+          },
+          {
+            "startYear": 2043,
+            "startAge": 44,
+            "ganZhi": "癸酉"
+          },
+          {
+            "startYear": 2053,
+            "startAge": 54,
+            "ganZhi": "壬申"
+          },
+          {
+            "startYear": 2063,
+            "startAge": 64,
+            "ganZhi": "辛未"
+          },
+          {
+            "startYear": 2073,
+            "startAge": 74,
+            "ganZhi": "庚午"
+          },
+          {
+            "startYear": 2083,
+            "startAge": 84,
+            "ganZhi": "己巳"
+          }
+        ]
+      }
+    }
+  }
+]

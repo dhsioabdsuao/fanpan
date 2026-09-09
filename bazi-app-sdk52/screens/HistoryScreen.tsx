@@ -12,13 +12,13 @@ import AuroraBackground from '../components/layout/AuroraBackground';
 import GlassCard from '../components/ui/GlassCard';
 import { BlurTargetView } from 'expo-blur';
 import type { SavedRecord } from '../services/storage';
-import type { RootStackParamList } from '../navigation/types';
+import type { HomeStackParamList } from '../navigation/types';
 
 export default function HistoryScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [records, setRecords] = useState<SavedRecord[]>([]);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   useFocusEffect(
     useCallback(() => {
@@ -116,7 +116,7 @@ export default function HistoryScreen() {
 const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  container: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 48 },
+  container: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 128 }, // 底部悬浮 tab bar 留白
   header: {
     flexDirection: 'row',
     alignItems: 'center',

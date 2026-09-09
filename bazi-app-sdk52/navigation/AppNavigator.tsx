@@ -1,10 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
-import HomeScreen from '../screens/HomeScreen';
-import ResultScreen from '../screens/ResultScreen';
-import AboutScreen from '../screens/AboutScreen';
-import PrivacyScreen from '../screens/PrivacyScreen';
-import HistoryScreen from '../screens/HistoryScreen';
+import MainTabs from './MainTabs';
+import LoginScreen from '../screens/community/LoginScreen';
+import UserAgreementScreen from '../screens/community/UserAgreementScreen';
+import PublishScreen from '../screens/community/PublishScreen';
+import PostDetailScreen from '../screens/community/PostDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -16,11 +16,11 @@ export default function AppNavigator() {
         animation: 'slide_from_right',
       }}
     >
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Result" component={ResultScreen} />
-      <Stack.Screen name="About" component={AboutScreen} />
-      <Stack.Screen name="Privacy" component={PrivacyScreen} />
-      <Stack.Screen name="History" component={HistoryScreen} />
+      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+      <Stack.Screen name="Publish" component={PublishScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="UserAgreement" component={UserAgreementScreen} />
     </Stack.Navigator>
   );
 }

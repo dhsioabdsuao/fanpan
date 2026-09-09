@@ -15,7 +15,7 @@ import {
   lookupCoordinates,
 } from '@/lib/solarTime/cityLookup';
 
-import type { RootStackParamList } from '../../navigation/types';
+import type { HomeStackParamList } from '../../navigation/types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -65,7 +65,7 @@ const resolver: Resolver<BirthFormData> = async (values) => {
 export default function BirthForm() {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   const form = useForm<BirthFormData>({
     resolver,

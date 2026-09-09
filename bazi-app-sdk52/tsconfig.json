@@ -10,6 +10,7 @@
   },
   "exclude": [
     "lib/__tests__",
-    "lib/solarTime/index.test.ts"
+    "lib/solarTime/index.test.ts",
+    "community/__tests__"
   ]
 }

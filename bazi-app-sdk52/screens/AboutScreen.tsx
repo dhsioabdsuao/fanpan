@@ -3,7 +3,7 @@ import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/types';
+import type { HomeStackParamList } from '../navigation/types';
 import Svg, { Circle, Path, ClipPath, Defs, Rect } from 'react-native-svg';
 import { FontSize, FONT_SERIF, Spacing } from '../theme';
 import { useThemeColors } from '../theme/ThemeContext';
@@ -12,7 +12,7 @@ import type { ThemeColors } from '../theme/ThemeContext';
 export default function AboutScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -80,7 +80,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xxl,
-    paddingBottom: Spacing.xxl * 2,
+    paddingBottom: Spacing.xxl * 2 + 32, // 底部悬浮 tab bar 留白
   },
   title: {
     fontSize: FontSize.xxl,
