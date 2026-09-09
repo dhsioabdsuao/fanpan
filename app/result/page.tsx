@@ -11,6 +11,7 @@ import { parseSearchParams } from '@/lib/bazi-input-adapter'
 import { calculateBazi } from '@/lib/bazi'
 import { analyze } from '@/lib/bage/analyze'
 import { PillarTable } from '@/components/bazi/PillarTable'
+import { FuXingBlock } from '@/components/bazi/FuXingBlock'
 import { DaYunTable } from '@/components/bazi/DaYunTable'
 import { BasicInfo } from '@/components/bazi/BasicInfo'
 import { ElementChart } from '@/components/bazi/ElementChart'
@@ -280,6 +281,9 @@ function ResultContent() {
         </div>
 
         <PillarTable full={full} hideHour={noHour === '1'} />
+
+        {/* 副星(藏干十神):四柱八字与神煞之间 */}
+        <FuXingBlock full={full} hideHour={noHour === '1'} />
 
         {/* ── 折叠面板区 ── */}
         <div className="space-y-4">

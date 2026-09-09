@@ -2,7 +2,8 @@ import { StyleSheet, View, ScrollView, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/types';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { HomeStackParamList, RootStackParamList } from '../navigation/types';
 import { buildBaziInput } from '../adapters/bazi-input-adapter';
 import { calculateBazi } from '@/lib/bazi';
 import { extractPattern, assessOutcome } from '@/lib/bage';
@@ -18,6 +19,7 @@ import type { ThemeColors } from '../theme/ThemeContext';
 import AuroraBackground from '../components/layout/AuroraBackground';
 import { BlurTargetView } from 'expo-blur';
 import PillarTable from '../components/bazi/PillarTable';
+import FuXingBlock from '../components/bazi/FuXingBlock';
 import BasicInfo from '../components/bazi/BasicInfo';
 import DaYunTable from '../components/bazi/DaYunTable';
 import ElementChart from '../components/bazi/ElementChart';
@@ -29,9 +31,14 @@ import CareerGuidanceBlock from '../components/bazi/CareerGuidanceBlock';
 import HealthGuidanceBlock from '../components/bazi/HealthGuidanceBlock';
 import CollapsibleSection from '../components/ui/CollapsibleSection';
 import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 import { saveRecord } from '../services/storage';
+import { buildPostDraft } from '@/community/privacy';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<HomeStackParamList, 'Result'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export default function ResultScreen({ navigation, route }: Props) {
   const colors = useThemeColors();
@@ -232,6 +239,9 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* Pillar Table */}
         <PillarTable full={full} />
 
+        {/* 副星(藏干十神):四柱八字与神煞之间 */}
+        <FuXingBlock full={full} />
+
         {/* Collapsible Sections */}
         <View style={styles.sections}>
           {Sections.map((section) => {
@@ -249,6 +259,16 @@ export default function ResultScreen({ navigation, route }: Props) {
               </CollapsibleSection>
             );
           })}
+        </View>
+
+        {/* 发布到广场(导航传脱敏草稿,由构造保证不携带出生原始数据) */}
+        <View style={styles.publishSection}>
+          <Button
+            title="发布到广场求批注"
+            variant="gold"
+            onPress={() => navigation.navigate('Publish', { draft: buildPostDraft(full) })}
+          />
+          <Text style={styles.publishNote}>仅上传四柱与性别,不含精确出生时间与地点</Text>
         </View>
 
         {/* 历史排盘入口 */}
@@ -318,7 +338,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl * 2,
+    paddingBottom: Spacing.xxl * 2 + 32, // 底部悬浮 tab bar 留白
   },
   header: {
     flexDirection: 'row',
@@ -451,6 +471,15 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   errorText: {
     fontSize: FontSize.md,
     color: colors.destructive,
+    textAlign: 'center',
+  },
+  publishSection: {
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
+  },
+  publishNote: {
+    fontSize: FontSize.xs,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   historyEntry: {
