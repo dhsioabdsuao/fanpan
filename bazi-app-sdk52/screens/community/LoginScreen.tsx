@@ -161,7 +161,7 @@ export default function LoginScreen() {
                   <Text style={styles.backLink}>← 返回</Text>
                 </Pressable>
               ) : (
-                <View />
+                <View style={styles.headerSpacer} />
               )}
               <Text style={styles.headerTitle}>登录</Text>
               <View style={styles.headerSpacer} />

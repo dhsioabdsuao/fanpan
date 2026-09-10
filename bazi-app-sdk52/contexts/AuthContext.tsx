@@ -13,6 +13,7 @@ import {
   logout as logoutRemote,
   requestAccountDeletionCode as requestDeletionCode,
   deleteAccount as deleteAccountRemote,
+  updateMyNickname,
   setCurrentUid,
 } from '../services/community';
 import type { VerificationHandle } from '../services/community';
@@ -32,6 +33,8 @@ interface AuthContextValue {
   requestDeletionCode(): Promise<void>;
   /** 注销第二步:输入验证码完成删除 */
   deleteAccount(code: string): Promise<void>;
+  /** 修改本人昵称(校验失败抛 CommunityError INVALID_NICKNAME) */
+  updateNickname(nickname: string): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -78,6 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteAccount: async (code) => {
       await deleteAccountRemote(code);
       setUser(null);
+    },
+    updateNickname: async (nickname) => {
+      const u = await updateMyNickname(nickname);
+      setUser(u);
     },
   };
 

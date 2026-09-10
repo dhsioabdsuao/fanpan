@@ -78,7 +78,7 @@ export default function SquareScreen() {
 
   const header = (
     <View style={styles.header}>
-      <View />
+      <View style={styles.headerSpacer} />
       <Text style={styles.headerTitle}>命理广场</Text>
       <View style={styles.headerSpacer} />
     </View>

@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Platform } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -13,7 +13,9 @@ import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import TitleBadge from '../../components/community/TitleBadge';
 import { useAuth } from '../../contexts/AuthContext';
-import { getMyStats, fetchMyPosts, fetchMyAnnotations } from '../../services/community';
+import { getMyStats, fetchMyPosts, fetchMyAnnotations, CommunityError } from '../../services/community';
+import Input from '../../components/ui/Input';
+import { evaluateNickname, nicknameRejectMessage } from '@/community/nickname';
 import { titleForCount } from '@/community/titles';
 import type { UserStatsDTO, PostDTO, AnnotationDTO } from '@/community';
 import type { RootStackParamList } from '../../navigation/types';
@@ -22,12 +24,16 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { user, loading, logout, requestDeletionCode, deleteAccount } = useAuth();
+  const { user, loading, logout, requestDeletionCode, deleteAccount, updateNickname } = useAuth();
 
   const [stats, setStats] = useState<UserStatsDTO | null>(null);
   const [myPosts, setMyPosts] = useState<PostDTO[]>([]);
   const [myAnnotations, setMyAnnotations] = useState<AnnotationDTO[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [nicknameModalVisible, setNicknameModalVisible] = useState(false);
+  const [nicknameInput, setNicknameInput] = useState('');
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
+  const [nicknameSaving, setNicknameSaving] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -123,6 +129,32 @@ export default function ProfileScreen() {
     }
   };
 
+  // 修改昵称:仅预填合法昵称;旧默认(手机号样式)留空让用户输入,避开校验陷阱
+  const openNicknameModal = () => {
+    const current = evaluateNickname(user?.nickname ?? '');
+    setNicknameInput(current.valid ? current.value : '');
+    setNicknameError(null);
+    setNicknameModalVisible(true);
+  };
+
+  const handleNicknameSave = async () => {
+    const ev = evaluateNickname(nicknameInput);
+    if (!ev.valid) {
+      setNicknameError(nicknameRejectMessage(ev.reason));
+      return;
+    }
+    setNicknameSaving(true);
+    try {
+      await updateNickname(nicknameInput);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      setNicknameModalVisible(false);
+    } catch (e) {
+      setNicknameError(e instanceof CommunityError ? e.message : '保存失败,请稍后重试');
+    } finally {
+      setNicknameSaving(false);
+    }
+  };
+
   const titleInfo = stats ? titleForCount(stats.titleCount) : null;
   const remaining = titleInfo?.nextThreshold != null && stats
     ? titleInfo.nextThreshold - stats.titleCount
@@ -134,7 +166,7 @@ export default function ProfileScreen() {
       <BlurTargetView style={styles.flex}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
           <View style={styles.header}>
-            <View />
+            <View style={styles.headerSpacer} />
             <Text style={styles.headerTitle}>我的</Text>
             <View style={styles.headerSpacer} />
           </View>
@@ -157,10 +189,13 @@ export default function ProfileScreen() {
             <View style={styles.body}>
               <GlassCard intensity={32}>
                 <View style={styles.identityRow}>
-                  <View style={styles.identityText}>
-                    <Text style={styles.nickname}>{user.nickname}</Text>
+                  <Pressable style={styles.identityText} hitSlop={8} onPress={openNicknameModal}>
+                    <View style={styles.nicknameRow}>
+                      <Text style={styles.nickname}>{user.nickname}</Text>
+                      <Text style={styles.nicknameEdit}>编辑</Text>
+                    </View>
                     <Text style={styles.phone}>{user.phoneMasked}</Text>
-                  </View>
+                  </Pressable>
                   {titleInfo && <TitleBadge info={titleInfo} />}
                 </View>
 
@@ -242,6 +277,48 @@ export default function ProfileScreen() {
           )}
         </ScrollView>
       </BlurTargetView>
+
+      {/* 修改昵称弹窗(样式沿用登录页验证码弹窗模式) */}
+      <Modal
+        visible={nicknameModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNicknameModalVisible(false)}
+      >
+        <View style={styles.nicknameBackdrop}>
+          <View style={styles.nicknameCard}>
+            <Text style={styles.nicknameTitle}>修改昵称</Text>
+            <Text style={styles.nicknameHint}>2-12 个汉字、字母、数字或·</Text>
+            <Input
+              placeholder="输入新昵称"
+              value={nicknameInput}
+              onChangeText={setNicknameInput}
+              maxLength={12}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {nicknameError && <Text style={styles.errorText}>{nicknameError}</Text>}
+            <View style={styles.nicknameButtons}>
+              <Pressable
+                onPress={() => !nicknameSaving && setNicknameModalVisible(false)}
+                hitSlop={8}
+                style={styles.nicknameCancel}
+              >
+                <Text style={styles.nicknameCancelText}>取消</Text>
+              </Pressable>
+              <View style={styles.nicknameConfirmWrap}>
+                <Button
+                  title="保存"
+                  variant="gold"
+                  loading={nicknameSaving}
+                  disabled={nicknameInput.trim().length === 0}
+                  onPress={handleNicknameSave}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -289,6 +366,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   identityText: { gap: 2 },
+  nicknameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  nicknameEdit: {
+    fontSize: FontSize.xs,
+    color: colors.textMuted,
+    textDecorationLine: 'underline',
+  },
   nickname: {
     fontFamily: FONT_SERIF,
     fontSize: FontSize.lg,
@@ -403,5 +490,51 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: FontSize.xs,
     color: colors.textMuted,
     marginTop: Spacing.xs,
+  },
+  nicknameBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  nicknameCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: colors.hairlineGold,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  nicknameTitle: {
+    fontFamily: FONT_SERIF,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  nicknameHint: {
+    fontSize: FontSize.xs,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  nicknameButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  nicknameCancel: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  nicknameCancelText: {
+    fontSize: FontSize.sm,
+    color: colors.textMuted,
+  },
+  nicknameConfirmWrap: {
+    flex: 1,
   },
 });

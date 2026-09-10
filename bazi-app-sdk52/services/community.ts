@@ -19,6 +19,7 @@ import { titleForCount } from '@/community/titles';
 import { evaluateDraft, nextDaily } from '@/community/antiSpam';
 import type { AntiSpamViolation } from '@/community/antiSpam';
 import { containsSensitive } from '@/community/sensitiveWords';
+import { evaluateNickname, nicknameRejectMessage } from '@/community/nickname';
 import { PostDraftSchema, QuestionSchema } from '@/community/schemas';
 import type { ReportReason } from '@/community/schemas';
 import { todayEast8 } from '@/community/east8';
@@ -204,7 +205,10 @@ export async function loginWithCode(
     const uid = user?.id ?? user?.uid;
     if (!uid || !user) throw new CommunityError('CODE_INVALID', '验证码错误');
 
-    const nickname = user.name || user.displayName || '';
+    // 自愈:OTP 会把 user.name 自动填成手机号;已有统计文档时以其昵称为准,
+    // 自定义昵称不被 auth 档案的手机号覆盖
+    const existingStats = await readUserStats(uid).catch(() => null);
+    const nickname = existingStats?.nickname || user.name || user.displayName || '';
     if (!nickname) {
       await user.update?.({ name: defaultNickname(phone) }).catch(() => {});
     }
@@ -250,6 +254,54 @@ export async function logout(): Promise<void> {
     await getApp().auth.signOut();
   } catch {
     // 本地登出失败不阻塞 UI
+  }
+}
+
+/**
+ * 修改本人昵称:
+ *   1) 纯函数校验,失败即抛 INVALID_NICKNAME(零读写)
+ *   2) UserStats.nickname 唯一权威写入(失败即整体失败)
+ *   3) Post/Annotation 历史 authorNickname 回填(尽力而为;幂等自愈:下次改名重跑)
+ *   4) 认证档案 user.name 同步(尽力而为;失败由 loginWithCode/restoreSession 的 stats 优先兜底)
+ */
+export async function updateMyNickname(nickname: string): Promise<AuthUser> {
+  ensureInit();
+  const uid = requireUid();
+  const evaluation = evaluateNickname(nickname);
+  if (!evaluation.valid) {
+    throw new CommunityError('INVALID_NICKNAME', nicknameRejectMessage(evaluation.reason));
+  }
+  const value = evaluation.value;
+  try {
+    // readUserStats 不套外层 catch:网络错误必须浮出,不能静默当「无文档」
+    const [stats, authState] = await Promise.all([
+      readUserStats(uid),
+      getApp().auth.getLoginState().catch(() => null),
+    ]);
+    const authUser = authState?.user as CloudbaseUserLike | undefined;
+    const phone = stats?.phone || authUser?.phone || '';
+
+    if (stats) {
+      // 规则引擎实测:按 id 更新被拒,必须 where({ uid });不碰 phone,防 '' 覆盖
+      await statsRef().where({ uid }).update({ nickname: value });
+    } else {
+      await upsertUserStats(phone, value);
+      // 防静默失败:create 路径后复核权威字段
+      const after = await readUserStats(uid).catch(() => null);
+      if (!after || after.nickname !== value) {
+        throw new CommunityError('NICKNAME_UPDATE_FAILED', '昵称保存失败,请稍后重试');
+      }
+    }
+    // 历史内容回填 + auth 档案同步(尽力而为)
+    await postsRef().where({ authorUid: uid }).update({ authorNickname: value }).catch(() => {});
+    await getApp().database().collection('Annotation')
+      .where({ authorUid: uid })
+      .update({ authorNickname: value })
+      .catch(() => {});
+    await authUser?.update?.({ name: value }).catch(() => {});
+    return { id: uid, phoneMasked: maskPhone(phone), nickname: value };
+  } catch (e) {
+    throw mapError(e);
   }
 }
 
