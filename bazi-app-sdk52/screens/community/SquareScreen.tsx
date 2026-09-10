@@ -1,7 +1,7 @@
 // 广场帖子流:分页 + 下拉刷新 + 空态/错误态;游客可完整浏览
 import { StyleSheet, View, Text, FlatList, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
@@ -44,6 +44,11 @@ export default function SquareScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  // 首次挂载时加载第一页
+  useEffect(() => {
+    loadFirstPage();
+  }, [loadFirstPage]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;

@@ -45,9 +45,12 @@ export class CommunityError extends Error {
 // ── 局部结构类型(js-sdk 未导出深路径类型,按需声明最小形状) ──
 
 interface CloudbaseUserLike {
+  /** SDK 验证响应用 id;登录态恢复对象可能同时有 uid。以 id 为准、uid 兜底 */
+  id?: string;
   uid?: string;
   name?: string;
   displayName?: string;
+  phone?: string;
   update?: (profile: { name?: string }) => Promise<unknown>;
 }
 
@@ -176,9 +179,11 @@ export async function sendSmsCode(phone: string): Promise<VerificationHandle> {
   try {
     const res = await getApp().auth.signInWithOtp({ phone });
     if (res?.error) throw mapError(res.error);
-    const handle = res?.data?.verifyOtp;
-    if (!handle) throw new CommunityError('SMS_FAILED', '验证码发送失败,请稍后重试');
-    return handle as unknown as VerificationHandle;
+    // SDK 事实:data.verifyOtp 本身就是验证函数(闭包持有 verification_id),
+    // 不是带 verifyOtp 方法的句柄对象 —— 包装成 VerificationHandle 供登录调用
+    const verifyFn = res?.data?.verifyOtp as unknown;
+    if (typeof verifyFn !== 'function') throw new CommunityError('SMS_FAILED', '验证码发送失败,请稍后重试');
+    return { verifyOtp: verifyFn as VerificationHandle['verifyOtp'] };
   } catch (e) {
     throw mapError(e);
   }
@@ -195,16 +200,18 @@ export async function loginWithCode(
     const res = await handle.verifyOtp({ token: code });
     if (res?.error) throw mapError(res.error);
     const user = res?.data?.user as CloudbaseUserLike | undefined;
-    if (!user?.uid) throw new CommunityError('CODE_INVALID', '验证码错误');
+    // SDK 事实:验证响应 user 对象用 id 字段(不是 uid),以 id 为准、uid 兜底
+    const uid = user?.id ?? user?.uid;
+    if (!uid || !user) throw new CommunityError('CODE_INVALID', '验证码错误');
 
     const nickname = user.name || user.displayName || '';
     if (!nickname) {
       await user.update?.({ name: defaultNickname(phone) }).catch(() => {});
     }
     await upsertUserStats(phone, nickname || defaultNickname(phone));
-    setCurrentUid(user.uid);
+    setCurrentUid(uid);
     return {
-      id: user.uid,
+      id: uid,
       phoneMasked: maskPhone(phone),
       nickname: nickname || defaultNickname(phone),
     };
@@ -219,11 +226,16 @@ export async function restoreSession(): Promise<AuthUser | null> {
   try {
     const state = await getApp().auth.getLoginState();
     const user = state?.user as CloudbaseUserLike | undefined;
-    if (!user?.uid) return null;
-    const stats = await readUserStats(user.uid).catch(() => null);
-    setCurrentUid(user.uid);
+    const uid = user?.id ?? user?.uid;
+    if (!uid || !user) return null;
+    const stats = await readUserStats(uid).catch(() => null);
+    setCurrentUid(uid);
+    // 自愈:会话在但统计文档缺失(如早期写入失败的历史用户),补建一份
+    if (!stats) {
+      await upsertUserStats(user.phone ?? '', user.name || user.displayName || '命友').catch(() => {});
+    }
     return {
-      id: user.uid,
+      id: uid,
       phoneMasked: maskPhone(stats?.phone ?? ''),
       nickname: stats?.nickname || user.name || user.displayName || '命友',
     };
@@ -293,7 +305,7 @@ export async function deleteAccount(code: string): Promise<void> {
       .where({ authorUid: uid })
       .update({ authorNickname: '已注销用户' })
       .catch(() => {});
-    await getApp().database().collection('UserStats').doc(uid).remove().catch(() => {});
+    await getApp().database().collection('UserStats').where({ uid }).remove().catch(() => {});
 
     // 错误以异常抛出;成功即完成账号删除
     await getApp().auth.deleteMe({ sudo_token: sudoToken });
@@ -319,29 +331,55 @@ function statsRef() {
 }
 
 async function readUserStats(uid: string): Promise<UserStatsDoc | null> {
-  const res = await statsRef().doc(uid).get();
-  const data = firstDoc<UserStatsDoc & { _id?: string }>(res?.data);
-  if (!data || !data.uid) return null;
-  return data;
+  try {
+    // 规则引擎实测:按 id 直读不含规则引用字段会被拒(查询子集要求),
+    // 必须用 where({ uid }) 查询
+    const res = await statsRef().where({ uid }).get();
+    const data = firstDoc<UserStatsDoc & { _id?: string }>(res?.data);
+    if (!data || !data.uid) return null;
+    return data;
+  } catch (e) {
+    const code = String((e as { code?: unknown })?.code ?? '');
+    // 不存在的文档在「仅本人可读」规则下也表现为 PERMISSION_DENIED,
+    // 业务上等同「尚无统计文档」,按缺失处理;写入路径(登录/自愈)负责补建
+    if (code.includes('PERMISSION_DENIED') || code.includes('NOT_FOUND') || code.includes('NOT_EXIST')) {
+      return null;
+    }
+    throw e;
+  }
 }
 
 async function upsertUserStats(phone: string, nickname: string): Promise<void> {
   const uid = requireUid();
   const existing = await readUserStats(uid).catch(() => null);
   if (existing) {
-    await statsRef().doc(uid).update({ phone, nickname });
+    // 规则引擎实测:按 id 更新被拒,必须 where({ uid }) 更新
+    await statsRef().where({ uid }).update({ phone, nickname });
     return;
   }
-  await statsRef().doc(uid).set({
-    uid,
-    phone,
-    nickname,
-    annotationCount: 0,
-    titleCount: 0,
-    lastAnnotationAt: null,
-    lastAnnotationDate: null,
-    dailyCount: 0,
-  });
+  try {
+    // 规则引擎实测:.set() 走 update 路由(空文档时 doc 为 null 被拒);
+    // .add({_id}) 走 create 路由,request.data.uid == auth.uid 正常放行
+    await statsRef().add({
+      _id: uid,
+      uid,
+      phone,
+      nickname,
+      annotationCount: 0,
+      titleCount: 0,
+      lastAnnotationAt: null,
+      lastAnnotationDate: null,
+      dailyCount: 0,
+    });
+  } catch (e) {
+    const errCode = String((e as { code?: string })?.code ?? '');
+    const errMsg = String((e as { message?: string })?.message ?? '');
+    // 并发自愈(restoreSession 双调用)时第二次 add 撞唯一索引 —— 视为已存在
+    if (errCode === 'DATABASE_REQUEST_FAILED' && errMsg.includes('E11000')) {
+      return;
+    }
+    throw e;
+  }
 }
 
 function toUserStatsDTO(doc: UserStatsDoc): UserStatsDTO {
@@ -359,8 +397,17 @@ export async function getMyStats(): Promise<UserStatsDTO> {
   const uid = requireUid();
   try {
     const doc = await readUserStats(uid);
-    if (!doc) throw new CommunityError('NO_STATS', '统计数据尚未初始化');
-    return toUserStatsDTO(doc);
+    // 尚无统计文档 = 新用户的正常状态,返回全 0 而非报错
+    return doc ? toUserStatsDTO(doc) : toUserStatsDTO({
+      uid,
+      phone: '',
+      nickname: '',
+      annotationCount: 0,
+      titleCount: 0,
+      lastAnnotationAt: null,
+      lastAnnotationDate: null,
+      dailyCount: 0,
+    });
   } catch (e) {
     throw mapError(e);
   }
@@ -609,7 +656,8 @@ export async function createAnnotation(postId: string, content: string): Promise
   if (evaluation.titleEligible) {
     statsUpdate.titleCount = getApp().database().command.inc(1);
   }
-  await statsRef().doc(uid).update(statsUpdate);
+  // 规则引擎实测:按 id 更新被拒,必须 where({ uid }) 更新
+  await statsRef().where({ uid }).update(statsUpdate);
 
   // 帖子批注计数(失败不阻塞批注本身)
   await postsRef()

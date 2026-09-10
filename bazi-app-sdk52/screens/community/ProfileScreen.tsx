@@ -48,7 +48,7 @@ export default function ProfileScreen() {
           setMyPosts(posts);
           setMyAnnotations(anns);
           setLoadError(null);
-        } catch (e) {
+        } catch {
           setLoadError('加载失败,请检查网络后下拉重试');
         }
       })();
