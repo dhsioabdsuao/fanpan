@@ -60,9 +60,9 @@ async function main() {
 
     if (COLLECTION === 'Post') {
       console.log(`\n[id ${id}] ${t}`);
-      console.log(`  标题:${TRIM(d.title)}`);
+      console.log(`  求测问题:${TRIM(d.question)}`);
       console.log(`  authorUid:${d.authorUid ?? '(无)'}`);
-      console.log(`  批注数:${d.annotCount ?? 0} 评论展示:${TRIM(d.authorNickname)}`);
+      console.log(`  批注数:${d.annotationCount ?? 0} 作者昵称:${TRIM(d.authorNickname)}`);
       if (MODE !== 'keys-only') {
         console.log(`  draft 键:${d.draft ? Object.keys(d.draft).sort().join(', ') : '(无)'}`);
       }

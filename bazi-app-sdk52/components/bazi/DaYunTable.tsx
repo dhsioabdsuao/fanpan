@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, View, Text, Pressable, ScrollView, LayoutAnimation, FlatList } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import type { FullAnalysis } from '@/lib/bage/analyze';
-import type { DaYunData } from '@/types/bazi';
 import { getTenGod, getStemElement, getBranchElement } from '@/lib/bazi-utils';
+import type { DaYunTableData, DaYunTableDecade } from '@/community/dayunExpand';
 import { FontSize, FontWeight, FONT_SERIF, Spacing, BorderRadius } from '../../theme';
 import { useThemeColors } from '../../theme/ThemeContext';
 import type { ThemeColors } from '../../theme/ThemeContext';
@@ -26,27 +26,52 @@ const ANNOTATION_STYLES: Record<string, { bg: string; color: string; border: str
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-function currentDaYunIndex(decades: DaYunData[]): number {
+function currentDaYunIndex(decades: DaYunTableDecade[]): number {
   for (let i = decades.length - 1; i >= 0; i--) {
     if (CURRENT_YEAR >= decades[i].startYear) return i;
   }
   return 0;
 }
 
-interface Props {
-  full: FullAnalysis;
+/** FullAnalysis → DaYunTable 纯数据(结果页路径) */
+export function toDaYunTableData(full: FullAnalysis): DaYunTableData | null {
+  const { daYun } = full.bazi;
+  if (!daYun) return null;
+  return {
+    startSolar: daYun.startSolar,
+    isForward: daYun.isForward,
+    dayMaster: full.bazi.dayMaster,
+    decades: daYun.decades.map((d) => ({
+      index: d.index,
+      startYear: d.startYear,
+      endYear: d.endYear,
+      startAge: d.startAge,
+      endAge: d.endAge,
+      ganZhi: d.ganZhi,
+      xunKong: d.xunKong,
+      liuNian: d.liuNian.map((ln) => ({
+        year: ln.year,
+        age: ln.age,
+        ganZhi: ln.ganZhi,
+        annotations: ln.annotations,
+      })),
+    })),
+  };
 }
 
-export default function DaYunTable({ full }: Props) {
+interface Props {
+  /** 纯数据契约:结果页经 toDaYunTableData(full),帖子详情经 buildDaYunTableData(draft) */
+  data: DaYunTableData | null;
+}
+
+export default function DaYunTable({ data }: Props) {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const result = full.bazi;
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  if (!result.daYun) return null;
+  if (!data) return null;
 
-  const { daYun } = result;
-  const currentIdx = currentDaYunIndex(daYun.decades);
+  const currentIdx = currentDaYunIndex(data.decades);
 
   const handleToggle = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -59,9 +84,9 @@ export default function DaYunTable({ full }: Props) {
 
       {/* 起运信息 */}
       <Text style={styles.startInfo}>
-        起运：{daYun.startSolar.year}年{daYun.startSolar.month}月{daYun.startSolar.day}日
+        起运：{data.startSolar.year}年{data.startSolar.month}月{data.startSolar.day}日
         {' · '}
-        {daYun.isForward ? '顺行' : '逆行'}
+        {data.isForward ? '顺行' : '逆行'}
         {' · '}当前{currentIdx + 1}步大运
       </Text>
 
@@ -78,12 +103,12 @@ export default function DaYunTable({ full }: Props) {
           </View>
 
           {/* Rows */}
-          {daYun.decades.map((dy) => {
+          {data.decades.map((dy) => {
             const isCurrent = dy.index === currentIdx;
             const isExpanded = expandedIndex === dy.index;
             const stem = dy.ganZhi[0];
             const branch = dy.ganZhi[1];
-            const tenGod = getTenGod(result.dayMaster, stem);
+            const tenGod = getTenGod(data.dayMaster, stem);
             const stemEl = getStemElement(stem);
             const branchEl = getBranchElement(branch);
 

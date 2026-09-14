@@ -21,7 +21,7 @@ import { BlurTargetView } from 'expo-blur';
 import PillarTable from '../components/bazi/PillarTable';
 import FuXingBlock from '../components/bazi/FuXingBlock';
 import BasicInfo from '../components/bazi/BasicInfo';
-import DaYunTable from '../components/bazi/DaYunTable';
+import DaYunTable, { toDaYunTableData } from '../components/bazi/DaYunTable';
 import ElementChart from '../components/bazi/ElementChart';
 import PatternBlock from '../components/bazi/PatternBlock';
 import StrengthBlock from '../components/bazi/StrengthBlock';
@@ -180,7 +180,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         </View>
       ),
     },
-    { id: 'dayun', title: '大运流年', component: DaYunTable },
+    { id: 'dayun', title: '大运流年', render: () => <DaYunTable data={toDaYunTableData(full)} /> },
     { id: 'career', title: '事业指引', component: CareerGuidanceBlock },
     { id: 'health', title: '体质倾向', component: HealthGuidanceBlock },
     { id: 'shensha', title: '神煞(标注)', component: ShenShaBlock },
@@ -261,16 +261,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           })}
         </View>
 
-        {/* 发布到广场(导航传脱敏草稿,由构造保证不携带出生原始数据) */}
-        <View style={styles.publishSection}>
-          <Button
-            title="发布到广场求批注"
-            variant="gold"
-            onPress={() => navigation.navigate('Publish', { draft: buildPostDraft(full) })}
-          />
-          <Text style={styles.publishNote}>仅上传四柱与性别,不含精确出生时间与地点</Text>
-        </View>
-
         {/* 历史排盘入口 */}
         <Pressable
           style={styles.historyEntry}
@@ -291,6 +281,18 @@ export default function ResultScreen({ navigation, route }: Props) {
           </Text>
         </View>
       </ScrollView>
+
+        {/* 固定底栏:发布到广场(始终在屏幕最下方,tab bar 之上;
+            导航传脱敏草稿,由构造保证不携带出生原始数据) */}
+        <View style={styles.publishBar}>
+          <Button
+            title="发布到广场求批注"
+            variant="gold"
+            style={styles.publishButton}
+            onPress={() => navigation.navigate('Publish', { draft: buildPostDraft(full) })}
+          />
+          <Text style={styles.publishNote}>仅上传四柱与性别,不含精确出生时间与地点</Text>
+        </View>
       </BlurTargetView>
     </SafeAreaView>
   );
@@ -338,7 +340,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl * 2 + 32, // 底部悬浮 tab bar 留白
+    // 底部留白 = 悬浮 tab bar + 固定发布底栏,防免责声明被遮挡
+    paddingBottom: Spacing.xxl * 2 + 32 + 96,
   },
   header: {
     flexDirection: 'row',
@@ -473,9 +476,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.destructive,
     textAlign: 'center',
   },
-  publishSection: {
+  publishBar: {
     gap: Spacing.xs,
-    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    borderTopColor: colors.hairlineGold,
+    backgroundColor: colors.glassBg,
+  },
+  publishButton: {
+    width: '100%',
   },
   publishNote: {
     fontSize: FontSize.xs,

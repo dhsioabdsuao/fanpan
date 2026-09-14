@@ -237,3 +237,20 @@ export function getXun(dayGanZhi: string): string {
   const xunEnd = xunStart + 9
   return `${jiaZi[xunStart]}～${jiaZi[xunEnd]}`
 }
+
+/**
+ * 旬空:所在旬缺失的两个地支(甲子旬空戌亥、甲午旬空辰巳)。
+ * 与 lunar-typescript 的 Yun.getXunKong() 同义,供脱敏场景
+ * (只有干支、无 lunar 对象)本地推导。
+ */
+export function getXunKong(dayGanZhi: string): string {
+  const xun = getXun(dayGanZhi)
+  if (!xun) return ''
+  const xunStartBranch = xun[1] // 旬首干支的第二个字(地支)
+  const zhiIdx = ZHI.indexOf(xunStartBranch as (typeof ZHI)[number])
+  if (zhiIdx < 0) return ''
+  // 旬空 = 旬首地支前两位,按顺序拼接(如甲午旬:午前为辰、巳)
+  const near = ZHI[(zhiIdx - 1 + 12) % 12]
+  const far = ZHI[(zhiIdx - 2 + 12) % 12]
+  return `${far}${near}`
+}

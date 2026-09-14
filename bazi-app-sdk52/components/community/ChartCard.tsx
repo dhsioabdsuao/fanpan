@@ -1,6 +1,10 @@
 // 帖子内嵌命盘卡:从 PostDTO.draft(云上脱敏数据)渲染,
 // 视觉沿用 PillarTable 的玻璃外框 + 金色双细线内框 + 日主金底高亮。
 // 不依赖 FullAnalysis —— 帖子数据里没有出生原始信息,由构造保证脱敏。
+//
+// 区块:四柱(天干十神+纳音)→ 神煞 → 副星(藏干十神)→ 大运流年(showDaYun)。
+// 副星十神由 dayMaster + 藏干本地推导(getTenGod),流年由 60 甲子本地
+// 展开(community/dayunExpand),均不改 PostDraft 白名单、不加云端字段。
 import { StyleSheet, View, Text } from 'react-native';
 import { useMemo } from 'react';
 import GlassCard from '../ui/GlassCard';
@@ -8,13 +12,16 @@ import { FontSize, FontWeight, Spacing, FONT_SERIF, BorderRadius } from '../../t
 import { useThemeColors } from '../../theme/ThemeContext';
 import type { ThemeColors } from '../../theme/ThemeContext';
 import { ELEMENT_COLORS } from '@/lib/theme-tokens';
+import { getTenGod } from '@/lib/bazi-utils';
+import { buildDaYunTableData } from '@/community/dayunExpand';
+import DaYunTable from '../bazi/DaYunTable';
 import type { PostDraft } from '@/community';
 
 interface Props {
   draft: PostDraft;
   /** 卡片流里隐藏时柱(详情页显示全四柱) */
   hideHour?: boolean;
-  /** 底部附大运摘要小字行 */
+  /** 底部附大运流年区块(详情/发布预览) */
   showDaYun?: boolean;
 }
 
@@ -35,6 +42,12 @@ export default function ChartCard({ draft, hideHour, showDaYun }: Props) {
     { key: 'day', label: '日柱' },
     { key: 'hour', label: '时柱' },
   ];
+
+  // 大运流年(由脱敏草稿本地展开,渲染与结果页同一个 DaYunTable)
+  const daYunData = useMemo(
+    () => (showDaYun && draft.daYun ? buildDaYunTableData(draft) : null),
+    [showDaYun, draft],
+  );
 
   return (
     <GlassCard intensity={28} contentStyle={styles.glassContent} style={styles.shell}>
@@ -81,6 +94,8 @@ export default function ChartCard({ draft, hideHour, showDaYun }: Props) {
           })}
         </View>
 
+        {/* 神煞(每柱完整多行展示,不截断) */}
+        <Text style={styles.sectionLabel}>神煞</Text>
         <View style={styles.shenshaRow}>
           {shenshaPillars.map(({ key, label }) => {
             const hidden = hideHour && key === 'hour';
@@ -92,7 +107,7 @@ export default function ChartCard({ draft, hideHour, showDaYun }: Props) {
                 ) : stars.length === 0 ? (
                   <Text style={styles.shenshaNone}>无</Text>
                 ) : (
-                  <Text style={[styles.shenshaName, { color: colors.fanXing }]} numberOfLines={1}>
+                  <Text style={[styles.shenshaName, { color: colors.fanXing }]}>
                     {stars.map((s) => s.name).join(' ')}
                   </Text>
                 )}
@@ -101,13 +116,36 @@ export default function ChartCard({ draft, hideHour, showDaYun }: Props) {
           })}
         </View>
 
-        {showDaYun && draft.daYun && (
-          <Text style={styles.daYunLine}>
-            大运{draft.daYun.isForward ? '顺行' : '逆行'} ·{' '}
-            {draft.daYun.decades.length > 0
-              ? `起运 ${draft.daYun.decades[0].startYear} 年(约 ${draft.daYun.decades[0].startAge} 岁)`
-              : '起运信息待排'}
-          </Text>
+        {/* 副星(藏干十神):十神由 dayMaster + 藏干本地推导,标注展示 */}
+        <Text style={styles.sectionLabel}>副星 · 藏干十神</Text>
+        <View style={styles.shenshaRow}>
+          {shenshaPillars.map(({ key, label }) => {
+            const hidden = hideHour && key === 'hour';
+            const pillar = draft.pillars[key];
+            return (
+              <View key={key} style={styles.fuXingCol}>
+                {hidden || pillar === null ? (
+                  <Text style={styles.shenshaNone}>—</Text>
+                ) : (
+                  <View style={styles.pairList}>
+                    {pillar.hiddenStems.map((stem, i) => (
+                      <View key={`${stem}-${i}`} style={styles.pairChip}>
+                        <Text style={styles.pairStem}>{stem}</Text>
+                        <Text style={styles.pairGod}>{getTenGod(draft.dayMaster, stem)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* 大运流年(showDaYun):与结果页同一个 DaYunTable 组件 */}
+        {daYunData && (
+          <View style={styles.daYunWrap}>
+            <DaYunTable data={daYunData} />
+          </View>
         )}
       </View>
     </GlassCard>
@@ -183,8 +221,14 @@ const makeStyles = (colors: ThemeColors) =>
       fontSize: FontSize.xs,
       color: colors.textMuted,
     },
-    shenshaRow: {
+    sectionLabel: {
       marginTop: Spacing.sm,
+      textAlign: 'center',
+      fontSize: 9,
+      color: colors.textMuted,
+    },
+    shenshaRow: {
+      marginTop: Spacing.xs,
       borderTopWidth: StyleSheet.hairlineWidth * 2,
       borderTopColor: colors.hairlineGold,
       paddingTop: Spacing.xs,
@@ -204,11 +248,40 @@ const makeStyles = (colors: ThemeColors) =>
       fontSize: 9,
       paddingVertical: 4,
       textAlign: 'center',
+      lineHeight: 13,
     },
-    daYunLine: {
-      marginTop: Spacing.xs,
+    fuXingCol: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    pairList: {
+      gap: 3,
+      paddingVertical: 4,
+      alignItems: 'center',
+    },
+    pairChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      borderRadius: BorderRadius.md,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 5,
+      paddingVertical: 2,
+    },
+    pairStem: {
+      fontFamily: FONT_SERIF,
+      fontSize: 10,
+      fontWeight: FontWeight.medium,
+      color: colors.goldDark,
+    },
+    pairGod: {
       fontSize: 9,
       color: colors.textMuted,
-      textAlign: 'center',
+    },
+    daYunWrap: {
+      marginTop: Spacing.md,
     },
   });
