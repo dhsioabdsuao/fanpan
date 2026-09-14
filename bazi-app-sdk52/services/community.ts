@@ -205,6 +205,10 @@ export async function loginWithCode(
     const uid = user?.id ?? user?.uid;
     if (!uid || !user) throw new CommunityError('CODE_INVALID', '验证码错误');
 
+    // 必须先落登录态再走任何依赖 requireUid 的路径(upsertUserStats 也在内),
+    // 否则真机首登 currentUid 仍为空会误报「请先登录」
+    setCurrentUid(uid);
+
     // 自愈:OTP 会把 user.name 自动填成手机号;已有统计文档时以其昵称为准,
     // 自定义昵称不被 auth 档案的手机号覆盖
     const existingStats = await readUserStats(uid).catch(() => null);
@@ -212,8 +216,7 @@ export async function loginWithCode(
     if (!nickname) {
       await user.update?.({ name: defaultNickname(phone) }).catch(() => {});
     }
-    await upsertUserStats(phone, nickname || defaultNickname(phone));
-    setCurrentUid(uid);
+    await upsertUserStats(uid, phone, nickname || defaultNickname(phone));
     return {
       id: uid,
       phoneMasked: maskPhone(phone),
@@ -236,7 +239,7 @@ export async function restoreSession(): Promise<AuthUser | null> {
     setCurrentUid(uid);
     // 自愈:会话在但统计文档缺失(如早期写入失败的历史用户),补建一份
     if (!stats) {
-      await upsertUserStats(user.phone ?? '', user.name || user.displayName || '命友').catch(() => {});
+      await upsertUserStats(uid, user.phone ?? '', user.name || user.displayName || '命友').catch(() => {});
     }
     return {
       id: uid,
@@ -285,7 +288,7 @@ export async function updateMyNickname(nickname: string): Promise<AuthUser> {
       // 规则引擎实测:按 id 更新被拒,必须 where({ uid });不碰 phone,防 '' 覆盖
       await statsRef().where({ uid }).update({ nickname: value });
     } else {
-      await upsertUserStats(phone, value);
+      await upsertUserStats(uid, phone, value);
       // 防静默失败:create 路径后复核权威字段
       const after = await readUserStats(uid).catch(() => null);
       if (!after || after.nickname !== value) {
@@ -401,8 +404,7 @@ async function readUserStats(uid: string): Promise<UserStatsDoc | null> {
   }
 }
 
-async function upsertUserStats(phone: string, nickname: string): Promise<void> {
-  const uid = requireUid();
+async function upsertUserStats(uid: string, phone: string, nickname: string): Promise<void> {
   const existing = await readUserStats(uid).catch(() => null);
   if (existing) {
     // 规则引擎实测:按 id 更新被拒,必须 where({ uid }) 更新
