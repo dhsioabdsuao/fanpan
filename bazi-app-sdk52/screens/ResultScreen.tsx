@@ -1,5 +1,6 @@
 import { StyleSheet, View, ScrollView, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useState, useMemo, useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -44,6 +45,12 @@ export default function ResultScreen({ navigation, route }: Props) {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [openId, setOpenId] = useState<string | null>('narrative');
+
+  // 悬浮 tab bar(MainTabs,absolute 定位)会盖住固定底栏:
+  // 底栏按 tab bar 内容高度抬升,保证显示在「首页/广场/我的」菜单栏之上
+  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+  const barBottomInset = Math.max(tabBarHeight - insets.bottom, 0);
 
   const { result, error } = useMemo(() => {
     const input = buildBaziInput(route.params);
@@ -261,14 +268,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           })}
         </View>
 
-        {/* 历史排盘入口 */}
-        <Pressable
-          style={styles.historyEntry}
-          onPress={() => navigation.navigate('History')}
-        >
-          <Text style={styles.historyEntryText}>历史排盘 →(本次命盘已自动保存)</Text>
-        </Pressable>
-
         {/* Disclaimer — 古籍批注风格 */}
         <View style={styles.disclaimerContainer}>
           <View style={styles.disclaimerDivider} />
@@ -284,7 +283,14 @@ export default function ResultScreen({ navigation, route }: Props) {
 
         {/* 固定底栏:发布到广场(始终在屏幕最下方,tab bar 之上;
             导航传脱敏草稿,由构造保证不携带出生原始数据) */}
-        <View style={styles.publishBar}>
+        <View style={[styles.publishBar, { paddingBottom: Spacing.sm + barBottomInset }]}>
+          {/* 历史排盘入口(求批注上方) */}
+          <Pressable
+            style={styles.historyEntry}
+            onPress={() => navigation.navigate('History')}
+          >
+            <Text style={styles.historyEntryText}>历史排盘 →(本次命盘已自动保存)</Text>
+          </Pressable>
           <Button
             title="发布到广场求批注"
             variant="gold"
@@ -477,7 +483,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     textAlign: 'center',
   },
   publishBar: {
-    gap: Spacing.xs,
+    gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth * 2,
@@ -500,7 +506,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     backgroundColor: colors.surface,
-    marginBottom: Spacing.lg,
   },
   historyEntryText: {
     fontSize: FontSize.sm,
