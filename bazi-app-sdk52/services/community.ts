@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { getApp, ensureInit } from './cloudbase';
-import { maskPhone, defaultNickname } from '@/community/mask';
+import { maskPhone, defaultNickname, CN_MOBILE } from '@/community/mask';
 import { titleForCount } from '@/community/titles';
 import { evaluateDraft, nextDaily } from '@/community/antiSpam';
 import type { AntiSpamViolation } from '@/community/antiSpam';
@@ -142,6 +142,17 @@ function mapError(e: unknown): CommunityError {
   }
 }
 
+/**
+ * 公开昵称兜底:OTP 会把 user.name 自动填成手机号,手机号形态的名字
+ * 不能作公开昵称(明文泄漏),统一回落默认打码昵称;改名功能本身也
+ * 禁止纯手机号昵称,口径一致。
+ */
+function safeFallbackNickname(name: string | undefined, phone: string): string {
+  const raw = name ?? '';
+  if (raw && !CN_MOBILE.test(raw)) return raw;
+  return phone ? defaultNickname(phone) : '命友';
+}
+
 function violationMessage(v: AntiSpamViolation): string {
   switch (v) {
     case 'TOO_SHORT':
@@ -212,15 +223,17 @@ export async function loginWithCode(
     // 自愈:OTP 会把 user.name 自动填成手机号;已有统计文档时以其昵称为准,
     // 自定义昵称不被 auth 档案的手机号覆盖
     const existingStats = await readUserStats(uid).catch(() => null);
-    const nickname = existingStats?.nickname || user.name || user.displayName || '';
-    if (!nickname) {
-      await user.update?.({ name: defaultNickname(phone) }).catch(() => {});
+    const rawName = user.name || user.displayName || '';
+    const nickname = existingStats?.nickname || safeFallbackNickname(rawName, phone);
+    // 新用户档案名是手机号形态:同步为默认打码昵称,避免下次误读
+    if (!existingStats?.nickname && rawName !== nickname) {
+      await user.update?.({ name: nickname }).catch(() => {});
     }
-    await upsertUserStats(uid, phone, nickname || defaultNickname(phone));
+    await upsertUserStats(uid, phone, nickname);
     return {
       id: uid,
       phoneMasked: maskPhone(phone),
-      nickname: nickname || defaultNickname(phone),
+      nickname,
     };
   } catch (e) {
     throw mapError(e);
@@ -237,14 +250,16 @@ export async function restoreSession(): Promise<AuthUser | null> {
     if (!uid || !user) return null;
     const stats = await readUserStats(uid).catch(() => null);
     setCurrentUid(uid);
-    // 自愈:会话在但统计文档缺失(如早期写入失败的历史用户),补建一份
+    // 自愈:会话在但统计文档缺失(如早期写入失败的历史用户),补建一份;
+    // 手机号形态的档案名不能作公开昵称,同 loginWithCode 口径
+    const fallbackNickname = safeFallbackNickname(user.name || user.displayName, user.phone ?? '');
     if (!stats) {
-      await upsertUserStats(uid, user.phone ?? '', user.name || user.displayName || '命友').catch(() => {});
+      await upsertUserStats(uid, user.phone ?? '', fallbackNickname).catch(() => {});
     }
     return {
       id: uid,
       phoneMasked: maskPhone(stats?.phone ?? ''),
-      nickname: stats?.nickname || user.name || user.displayName || '命友',
+      nickname: stats?.nickname || fallbackNickname,
     };
   } catch {
     return null;

@@ -43,7 +43,7 @@ const mocks = vi.hoisted(() => {
   const fakeApp = {
     auth: {
       signInWithOtp: vi.fn() as Mock,
-      getLoginState: vi.fn(async () => null),
+      getLoginState: vi.fn(async () => null) as Mock,
       signOut: vi.fn(async () => {}),
     },
     database: () => ({
@@ -63,6 +63,7 @@ vi.mock('../cloudbase', () => ({
 import {
   sendSmsCode,
   loginWithCode,
+  restoreSession,
   logout,
   getMyStats,
   setCurrentUid,
@@ -91,7 +92,8 @@ describe('登录流(首登 / 重登 / 退出)', () => {
 
     expect(verifyOtp).toHaveBeenCalledWith({ token: '123456' });
     expect(user.id).toBe('uid-first');
-    expect(user.nickname).toBe('13800138000');
+    // OTP 会把 user.name 自动填成手机号:不能作公开昵称,必须回落默认打码昵称
+    expect(user.nickname).toBe('命友·138****8000');
 
     // 登录后 currentUid 已就位:需要登录态的接口立即可用
     const stats = await getMyStats();
@@ -104,6 +106,19 @@ describe('登录流(首登 / 重登 / 退出)', () => {
     expect(docs[0]._id).toBe('uid-first');
     expect(docs[0].uid).toBe('uid-first');
     expect(docs[0].phone).toBe('13800138000');
+    // 隐私红线:明文手机号绝不能以昵称形式入云
+    expect(docs[0].nickname).toBe('命友·138****8000');
+  });
+
+  it('新用户首登:user.name 为空时使用默认打码昵称', async () => {
+    mockOtpUser({ id: 'uid-empty-name' });
+
+    const handle = await sendSmsCode('13800138000');
+    const user = await loginWithCode('13800138000', handle, '123456');
+
+    expect(user.nickname).toBe('命友·138****8000');
+    const docs = [...mocks.statsStore.values()];
+    expect(docs[0].nickname).toBe('命友·138****8000');
   });
 
   it('重登自愈:已有统计文档的昵称优先,不被 auth 档案的手机号覆盖', async () => {
@@ -134,5 +149,43 @@ describe('登录流(首登 / 重登 / 退出)', () => {
     const err = await getMyStats().catch((e: unknown) => e);
     expect(err).toBeInstanceOf(CommunityError);
     expect((err as CommunityError).code).toBe('UNAUTHENTICATED');
+  });
+});
+
+describe('restoreSession(会话恢复)', () => {
+  it('统计文档缺失且档案名为手机号:补建昵称用默认打码,不泄漏明文手机号', async () => {
+    mocks.fakeApp.auth.getLoginState.mockResolvedValue({
+      user: { id: 'uid-restore', name: '13900139000', phone: '13900139000' },
+    });
+
+    const user = await restoreSession();
+
+    expect(user?.id).toBe('uid-restore');
+    expect(user?.nickname).toBe('命友·139****9000');
+    const docs = [...mocks.statsStore.values()];
+    expect(docs[0].uid).toBe('uid-restore');
+    expect(docs[0].nickname).toBe('命友·139****9000');
+    expect(docs[0].nickname).not.toContain('13900139000');
+  });
+
+  it('统计文档存在:昵称以统计文档为准', async () => {
+    mocks.statsStore.set('uid-keep', {
+      _id: 'uid-keep',
+      uid: 'uid-keep',
+      phone: '13900139000',
+      nickname: '玄机子',
+    });
+    mocks.fakeApp.auth.getLoginState.mockResolvedValue({
+      user: { id: 'uid-keep', name: '13900139000', phone: '13900139000' },
+    });
+
+    const user = await restoreSession();
+
+    expect(user?.nickname).toBe('玄机子');
+  });
+
+  it('无会话返回 null', async () => {
+    mocks.fakeApp.auth.getLoginState.mockResolvedValue(null);
+    expect(await restoreSession()).toBeNull();
   });
 });
