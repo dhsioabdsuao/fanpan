@@ -84,6 +84,27 @@ export default function SquareScreen() {
     </View>
   );
 
+  // 已有内容时刷新失败:顶部错误横幅 + 重试,不丢弃已加载帖子
+  const listHeader = (
+    <View>
+      {header}
+      {error && posts.length > 0 && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable
+            hitSlop={8}
+            onPress={() => {
+              setRefreshing(true);
+              loadFirstPage();
+            }}
+          >
+            <Text style={styles.retryLink}>重试</Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -141,7 +162,7 @@ export default function SquareScreen() {
           data={posts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PostCard post={item} onPress={() => openPost(item.id)} />}
-          ListHeaderComponent={header}
+          ListHeaderComponent={listHeader}
           contentContainerStyle={styles.listContainer}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           refreshControl={
@@ -204,6 +225,24 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: FontSize.sm,
     color: colors.destructive,
     textAlign: 'center',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: 12,
+    backgroundColor: colors.glassBg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  retryLink: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: colors.goldDark,
   },
   footerText: {
     fontSize: FontSize.xs,

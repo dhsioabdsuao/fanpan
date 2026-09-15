@@ -12,9 +12,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#f5f0e8",
-    "splash": {
-      "backgroundColor": "#f5f0e8"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tonyybr.bazi",
@@ -60,7 +57,10 @@
     },
     "owner": "tonyybr",
     "plugins": [
-      "expo-status-bar"
+      "expo-status-bar",
+      ["expo-splash-screen", {
+        "backgroundColor": "#f5f0e8"
+      }]
     ]
   }
 }

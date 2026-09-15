@@ -69,7 +69,7 @@ async function main() {
     } else if (COLLECTION === 'Annotation') {
       console.log(`\n[id ${id}] ${t}`);
       console.log(`  postId:${TRIM(d.postId)} authorUid:${d.authorUid ?? '(无)'}`);
-      console.log(`  内容:${TRIM(d.content)}`);
+      console.log(`  作者昵称:${d.authorNickname ?? '(无)'} 内容:${TRIM(d.content)}`);
     } else if (COLLECTION === 'UserStats') {
       console.log(`\n[id ${id}] ${t}`);
       console.log(`  uid:${d.uid ?? '(无)'} nickname:${d.nickname ?? '(无)'}`);
